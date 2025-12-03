@@ -1,14 +1,16 @@
 /**
  * Vendor-specific functions - B10_vendor.js
  * Functions for working with Vendor data from Google Sheets
- * Now using unified getTableEntities function
+ * UPDATED: Now uses B02 data manager instead of getTableEntities
  */
 
 /**
- * Get vendor entities (wrapper for unified getTableEntities)
+ * Get vendor entities - now uses B02 data manager
  */
 function getVendorEntities() {
-  return getTableEntities('Vendor');
+  const manager = getDataManager();
+  const vendors = manager.getVendors();
+  return createResponse(true, vendors, null);
 }
 
 /**

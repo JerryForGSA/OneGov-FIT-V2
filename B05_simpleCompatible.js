@@ -1,15 +1,13 @@
 /**
  * Apps Script Compatible Functions - B05_SimpleCompatible.js
  * Simple functions that return data directly (no wrapper functions)
- * UPDATED: Added simple DataManager replacement for Report Builder compatibility
- * FIXED: Added getTableEntities function to resolve Agency view Vendor table issue
+ * UPDATED: Removed redundant code - all data management now through B02_dataManager.js
  */
 
-/**
- * Get entities with proper column mappings (unified for OEM, Agency, Vendor)
- * Moved from B08_oem.js to be available for all entity type modules
- */
-function getTableEntities(entityType = 'OEM') {
+// REMOVED: getTableEntities function - now handled by B02_dataManager.js
+// All entity loading should use getDataManager().getEntities(entityType)
+
+/* ARCHIVED getTableEntities - Replaced by B02
   try {
     const SPREADSHEET_ID = '18h0TYPAPiWCKPB09v7kChoICQOELJSLBfwaZwpYheXE';
     const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
@@ -199,12 +197,12 @@ function getTableEntities(entityType = 'OEM') {
     console.error(`Error getting ${entityType} entities:`, error);
     return createResponse(false, null, error.toString());
   }
-}
+} */
 
-/**
- * Simple DataManager replacement for when B02 is disabled
- * Provides basic functionality for Report Builder to work
- */
+// REMOVED: Redundant getDataManager function - B02_dataManager.js is now active
+// Use the getDataManager() function from B01_main.js which properly initializes B02
+
+/* ARCHIVED Simple DataManager
 function getDataManager() {
   try {
     console.log('🔧 Simple DataManager: Creating replacement for B02 (disabled)');
@@ -253,11 +251,11 @@ function getDataManager() {
       getEntities: function() { return []; }
     };
   }
-}
+} */
 
-/**
- * Get OEM data - Apps Script compatible
- */ 
+/* ARCHIVED - Duplicate getOEMs function
+ * REPLACED BY: B01_main.js getOEMs() which uses B02 data manager
+ * 
 function getOEMs() {
   try {
     const SPREADSHEET_ID = '18h0TYPAPiWCKPB09v7kChoICQOELJSLBfwaZwpYheXE';
@@ -661,11 +659,11 @@ function getOEMs() {
   } catch (error) {
     return { error: error.toString() };
   }
-}
+} */
 
-/**
- * Get Agency data - Apps Script compatible
- */
+/* ARCHIVED - Duplicate getAgencies function
+ * REPLACED BY: B01_main.js getAgencies() which uses B02 data manager
+ *
 function getAgencies() {
   try {
     const SPREADSHEET_ID = '18h0TYPAPiWCKPB09v7kChoICQOELJSLBfwaZwpYheXE';
@@ -1037,11 +1035,11 @@ function getAgencies() {
   } catch (error) {
     return { error: error.toString() };
   }
-}
+} */
 
-/**
- * Get Vendor data - Apps Script compatible
- */
+/* ARCHIVED - Duplicate getVendors function
+ * REPLACED BY: B01_main.js getVendors() which uses B02 data manager
+ *
 function getVendors() {
   try {
     const SPREADSHEET_ID = '18h0TYPAPiWCKPB09v7kChoICQOELJSLBfwaZwpYheXE';
@@ -1420,10 +1418,11 @@ function getVendors() {
   } catch (error) {
     return { error: error.toString() };
   }
-}
+} */
 
 /**
  * Get cross-sheet summary - Apps Script compatible
+ * NOTE: This uses B01's getOEMs/getVendors/getAgencies which now use B02
  */
 function getSummaryData() {
   try {

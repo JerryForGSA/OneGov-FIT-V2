@@ -984,10 +984,10 @@ function exportToGoogleSlides(cards) {
   }
 }
 
-/**
- * Helper function to parse JSON columns
+/* ARCHIVED - Duplicate parseJSONColumn function
+ * REPLACED BY: B02_dataManager.js parseJSON() method
  */
-function parseJSONColumn(value) {
+/* function parseJSONColumn(value) {
   if (!value) return null;
   
   try {
@@ -1011,7 +1011,7 @@ function parseJSONColumn(value) {
     console.warn('Error parsing JSON column:', error, 'Value:', value);
     return null;
   }
-}
+} */
 
 /**
  * Helper function to create standardized web responses
@@ -2758,10 +2758,10 @@ function cleanLabel(str) {
            .trim();
 }
 
-/**
- * UNIFIED TABLE ENTITIES FUNCTION
- * Get entities with proper column mappings (works for OEM, Agency, Vendor)
- */
+/* ARCHIVED - Duplicate getTableEntities function
+ * REPLACED BY: B02_dataManager.js getEntities() method
+ * This entire function duplicates B02's loadEntitySheet functionality
+ *
 function getTableEntities(entityType = 'OEM') {
   try {
     const SPREADSHEET_ID = '18h0TYPAPiWCKPB09v7kChoICQOELJSLBfwaZwpYheXE';
@@ -2937,7 +2937,7 @@ function getTableEntities(entityType = 'OEM') {
     console.error(`V47 Error getting ${entityType} entities:`, error);
     return createResponse(false, null, error.toString());
   }
-}
+} */
 
 // ============================================================================
 // SAVINGS REPORT VIEWER FUNCTIONS

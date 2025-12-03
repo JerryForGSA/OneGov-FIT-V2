@@ -1,14 +1,16 @@
 /**
  * Agency-specific functions - B06_agency.js
  * Functions for working with Agency data from Google Sheets
- * Now using unified getTableEntities function
+ * UPDATED: Now uses B02 data manager instead of getTableEntities
  */
 
 /**
- * Get agency entities (wrapper for unified getTableEntities)
+ * Get agency entities - now uses B02 data manager
  */
 function getAgencyEntities() {
-  return getTableEntities('Agency');
+  const manager = getDataManager();
+  const agencies = manager.getAgencies();
+  return createResponse(true, agencies, null);
 }
 
 /**

@@ -1,28 +1,34 @@
 /**
  * OEM-specific functions - B08_oem.js
  * Functions for working with OEM data from Google Sheets
- * NOTE: getTableEntities function moved to B05_simpleCompatible.js for shared access
+ * UPDATED: Now uses B02 data manager instead of getTableEntities
  */
 
 /**
- * Get OEM entities (wrapper for getTableEntities)
+ * Get OEM entities - now uses B02 data manager
  */
 function getOEMEntities() {
-  return getTableEntities('OEM');
+  const manager = getDataManager();
+  const oems = manager.getOEMs();
+  return createResponse(true, oems, null);
 }
 
 /**
- * Get Agency entities (wrapper for getTableEntities)
+ * Get Agency entities - now uses B02 data manager
  */
 function getAgencyEntities() {
-  return getTableEntities('Agency');
+  const manager = getDataManager();
+  const agencies = manager.getAgencies();
+  return createResponse(true, agencies, null);
 }
 
 /**
- * Get Vendor entities (wrapper for getTableEntities)
+ * Get Vendor entities - now uses B02 data manager
  */
 function getVendorEntities() {
-  return getTableEntities('Vendor');
+  const manager = getDataManager();
+  const vendors = manager.getVendors();
+  return createResponse(true, vendors, null);
 }
 
 /**
