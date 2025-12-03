@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OneGov Savings Report Viewer</title>
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- html2canvas for chart export -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  
+  <style>
+    :root {
+      --primary-dark: #0a2240;
+      --primary: #144673;
+      --primary-light: #3a6ea5;
+      --accent: #f47920;
+      --accent-light: #ff8c42;
+      --success: #22c55e;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-600: #4b5563;
+      --gray-800: #1f2937;
+    }
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--gray-100);
+      color: var(--gray-800);
+      line-height: 1.5;
+    }
+    
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+      color: white;
+      padding: 20px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .header h1 {
+      font-size: 24px;
+      font-weight: 600;
+    }
+    
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+    
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: var(--accent-light);
+    }
+    
+    .btn-secondary {
+      background: white;
+      color: var(--primary);
+      border: 1px solid var(--gray-300);
+    }
+    
+    .btn-secondary:hover {
+      background: var(--gray-100);
+    }
+    
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    /* Report Selector - Two Level Menu */
+    .report-selector {
+      background: white;
+      padding: 20px 30px;
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 20px;
+    }
+    
+    .selector-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .selector-group label {
+      font-weight: 500;
+      color: var(--gray-600);
+      white-space: nowrap;
+    }
+    
+    .selector-group select {
+      padding: 10px 15px;
+      border: 1px solid var(--gray-300);
+      border-radius: 6px;
+      font-size: 14px;
+      min-width: 250px;
+      background: white;
+    }
+    
+    .selector-group select:disabled {
+      background: var(--gray-100);
+      cursor: not-allowed;
+    }
+    
+    .report-count {
+      font-size: 13px;
+      color: var(--gray-600);
+      padding: 6px 12px;
+      background: var(--gray-100);
+      border-radius: 20px;
+    }
+    
+    /* Main Content */
+    .main-content {
+      max-width: 1200px;
+      margin: 30px auto;
+      padding: 0 30px;
+    }
+    
+    /* Cards */
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      margin-bottom: 24px;
+      overflow: hidden;
+    }
+    
+    .card-header {
+      background: var(--gray-50);
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .card-header h2 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--primary-dark);
+    }
+    
+    .card-body {
+      padding: 24px;
+    }
+    
+    /* Summary Stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+    }
+    
+    .stat-item {
+      background: var(--gray-50);
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+    
+    .stat-value.highlight {
+      color: var(--success);
+    }
+    
+    .stat-label {
+      font-size: 13px;
+      color: var(--gray-600);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    /* Charts */
+    .chart-container {
+      position: relative;
+      width: 100%;
+      min-height: 400px;
+    }
+    
+    .chart-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    
+    @media (max-width: 900px) {
+      .chart-row {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    /* Tables */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    
+    .data-table th,
+    .data-table td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--gray-200);
+    }
+    
+    .data-table th {
+      background: var(--gray-50);
+      font-weight: 600;
+      color: var(--gray-600);
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 0.5px;
+    }
+    
+    .data-table tr:hover {
+      background: var(--gray-50);
+    }
+    
+    .data-table .numeric {
+      text-align: right;
+    }
+    
+    /* Commentary */
+    .commentary-section {
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--gray-200);
+    }
+    
+    .commentary-label {
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--gray-600);
+    }
+    
+    .commentary-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 14px;
+      resize: vertical;
+    }
+    
+    .commentary-textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(20, 70, 115, 0.1);
+    }
+    
+    /* No Data */
+    .no-data {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--gray-600);
+    }
+    
+    .no-data-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+    
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      padding: 16px 24px;
+      border-radius: 8px;
+      background: var(--gray-800);
+      color: white;
+      font-size: 14px;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s;
+      z-index: 1000;
+    }
+    
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    
+    .toast.success {
+      background: var(--success);
+    }
+    
+    .toast.error {
+      background: #ef4444;
+    }
+    
+    /* Loading */
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 40px;
+    }
+    
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--gray-200);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Report meta info */
+    .report-meta {
+      display: flex;
+      gap: 20px;
+      font-size: 14px;
+      color: var(--gray-600);
+      flex-wrap: wrap;
+    }
+    
+    .report-meta span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Test indicator -->
+  <div style="position: fixed; top: 0; left: 0; background: red; color: white; padding: 10px; z-index: 9999;">
+    F06 LOADED SUCCESSFULLY
+  </div>
+  
+  <div id="app">
+    <!-- Header -->
+    <div class="header">
+      <h1>📊 OneGov Report Viewer</h1>
+      <div class="header-actions">
+        <button class="btn btn-secondary" onclick="saveCommentary()" id="btnSave" disabled>💾 Save Commentary</button>
+        <button class="btn btn-primary" onclick="exportReport()" id="btnExport" disabled>📥 Export Report</button>
+      </div>
+    </div>
+    
+    <!-- Report Selector - Two Level Menu -->
+    <div class="report-selector">
+      <div class="selector-group">
+        <label for="reportTypeSelect">Report Type:</label>
+        <select id="reportTypeSelect" onchange="onReportTypeChange(this.value)">
+          <option value="">-- Select report type --</option>
+        </select>
+      </div>
+      
+      <div class="selector-group">
+        <label for="reportSelect">Report:</label>
+        <select id="reportSelect" onchange="loadReport(this.value)" disabled>
+          <option value="">-- Select type first --</option>
+        </select>
+      </div>
+      
+      <span class="report-count" id="reportCount"></span>
+      
+      <button class="btn btn-secondary" onclick="refreshReportList()">🔄 Refresh</button>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content" id="reportContent">
+      <div class="no-data">
+        <div class="no-data-icon">📋</div>
+        <p>Select a report type, then choose a report to view.</p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Toast -->
+  <div id="toast" class="toast"></div>
+  
+  <!-- Debug element -->
+  <div style="position: fixed; top: 10px; right: 10px; background: red; color: white; padding: 5px; z-index: 9999;">
+    F06 LOADED v132
+  </div>
+  
+  <script>
+    alert('F06 SCRIPT EXECUTING!');
+    console.log('🚀 F06 SCRIPT STARTED - VERSION 133');
+    
+    // Global state
+    let currentReport = null;
+    let currentRowNum = null;
+    let chart1Instance = null;
+    let chart2Instance = null;
+    let allReports = [];  // Store all reports for filtering
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('📄 F06 DOM LOADED');
+      refreshReportList();
+      
+      // Auto-load report if coming from dashboard card
+      // For OneGov Monthly Savings, auto-select and load
+      // Add visible indicator that F06 is loading
+      document.body.innerHTML = '<div style="padding: 20px; text-align: center; font-family: sans-serif;"><h2>Loading OneGov Savings Report...</h2><p>Initializing report viewer...</p></div>';
+      
+      setTimeout(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const page = urlParams.get('page');
+        const rowNum = urlParams.get('rowNum');
+        console.log('F06 Auto-load: URL page param =', page, 'rowNum =', rowNum);
+        
+        // Update loading message
+        document.body.innerHTML = '<div style="padding: 20px; text-align: center; font-family: sans-serif;"><h2>Loading Report...</h2><p>Page: ' + page + ', Row: ' + rowNum + '</p></div>';
+        
+        if (page === 'savingsreport') {
+          console.log('F06 Auto-load: Attempting to auto-load report');
+          
+          // If specific rowNum is provided, load that report directly
+          if (rowNum) {
+            console.log('F06 Auto-load: Loading specific report rowNum =', rowNum);
+            loadReport(rowNum);
+            return;
+          }
+          
+          // Otherwise, auto-select OneGov Monthly Savings if available
+          const typeSelect = document.getElementById('reportTypeSelect');
+          console.log('F06 Auto-load: Type select found?', !!typeSelect);
+          console.log('F06 Auto-load: Available options:', typeSelect ? Array.from(typeSelect.options).map(o => o.value) : 'none');
+          
+          if (typeSelect) {
+            // Look for OneGov Monthly Savings option
+            for (let i = 0; i < typeSelect.options.length; i++) {
+              if (typeSelect.options[i].value === 'OneGov Monthly Savings') {
+                console.log('F06 Auto-load: Found OneGov Monthly Savings option, selecting...');
+                typeSelect.value = 'OneGov Monthly Savings';
+                onReportTypeChange('OneGov Monthly Savings');
+                
+                // After type is selected, auto-select first report
+                setTimeout(() => {
+                  const reportSelect = document.getElementById('reportSelect');
+                  console.log('F06 Auto-load: Report select found?', !!reportSelect);
+                  console.log('F06 Auto-load: Report options count:', reportSelect ? reportSelect.options.length : 0);
+                  
+                  if (reportSelect && reportSelect.options.length > 1) {
+                    console.log('F06 Auto-load: Selecting first report, value =', reportSelect.options[1].value);
+                    reportSelect.selectedIndex = 1; // Select first actual report (index 0 is placeholder)
+                    loadReport(reportSelect.value);
+                  } else {
+                    console.log('F06 Auto-load: No reports available to load');
+                  }
+                }, 500);
+                break;
+              }
+            }
+          }
+        }
+      }, 1000); // Wait for reports to load
+    });
+    
+    // Format currency
+    function formatCurrency(value) {
+      if (!value && value !== 0) return '$0';
+      if (value >= 1000000) {
+        return '$' + (value / 1000000).toFixed(1) + 'M';
+      } else if (value >= 1000) {
+        return '$' + (value / 1000).toFixed(1) + 'K';
+      }
+      return '$' + value.toFixed(0);
+    }
+    
+    // Format full currency
+    function formatCurrencyFull(value) {
+      if (!value && value !== 0) return '$0.00';
+      return '$' + value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    
+    // Show toast
+    function showToast(message, type = 'info') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = 'toast ' + type + ' show';
+      setTimeout(() => {
+        toast.className = 'toast';
+      }, 3000);
+    }
+    
+    // Refresh report list - loads all reports and populates type dropdown
+    function refreshReportList() {
+      const typeSelect = document.getElementById('reportTypeSelect');
+      const reportSelect = document.getElementById('reportSelect');
+      const countSpan = document.getElementById('reportCount');
+      
+      typeSelect.innerHTML = '<option value="">Loading...</option>';
+      reportSelect.innerHTML = '<option value="">-- Select type first --</option>';
+      reportSelect.disabled = true;
+      countSpan.textContent = '';
+      
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result.error) {
+            showToast(result.error, 'error');
+            typeSelect.innerHTML = '<option value="">Error loading reports</option>';
+            return;
+          }
+          
+          // Store all reports (handle both old and new response formats)
+          allReports = result.reports || 
+                      [...(result.activeReports || []), ...(result.archivedReports || [])];
+          
+          // Get unique report types from Column A (reportType)
+          const reportTypes = new Set();
+          allReports.forEach(report => {
+            if (report.reportType && report.reportType.trim()) {
+              reportTypes.add(report.reportType.trim());
+            }
+          });
+          
+          // Populate type dropdown
+          typeSelect.innerHTML = '<option value="">-- Select report type --</option>';
+          
+          // Sort report types alphabetically
+          const sortedTypes = Array.from(reportTypes).sort();
+          
+          sortedTypes.forEach(type => {
+            const option = document.createElement('option');
+            option.value = type;
+            option.textContent = type;
+            typeSelect.appendChild(option);
+          });
+          
+          if (sortedTypes.length === 0) {
+            typeSelect.innerHTML = '<option value="">No reports found</option>';
+          }
+          
+          // Show total count
+          countSpan.textContent = `${allReports.length} total reports`;
+        })
+        .withFailureHandler(function(error) {
+          showToast('Failed to load reports: ' + error.message, 'error');
+          typeSelect.innerHTML = '<option value="">Error loading reports</option>';
+        })
+        .getSimpleReports();
+    }
+    
+    // When report type is selected, populate the report dropdown
+    function onReportTypeChange(reportType) {
+      const reportSelect = document.getElementById('reportSelect');
+      const countSpan = document.getElementById('reportCount');
+      
+      // Reset report content
+      document.getElementById('reportContent').innerHTML = `
+        <div class="no-data">
+          <div class="no-data-icon">📋</div>
+          <p>Select a report to view.</p>
+        </div>
+      `;
+      document.getElementById('btnSave').disabled = true;
+      document.getElementById('btnExport').disabled = true;
+      
+      if (!reportType) {
+        reportSelect.innerHTML = '<option value="">-- Select type first --</option>';
+        reportSelect.disabled = true;
+        countSpan.textContent = `${allReports.length} total reports`;
+        return;
+      }
+      
+      // Filter reports by type
+      const filteredReports = allReports.filter(r => r.reportType === reportType);
+      
+      // Sort by timestamp (most recent first)
+      filteredReports.sort((a, b) => {
+        const dateA = a.timestamp ? new Date(a.timestamp) : new Date(0);
+        const dateB = b.timestamp ? new Date(b.timestamp) : new Date(0);
+        return dateB - dateA;  // Descending (most recent first)
+      });
+      
+      // Populate report dropdown
+      reportSelect.innerHTML = '<option value="">-- Select a report --</option>';
+      
+      filteredReports.forEach(report => {
+        const option = document.createElement('option');
+        option.value = report.rowNum;
+        
+        // Build label with useful info
+        let label = '';
+        
+        // Add reporting period if available
+        if (report.json?.reportingPeriod) {
+          label = report.json.reportingPeriod;
+        } else {
+          label = `Row ${report.rowNum}`;
+        }
+        
+        // Add timestamp
+        if (report.timestamp) {
+          const date = new Date(report.timestamp);
+          label += ` (${date.toLocaleDateString()} ${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})})`;
+        }
+        
+        // Add indicator if has JSON data
+        if (!report.hasJson) {
+          label += ' [No JSON]';
+          option.disabled = true;
+        }
+        
+        option.textContent = label;
+        reportSelect.appendChild(option);
+      });
+      
+      reportSelect.disabled = false;
+      countSpan.textContent = `${filteredReports.length} ${reportType} reports`;
+      
+      if (filteredReports.length === 0) {
+        reportSelect.innerHTML = '<option value="">No reports of this type</option>';
+        reportSelect.disabled = true;
+      }
+    }
+    
+    // Load a specific report
+    function loadReport(rowNum) {
+      if (!rowNum) {
+        document.getElementById('reportContent').innerHTML = `
+          <div class="no-data">
+            <div class="no-data-icon">📋</div>
+            <p>Select a report to view.</p>
+          </div>
+        `;
+        document.getElementById('btnSave').disabled = true;
+        document.getElementById('btnExport').disabled = true;
+        return;
+      }
+      
+      // Show loading state
+      document.getElementById('reportContent').innerHTML = `
+        <div class="loading">
+          <div class="spinner"></div>
+        </div>
+      `;
+      
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result.error) {
+            showToast(result.error, 'error');
+            document.getElementById('reportContent').innerHTML = `
+              <div class="no-data">
+                <div class="no-data-icon"></div>
+                <p>${result.error}</p>
+              </div>
+            `;
+            return;
+          }
+          
+          currentRowNum = result.rowNum;
+          currentReport = result.json;
+          
+          if (!currentReport) {
+            document.getElementById('reportContent').innerHTML = `
+              <div class="no-data">
+                <div class="no-data-icon">📭</div>
+                <p>This report has no JSON data.</p>
+              </div>
+            `;
+            return;
+          }
+          
+          // Enable buttons
+          document.getElementById('btnSave').disabled = false;
+          document.getElementById('btnExport').disabled = false;
+          
+          renderReport(result);
+        })
+        .withFailureHandler(function(error) {
+          showToast('Failed to load report: ' + error.message, 'error');
+          document.getElementById('reportContent').innerHTML = `
+            <div class="no-data">
+              <div class="no-data-icon"></div>
+              <p>Error loading report</p>
+            </div>
+          `;
+        })
+        .getSimpleReportByRow(parseInt(rowNum));
+    }
+    
+    // Render report
+    function renderReport(result) {
+      const report = result.json;
+      const summary = report.executiveSummary?.data || {};
+      const tables = report.tables || {};
+      
+      document.getElementById('reportContent').innerHTML = `
+        <!-- Executive Summary -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Executive Summary</h2>
+            <div class="report-meta">
+              <span>📅 ${report.reportingPeriod || 'Unknown Period'}</span>
+              <span>👤 ${result.creator || 'Unknown'}</span>
+              <span>🕐 ${result.timestamp ? new Date(result.timestamp).toLocaleString() : 'Unknown'}</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="stats-grid">
+              <div class="stat-item">
+                <div class="stat-value highlight">${formatCurrency(summary.totalSavings)}</div>
+                <div class="stat-label">Total Savings</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">${summary.totalTransactions || 0}</div>
+                <div class="stat-label">Transactions</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">${formatCurrency(summary.totalCPL)}</div>
+                <div class="stat-label">Total CPL</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">${formatCurrency(summary.totalPaid)}</div>
+                <div class="stat-label">Total Paid</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">${summary.overallDiscountRate || 0}%</div>
+                <div class="stat-label">Discount Rate</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">${summary.oemCount || 0}</div>
+                <div class="stat-label">OEMs</div>
+              </div>
+            </div>
+            
+            <div class="commentary-section">
+              <div class="commentary-label">Commentary</div>
+              <textarea class="commentary-textarea" id="executiveSummaryCommentary" 
+                placeholder="Add executive summary commentary...">${report.executiveSummary?.commentary || ''}</textarea>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Charts -->
+        <div class="chart-row">
+          <div class="card">
+            <div class="card-header">
+              <h2>Savings by OEM (Stacked by Month)</h2>
+            </div>
+            <div class="card-body">
+              <div class="chart-container">
+                <canvas id="chart1"></canvas>
+              </div>
+            </div>
+          </div>
+          
+          <div class="card">
+            <div class="card-header">
+              <h2>Savings by Month</h2>
+            </div>
+            <div class="card-body">
+              <div class="chart-container">
+                <canvas id="chart2"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- OEM Table -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Savings by OEM</h2>
+          </div>
+          <div class="card-body">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>OEM</th>
+                  <th class="numeric">Savings</th>
+                  <th class="numeric">% of Total</th>
+                  <th class="numeric">Transactions</th>
+                  <th class="numeric">CPL</th>
+                  <th class="numeric">Paid</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${(tables.oemSummary?.rows || []).map(row => `
+                  <tr>
+                    <td>${row[0]}</td>
+                    <td class="numeric">${formatCurrency(row[1])}</td>
+                    <td class="numeric">${row[2]}%</td>
+                    <td class="numeric">${row[3]}</td>
+                    <td class="numeric">${formatCurrency(row[4])}</td>
+                    <td class="numeric">${formatCurrency(row[5])}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+            
+            <div class="commentary-section">
+              <div class="commentary-label">Financial Overview Commentary</div>
+              <textarea class="commentary-textarea" id="financialOverviewCommentary" 
+                placeholder="Add financial analysis commentary...">${report.financialOverview?.commentary || ''}</textarea>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Month Table -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Savings by Month</h2>
+          </div>
+          <div class="card-body">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Period</th>
+                  <th class="numeric">Savings</th>
+                  <th class="numeric">% of Total</th>
+                  <th class="numeric">Transactions</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${(tables.monthSummary?.rows || []).map(row => `
+                  <tr>
+                    <td>${row[0]}</td>
+                    <td class="numeric">${formatCurrency(row[1])}</td>
+                    <td class="numeric">${row[2]}%</td>
+                    <td class="numeric">${row[3]}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- Methodology -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Methodology</h2>
+          </div>
+          <div class="card-body">
+            <p><strong>Data Source:</strong> ${report.methodology?.data?.dataSource || 'N/A'}</p>
+            <p><strong>Validation Criteria:</strong> ${report.methodology?.data?.validationCriteria || 'N/A'}</p>
+            <p><strong>Excluded Transactions:</strong> ${report.methodology?.data?.excludedTransactions || 0}</p>
+            <p><strong>Calculation Method:</strong> ${report.methodology?.data?.calculationMethod || 'N/A'}</p>
+            
+            <div class="commentary-section">
+              <div class="commentary-label">Methodology Commentary</div>
+              <textarea class="commentary-textarea" id="methodologyCommentary" 
+                placeholder="Add methodology notes...">${report.methodology?.commentary || ''}</textarea>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Addendum -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Addendum</h2>
+          </div>
+          <div class="card-body">
+            <div class="commentary-section" style="margin-top: 0; padding-top: 0; border-top: none;">
+              <div class="commentary-label">Additional Notes</div>
+              <textarea class="commentary-textarea" id="addendumCommentary" 
+                placeholder="Add any additional notes or observations...">${report.addendum?.commentary || ''}</textarea>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      // Render charts after DOM is updated
+      setTimeout(() => {
+        renderCharts(report.chartData);
+      }, 100);
+    }
+    
+    // Render charts using Chart.js
+    function renderCharts(chartData) {
+      if (!chartData) return;
+      
+      // Destroy existing charts
+      if (chart1Instance) {
+        chart1Instance.destroy();
+        chart1Instance = null;
+      }
+      if (chart2Instance) {
+        chart2Instance.destroy();
+        chart2Instance = null;
+      }
+      
+      const colors = ['#144673', '#3a6ea5', '#5a9bd4', '#f47920', '#ff8c42', '#22c55e', '#8b5cf6', '#ef4444', '#06b6d4', '#f59e0b'];
+      
+      // Chart 1: Stacked OEM by Month
+      if (chartData.stackedOEM) {
+        const ctx1 = document.getElementById('chart1');
+        if (ctx1) {
+          const oemData = chartData.stackedOEM;
+          
+          // Build datasets for each month
+          const datasets = oemData.datasets || [];
+          
+          chart1Instance = new Chart(ctx1, {
+            type: 'bar',
+            data: {
+              labels: oemData.labels || [],
+              datasets: datasets.map((ds, idx) => ({
+                label: ds.label,
+                data: ds.data,
+                backgroundColor: colors[idx % colors.length],
+                borderColor: colors[idx % colors.length],
+                borderWidth: 1
+              }))
+            },
+            options: {
+              indexAxis: 'y',
+              responsive: true,
+              maintainAspectRatio: false,
+              scales: {
+                x: {
+                  stacked: true,
+                  ticks: {
+                    callback: function(value) {
+                      return '$' + (value / 1000000).toFixed(1) + 'M';
+                    }
+                  }
+                },
+                y: {
+                  stacked: true
+                }
+              },
+              plugins: {
+                tooltip: {
+                  callbacks: {
+                    label: function(context) {
+                      return context.dataset.label + ': $' + (context.raw / 1000000).toFixed(2) + 'M';
+                    }
+                  }
+                },
+                legend: {
+                  position: 'bottom'
+                }
+              }
+            }
+          });
+        }
+      }
+      
+      // Chart 2: Monthly Totals
+      if (chartData.monthlyTotals) {
+        const ctx2 = document.getElementById('chart2');
+        if (ctx2) {
+          const monthData = chartData.monthlyTotals;
+          
+          chart2Instance = new Chart(ctx2, {
+            type: 'bar',
+            data: {
+              labels: monthData.labels || [],
+              datasets: [{
+                label: 'Savings',
+                data: monthData.data || [],
+                backgroundColor: '#144673',
+                borderColor: '#0a2240',
+                borderWidth: 1
+              }]
+            },
+            options: {
+              indexAxis: 'y',
+              responsive: true,
+              maintainAspectRatio: false,
+              scales: {
+                x: {
+                  ticks: {
+                    callback: function(value) {
+                      return '$' + (value / 1000000).toFixed(1) + 'M';
+                    }
+                  }
+                }
+              },
+              plugins: {
+                tooltip: {
+                  callbacks: {
+                    label: function(context) {
+                      const pct = monthData.percentages ? monthData.percentages[context.dataIndex] : '';
+                      return 'Savings: $' + (context.raw / 1000000).toFixed(2) + 'M' + (pct ? ' (' + pct + '%)' : '');
+                    }
+                  }
+                },
+                legend: {
+                  display: false
+                }
+              }
+            }
+          });
+        }
+      }
+    }
+    
+    // Save commentary
+    function saveCommentary() {
+      if (!currentReport || !currentRowNum) {
+        showToast('No report loaded', 'error');
+        return;
+      }
+      
+      // Update commentary fields in the report object
+      currentReport.executiveSummary = currentReport.executiveSummary || {};
+      currentReport.executiveSummary.commentary = document.getElementById('executiveSummaryCommentary')?.value || '';
+      
+      currentReport.financialOverview = currentReport.financialOverview || {};
+      currentReport.financialOverview.commentary = document.getElementById('financialOverviewCommentary')?.value || '';
+      
+      currentReport.methodology = currentReport.methodology || {};
+      currentReport.methodology.commentary = document.getElementById('methodologyCommentary')?.value || '';
+      
+      currentReport.addendum = currentReport.addendum || {};
+      currentReport.addendum.commentary = document.getElementById('addendumCommentary')?.value || '';
+      
+      showToast('Saving commentary...', 'info');
+      
+      google.script.run
+        .withSuccessHandler(function(result) {
+          if (result.success) {
+            showToast('Commentary saved successfully!', 'success');
+          } else {
+            showToast('Failed to save: ' + (result.error || 'Unknown error'), 'error');
+          }
+        })
+        .withFailureHandler(function(error) {
+          showToast('Failed to save commentary: ' + error.message, 'error');
+        })
+        .updateReportJson(currentRowNum, currentReport);
+    }
+    
+    // Export report
+    function exportReport() {
+      if (!currentReport || !currentRowNum) {
+        showToast('No report loaded', 'error');
+        return;
+      }
+      
+      showToast('Exporting report...', 'info');
+      
+      // First save commentary
+      saveCommentary();
+      
+      // Capture charts as images
+      const chart1Canvas = document.getElementById('chart1');
+      const chart2Canvas = document.getElementById('chart2');
+      
+      let image1Data = null;
+      let image2Data = null;
+      
+      if (chart1Canvas) {
+        image1Data = chart1Canvas.toDataURL('image/png').split(',')[1];
+      }
+      
+      if (chart2Canvas) {
+        image2Data = chart2Canvas.toDataURL('image/png').split(',')[1];
+      }
+      
+      // Get folder ID from config
+      const chartFolderId = currentReport.config?.chartImagesFolderId || '1z05YYe_jVHXxk7EllR-MiBio19Zbo2zo';
+      
+      // Generate timestamp for filenames
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const period = (currentReport.reportingPeriod || 'report').replace(/\s+/g, '_');
+      
+      // Save chart images to Drive
+      const savePromises = [];
+      
+      if (image1Data) {
+        savePromises.push(new Promise((resolve, reject) => {
+          google.script.run
+            .withSuccessHandler(resolve)
+            .withFailureHandler(reject)
+            .saveFileToDrive(chartFolderId, image1Data, `${period}_OEM_Chart_${timestamp}.png`, 'image/png');
+        }));
+      }
+      
+      if (image2Data) {
+        savePromises.push(new Promise((resolve, reject) => {
+          google.script.run
+            .withSuccessHandler(resolve)
+            .withFailureHandler(reject)
+            .saveFileToDrive(chartFolderId, image2Data, `${period}_Month_Chart_${timestamp}.png`, 'image/png');
+        }));
+      }
+      
+      Promise.all(savePromises)
+        .then(results => {
+          const image1Url = results[0]?.url || '';
+          const image2Url = results[1]?.url || '';
+          
+          // Update the report row with image URLs
+          google.script.run
+            .withSuccessHandler(function(result) {
+              if (result.success) {
+                showToast('Report exported successfully!', 'success');
+              } else {
+                showToast('Export completed with warnings', 'info');
+              }
+            })
+            .withFailureHandler(function(error) {
+              showToast('Failed to update report: ' + error.message, 'error');
+            })
+            .updateReportAfterExport(currentRowNum, null);
+        })
+        .catch(error => {
+          showToast('Failed to export charts: ' + error.message, 'error');
+        });
+    }
+  </script>
+</body>
+</html>

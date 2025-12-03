@@ -1,0 +1,8 @@
+# OAuth tokens and sensitive files
+.clasprc.json
+.clasp.json.backup*
+.claude.json.backup
+
+# OS files
+.DS_Store
+.CFUserTextEncoding
