@@ -1999,8 +1999,10 @@
                     } else {
                     }
                     
-                    // Process AI Categories - handle fiscal_year_summaries with top_10_categories structure
-                    if (entity.aiCategories && typeof entity.aiCategories === 'object') {
+                    // Process AI Categories - handle fiscal_year_summaries with top_10_categories structure  
+                    // Check both aiCategories (plural) and aiCategory (singular) fields
+                    const aiCategoryData = entity.aiCategories || entity.aiCategory;
+                    if (aiCategoryData && typeof aiCategoryData === 'object') {
                         
                         // Function to get group for a category - improved matching
                         const getCategoryGroup = (categoryName) => {
@@ -2020,8 +2022,8 @@
                         };
                         
                         // Handle fiscal_year_summaries structure with top_10_categories arrays
-                        if (entity.aiCategories.fiscal_year_summaries) {
-                            Object.entries(entity.aiCategories.fiscal_year_summaries).forEach(([year, yearData]) => {
+                        if (aiCategoryData.fiscal_year_summaries) {
+                            Object.entries(aiCategoryData.fiscal_year_summaries).forEach(([year, yearData]) => {
                                 if (yearData && typeof yearData === 'object' && yearData.top_10_categories && Array.isArray(yearData.top_10_categories)) {
                                     yearData.top_10_categories.forEach(categoryItem => {
                                         if (categoryItem && typeof categoryItem === 'object' && categoryItem.category && categoryItem.obligations) {
@@ -2174,13 +2176,7 @@
                         });
                     }
                     
-                    // Column P: AI Category
-                    if (entity.aiCategory && typeof entity.aiCategory === 'object') {
-                        Object.entries(entity.aiCategory).forEach(([category, data]) => {
-                            const amount = typeof data === 'object' ? data.total || 0 : data || 0;
-                            aiCategories[category] = (aiCategories[category] || 0) + amount;
-                        });
-                    }
+                    // Column P: AI Category - processed above in fiscal_year_summaries section
                     
                     // Column Q: Top BIC Products - use top_25_products array structure (handled above in dedicated section)
                     // This section is now handled in the dedicated BIC Products processing above
@@ -3032,8 +3028,18 @@
                                             }
                                         }
                                         
-                                        // Column R is empty - this is where vendor data SHOULD be
-                                        console.log(` AGENCY->VENDOR: Column R (reseller) is EMPTY. This column needs to be populated with vendor data.`);
+                                        // Fallback: Try BIC reseller data (Column S) for agencies
+                                        console.log(`🏪 AGENCY->VENDOR: Trying BIC reseller data as fallback...`);
+                                        if (entity.bicReseller?.top_15_resellers) {
+                                            console.log(`🏪 AGENCY->VENDOR: Found ${entity.bicReseller.top_15_resellers.length} BIC resellers`);
+                                            entity.bicReseller.top_15_resellers.forEach((reseller) => {
+                                                if (reseller && reseller.vendor_name && reseller.total_sales) {
+                                                    secondTableData[reseller.vendor_name] = (secondTableData[reseller.vendor_name] || 0) + reseller.total_sales;
+                                                }
+                                            });
+                                        } else {
+                                            console.log(` AGENCY->VENDOR: No vendor data available in any column (R or S empty).`);
+                                        }
                                     }
                                 } else if (entityType === 'OEMs') {
                                     // OEM cards show Vendors table
@@ -7386,11 +7392,14 @@
                 setColumnCFilter('All');
                 setOneGovFilter('All');
                 
+                // Use getAllEntities for all types to ensure consistent B02 data manager usage
                 const functionMap = {
-                    'OEMs': 'getOEMs',
-                    'Vendors': 'getVendors',
-                    'Agencies': 'getAgencies'
+                    'OEMs': 'getAllEntities',
+                    'Vendors': 'getAllEntities', 
+                    'Agencies': 'getAllEntities'
                 };
+                
+                // We'll filter by type after getting all entities
 
                 try {
                     const data = await new Promise((resolve, reject) => {
@@ -7403,9 +7412,26 @@
                     if (data?.error) {
                         setError(data.error);
                     } else {
-                        const entityData = data || [];
-                        setEntities(entityData);
-                        currentEntities = entityData; // Store for detail view
+                        // Since all sheets have identical structure, getAllEntities returns all properly
+                        // Filter to only the selected entity type
+                        const allEntities = data || [];
+                        console.log(`getAllEntities returned ${allEntities.length} entities`);
+                        
+                        // Debug: Check what types are actually in the data
+                        if (allEntities.length > 0) {
+                            const types = [...new Set(allEntities.map(e => e.type || e.entityType))];
+                            console.log(`Entity types found:`, types);
+                            console.log(`Looking for type: "${type}"`);
+                            console.log(`Sample entity:`, allEntities[0]);
+                        }
+                        
+                        const filteredEntities = allEntities.filter(entity => 
+                            entity.type === type || entity.entityType === type
+                        );
+                        console.log(`Filtered ${allEntities.length} entities to ${filteredEntities.length} ${type}`);
+                        
+                        setEntities(filteredEntities);
+                        currentEntities = filteredEntities; // Store for detail view
                     }
                 } catch (err) {
                     setError(err.toString());

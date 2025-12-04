@@ -460,9 +460,9 @@ function getDataManager() {
 function getEntities(entityType) {
   try {
     const dataManager = getDataManager();
-    const entities = dataManager.getEntitiesForView('dashboard', { entityType });
+    const entities = dataManager.getEntities(entityType);
     
-    console.log(`getEntities(${entityType}): Using B02 data manager for efficient data loading`);
+    console.log(`getEntities(${entityType}): Using B02 data manager - found ${entities.length} entities`);
     return createResponse(true, entities, null);
   } catch (error) {
     console.error('Error getting entities:', error);
@@ -506,6 +506,38 @@ function getAgencies() {
   } catch (error) {
     console.error('Error getting Agencies:', error);
     return createWebResponse(false, null, error.toString());
+  }
+}
+
+/**
+ * Get all entities for the main dashboard
+ * This is called by F01_MainDashboard.html
+ */
+function getAllEntities() {
+  try {
+    const dataManager = getDataManager();
+    dataManager.loadAllData();
+    
+    // Get raw entities directly from cache
+    const agencies = dataManager.cache.agencies || [];
+    const oems = dataManager.cache.oems || [];
+    const vendors = dataManager.cache.vendors || [];
+    
+    // Combine all entities
+    const allEntities = [...agencies, ...oems, ...vendors];
+    
+    if (allEntities.length > 0) {
+      // Transform using dataManager
+      const transformed = dataManager.transformForDashboard(allEntities);
+      const serialized = ensureSerializable(transformed);
+      return serialized;
+    } else {
+      return [];
+    }
+    
+  } catch (error) {
+    console.error('getAllEntities error:', error);
+    return [];
   }
 }
 
@@ -624,18 +656,15 @@ function exportReportTable(data, format) {
  */
 function getSummaryDashboardData() {
   try {
-    // Get data from all three entity types
-    const oemResponse = getOEMEntities();
-    const vendorResponse = getVendorEntities();
-    const agencyResponse = getAgencyEntities();
+    console.log('getSummaryDashboardData: Called for KPI calculations');
     
-    if (!oemResponse.success || !vendorResponse.success || !agencyResponse.success) {
-      throw new Error('Failed to load entity data');
-    }
+    // Use efficient B02 data manager
+    const dataManager = getDataManager();
+    const oems = dataManager.getOEMs() || [];
+    const vendors = dataManager.getVendors() || [];
+    const agencies = dataManager.getAgencies() || [];
     
-    const oems = JSON.parse(oemResponse.getContent()).data;
-    const vendors = JSON.parse(vendorResponse.getContent()).data;
-    const agencies = JSON.parse(agencyResponse.getContent()).data;
+    console.log(`getSummaryDashboardData: Loaded ${oems.length} OEMs, ${vendors.length} vendors, ${agencies.length} agencies`);
     
     const dashboard = {
       overview: {

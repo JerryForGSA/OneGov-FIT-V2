@@ -248,10 +248,16 @@ class OneGovDataManager {
       
       if (!name || name.trim() === '') continue;
       
+      // Convert entity type to frontend format (plural, capitalized)
+      const frontendEntityType = entityType === 'oem' ? 'OEMs' : 
+                                 entityType === 'vendor' ? 'Vendors' : 
+                                 entityType === 'agency' ? 'Agencies' : entityType;
+      
       const entity = {
         id: `${entityType}_${i}`,
         name: name.trim(),
-        type: entityType,
+        type: frontendEntityType,
+        entityType: frontendEntityType, // Add explicit entityType field
         rowIndex: i
       };
       
@@ -261,9 +267,12 @@ class OneGovDataManager {
         
         const value = row[colIndex - 1];
         
-        // Debug usaiProfile, website, linkedin for first OEM
-        if (entityType === 'oem' && i === 1 && (key === 'usaiProfile' || key === 'website' || key === 'linkedin')) {
-          console.log(` B02 DEBUG: First OEM "${name}" - ${key} (col ${colIndex}):`, value ? (typeof value === 'string' ? value.substring(0, 100) : value) : 'EMPTY');
+        // Debug key columns for first OEM to check KPI data
+        if (entityType === 'oem' && i === 1) {
+          const debugColumns = ['topBicProducts', 'topRefPiid', 'topPiid', 'sumTier', 'contractVehicle', 'fundingAgency', 'reseller'];
+          if (debugColumns.includes(key)) {
+            console.log(` B02 DEBUG OEM KPIs: "${name}" - ${key} (col ${colIndex}):`, value ? (typeof value === 'string' ? value.substring(0, 200) : value) : 'EMPTY');
+          }
         }
         
         // Handle JSON columns
@@ -489,39 +498,34 @@ class OneGovDataManager {
   transformForDashboard(entities) {
     console.log(`🏗️ DataManager transformForDashboard: Processing ${entities.length} entities`);
     return entities.map(entity => {
-      // Debug for first OEM
-      if (entity.type === 'oem' && entity.name === 'Adobe') {
-        console.log(`🏗️ B02 Transform DEBUG "${entity.name}":`);
-        console.log(`  - entity.website = "${entity.website}"`);
-        console.log(`  - entity.linkedin = "${entity.linkedin}"`);
-        console.log(`  - entity.usaiProfile = `, entity.usaiProfile);
-        console.log(`  - entity.usaiProfile?.website = "${entity.usaiProfile?.website}"`);
-        console.log(`  - entity.usaiProfile?.linkedin = "${entity.usaiProfile?.linkedin}"`);
+      
+      // Extract fiscal year data for charts
+      let fiscalYearObligations = null;
+      if (entity.obligations && entity.obligations.fiscal_year_obligations) {
+        fiscalYearObligations = entity.obligations.fiscal_year_obligations;
+      } else if (entity.obligations && typeof entity.obligations === 'string') {
+        try {
+          const parsed = JSON.parse(entity.obligations);
+          fiscalYearObligations = parsed.fiscal_year_obligations;
+        } catch (e) {
+          // Ignore parse errors
+        }
       }
       
+      // Return ALL entity fields for complete data access
       return {
-        id: entity.id,
-        name: entity.name,
-        type: entity.type,
+        ...entity, // Include all original fields
+        // Add calculated/derived fields
         totalObligations: entity.totalObligations,
         tier: entity.tier,
         contractCount: entity.activeContracts ? Object.keys(entity.activeContracts).length : 0,
         hasAIProducts: entity.hasAIProducts,
-        parentCompany: entity.parentCompany,
         fasTableUrl: entity.fasTableUrl || '',
         bicTableUrl: entity.bicTableUrl || '',
-        obligations: entity.obligations,
-        smallBusiness: entity.smallBusiness,
-        oneGovTier: entity.oneGovTier,
-        contractVehicle: entity.contractVehicle,
-        fundingDepartment: entity.fundingDepartment,
-        aiProduct: entity.aiProduct,
-        discount: entity.discount,
-        reseller: entity.reseller,
-        fundingAgency: entity.fundingAgency,
-        usaiProfile: entity.usaiProfile,
         website: entity.website || entity.usaiProfile?.website || '',
-        linkedin: entity.linkedin || entity.usaiProfile?.linkedin || ''
+        linkedin: entity.linkedin || entity.usaiProfile?.linkedin || '',
+        // Add fiscal year data for frontend charts
+        fiscalYearObligations: fiscalYearObligations
       };
     });
   }
@@ -837,18 +841,8 @@ function createResponse(success, data, error) {
 
 // PUBLIC API FUNCTIONS
 
-function getAllEntities() {
-  try {
-    const manager = getDataManager();
-    const allEntities = manager.getEntitiesForView('dashboard');
-    
-    console.log(`DataManager getAllEntities: Returning ${allEntities.length} entities for dashboard`);
-    return allEntities;
-  } catch (error) {
-    console.error('DataManager getAllEntities error:', error);
-    return [];
-  }
-}
+// REMOVED: getAllEntities function moved to B01_main.js to avoid conflicts
+// Use B01's getAllEntities which directly accesses cache and transforms data
 
 function getEntities(entityType) {
   const manager = getDataManager();
