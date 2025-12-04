@@ -6074,6 +6074,120 @@
             const [selectedEntities, setSelectedEntities] = React.useState([]);
             const [availableEntityNames, setAvailableEntityNames] = React.useState([]);
             
+            // NEW: Chart Buffet filters
+            const [deptFilter, setDeptFilter] = React.useState('all'); // 'all', 'dod', 'civilian'
+            const [tierFilter, setTierFilter] = React.useState('all'); // 'all', 'Tier 1', 'Tier 2', 'Tier 3', 'Tier 4', 'Below Tier 4'
+            
+            // NEW: Expanded modal state
+            const [expandedCard, setExpandedCard] = React.useState(null);
+            const [expandedChartType, setExpandedChartType] = React.useState(null);
+            
+            // NEW: Column configuration with chart types
+            const COLUMN_CONFIG = {
+                obligations: { 
+                    title: 'Obligations Analysis', 
+                    icon: '💰',
+                    chartTypes: ['bar', 'line', 'pie', 'table'],
+                    defaultChart: 'bar'
+                },
+                smallBusiness: { 
+                    title: 'Small Business Distribution', 
+                    icon: '🏪',
+                    chartTypes: ['pie', 'donut', 'horizontalBar', 'table'],
+                    defaultChart: 'pie'
+                },
+                sumTier: { 
+                    title: 'SUM Tier Analysis', 
+                    icon: '🏆',
+                    chartTypes: ['pie', 'donut', 'bar', 'funnel', 'table'],
+                    defaultChart: 'pie'
+                },
+                sumType: { 
+                    title: 'SUM Type Breakdown', 
+                    icon: '📊',
+                    chartTypes: ['pie', 'donut', 'horizontalBar', 'table'],
+                    defaultChart: 'pie'
+                },
+                contractVehicle: { 
+                    title: 'Contract Vehicles', 
+                    icon: '📋',
+                    chartTypes: ['horizontalBar', 'funnel', 'table'],
+                    defaultChart: 'horizontalBar'
+                },
+                fundingDepartment: { 
+                    title: 'Funding Departments', 
+                    icon: '🏛️',
+                    chartTypes: ['horizontalBar', 'funnel', 'pie', 'table'],
+                    defaultChart: 'horizontalBar'
+                },
+                topRefPiid: { 
+                    title: 'Top Reference PIIDs', 
+                    icon: '🔗',
+                    chartTypes: ['horizontalBar', 'funnel', 'table'],
+                    defaultChart: 'horizontalBar'
+                },
+                topPiid: { 
+                    title: 'Top PIIDs', 
+                    icon: '📄',
+                    chartTypes: ['horizontalBar', 'funnel', 'table'],
+                    defaultChart: 'horizontalBar'
+                },
+                aiProduct: { 
+                    title: 'Product Obligations', 
+                    icon: '🤖',
+                    chartTypes: ['horizontalBar', 'pie', 'table'],
+                    defaultChart: 'horizontalBar'
+                },
+                aiCategories: { 
+                    title: 'Category Obligations', 
+                    icon: '🧠',
+                    chartTypes: ['pie', 'donut', 'horizontalBar', 'table'],
+                    defaultChart: 'pie'
+                },
+                topBicProducts: { 
+                    title: 'Product BIC Sales', 
+                    icon: '🛍️',
+                    chartTypes: ['horizontalBar', 'funnel', 'table'],
+                    defaultChart: 'horizontalBar'
+                },
+                reseller: { 
+                    title: 'Reseller Analysis', 
+                    icon: '🔄',
+                    chartTypes: ['horizontalBar', 'funnel', 'pie', 'table'],
+                    defaultChart: 'horizontalBar'
+                },
+                bicReseller: { 
+                    title: 'BIC Reseller Sales', 
+                    icon: '🔄',
+                    chartTypes: ['horizontalBar', 'funnel', 'table'],
+                    defaultChart: 'horizontalBar'
+                },
+                bicOem: { 
+                    title: 'OEM BIC Sales', 
+                    icon: '🏭',
+                    chartTypes: ['horizontalBar', 'funnel', 'pie', 'table'],
+                    defaultChart: 'horizontalBar'
+                },
+                fasOem: { 
+                    title: 'FAS OEM Analysis', 
+                    icon: '🏭',
+                    chartTypes: ['horizontalBar', 'funnel', 'table'],
+                    defaultChart: 'horizontalBar'
+                },
+                fundingAgency: { 
+                    title: 'Funding Agencies', 
+                    icon: '🏢',
+                    chartTypes: ['horizontalBar', 'funnel', 'pie', 'table'],
+                    defaultChart: 'horizontalBar'
+                },
+                oneGovTier: { 
+                    title: 'OneGov Tier', 
+                    icon: '⭐',
+                    chartTypes: ['pie', 'donut', 'bar', 'table'],
+                    defaultChart: 'pie'
+                }
+            };
+            
             const getDefaultCardData = () => [
                 {
                     id: 'obligations',
@@ -6176,7 +6290,7 @@
                         loadReportData();
                     }
                 }
-            }, [selectedEntityType, selectedColumn, topN, parentDeptFilter, selectedEntities]);
+            }, [selectedEntityType, selectedColumn, topN, parentDeptFilter, selectedEntities, deptFilter, tierFilter]);
             
             const loadReportData = async () => {
                 if (!selectedEntityType) {
@@ -6199,7 +6313,7 @@
                             setCardData(getDefaultCardData());
                             setLoading(false);
                         })
-                        .generateColumnReports(selectedEntityType, selectedColumn, topN, selectedEntities);
+                        .generateColumnReports(selectedEntityType, selectedColumn, topN, selectedEntities, deptFilter, tierFilter);
                 } catch (error) {
                     console.error('Error in loadReportData:', error);
                     setCardData(getDefaultCardData());
@@ -6283,16 +6397,41 @@
                 }));
             };
             
-            const toggleSelection = (cardId, side) => {
+            const toggleSelection = (cardId, action) => {
                 setSelections(prev => {
-                    const current = prev[cardId] || { chart: false, table: false };
-                    return {
-                        ...prev,
-                        [cardId]: {
-                            ...current,
-                            [side]: !current[side]
-                        }
-                    };
+                    // Handle dropdown selection actions
+                    switch(action) {
+                        case 'clear':
+                            return {
+                                ...prev,
+                                [cardId]: { chart: false, table: false }
+                            };
+                        case 'chartOnly':
+                            return {
+                                ...prev,
+                                [cardId]: { chart: true, table: false }
+                            };
+                        case 'tableOnly':
+                            return {
+                                ...prev,
+                                [cardId]: { chart: false, table: true }
+                            };
+                        case 'both':
+                            return {
+                                ...prev,
+                                [cardId]: { chart: true, table: true }
+                            };
+                        default:
+                            // Legacy toggle behavior (for backwards compatibility)
+                            const current = prev[cardId] || { chart: false, table: false };
+                            return {
+                                ...prev,
+                                [cardId]: {
+                                    ...current,
+                                    [action]: !current[action]
+                                }
+                            };
+                    }
                 });
             };
             
@@ -6385,28 +6524,23 @@
                                           cursor: 'pointer'
                                       }}
                                   >
-                                      <option value="obligations">Obligations</option>
-                                      <option value="smallBusiness">Small Business</option>
-                                      <option value="sumTier">SUM Tier</option>
-                                      <option value="sumType">Sum Type</option>
-                                      <option value="contractVehicle">Contract Vehicle</option>
-                                      <option value="fundingDepartment">Funding Department</option>
-                                      <option value="discount">OneGov Discounted Products</option>
-                                      <option value="topRefPiid">Top Ref_PIID</option>
-                                      <option value="topPiid">Top PIID</option>
-                                      <option value="activeContracts">Active Contracts</option>
-                                      <option value="discountOfferings">Expiring OneGov Discounted Products</option>
-                                      <option value="aiProduct">AI Product</option>
-                                      <option value="aiCategory">AI Category</option>
-                                      <option value="topBicProducts">Top BIC Products</option>
-                                      <option value="reseller">Reseller</option>
-                                      <option value="bicReseller">BIC Reseller</option>
-                                      <option value="bicOem">BIC OEM</option>
-                                      <option value="fasOem">FAS OEM</option>
-                                      <option value="fundingAgency">Funding Agency</option>
-                                      <option value="bicTopProductsPerAgency">BIC Top Products per Agency</option>
-                                      <option value="oneGovTier">OneGov Tier</option>
-                                      <option value="usaiProfile">USAi Profile</option>
+                                      <option value="obligations">💰 Obligations Analysis</option>
+                                      <option value="smallBusiness">🏪 Small Business Distribution</option>
+                                      <option value="sumTier">🏆 SUM Tier Analysis</option>
+                                      <option value="sumType">📊 SUM Type Breakdown</option>
+                                      <option value="contractVehicle">📋 Contract Vehicles</option>
+                                      <option value="fundingDepartment">🏛️ Funding Departments</option>
+                                      <option value="topRefPiid">🔗 Top Reference PIIDs</option>
+                                      <option value="topPiid">📄 Top PIIDs</option>
+                                      <option value="aiProduct">🤖 Product Obligations</option>
+                                      <option value="aiCategories">🧠 Category Obligations</option>
+                                      <option value="topBicProducts">🛍️ Product BIC Sales</option>
+                                      <option value="reseller">🔄 Reseller Analysis</option>
+                                      <option value="bicReseller">🔄 BIC Reseller Sales</option>
+                                      <option value="bicOem">🏭 OEM BIC Sales</option>
+                                      <option value="fasOem">🏭 FAS OEM Analysis</option>
+                                      <option value="fundingAgency">🏢 Funding Agencies</option>
+                                      <option value="oneGovTier">⭐ OneGov Tier</option>
                                   </select>
 
                                     <div style={{display: 'flex', gap: '4px'}}>
@@ -6429,6 +6563,45 @@
                                             </button>
                                         ))}
                                     </div>
+
+                                    {/* DOD/Civilian Filter */}
+                                    <select 
+                                        value={deptFilter}
+                                        onChange={(e) => setDeptFilter(e.target.value)}
+                                        style={{
+                                            padding: '8px 12px',
+                                            borderRadius: '6px',
+                                            fontSize: '0.85rem',
+                                            border: '1px solid #d1d5db',
+                                            background: deptFilter !== 'all' ? '#e0f2fe' : 'white',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        <option value="all">All Departments</option>
+                                        <option value="dod">🎖️ DOD Only</option>
+                                        <option value="civilian">🏛️ Civilian Only</option>
+                                    </select>
+
+                                    {/* Tier Filter */}
+                                    <select 
+                                        value={tierFilter}
+                                        onChange={(e) => setTierFilter(e.target.value)}
+                                        style={{
+                                            padding: '8px 12px',
+                                            borderRadius: '6px',
+                                            fontSize: '0.85rem',
+                                            border: '1px solid #d1d5db',
+                                            background: tierFilter !== 'all' ? '#fef3c7' : 'white',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        <option value="all">All Tiers</option>
+                                        <option value="Tier 1">⭐ Tier 1</option>
+                                        <option value="Tier 2">Tier 2</option>
+                                        <option value="Tier 3">Tier 3</option>
+                                        <option value="Tier 4">Tier 4</option>
+                                        <option value="Below Tier 4">Below Tier 4</option>
+                                    </select>
 
                                     <select 
                                         value={selectedEntities.length === 0 ? '' : selectedEntities[0]}
@@ -6501,6 +6674,90 @@
                         </div>
                     </div>
                     
+                    {/* Selection Legend Bar */}
+                    <div style={{
+                        maxWidth: '1600px', 
+                        margin: '0 auto 20px', 
+                        padding: '12px 24px',
+                        background: 'white',
+                        borderRadius: '10px',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                    }}>
+                        <div style={{display: 'flex', gap: '24px', alignItems: 'center'}}>
+                            <span style={{fontWeight: '600', color: '#64748b', fontSize: '0.85rem'}}>Selection Legend:</span>
+                            <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                                <div style={{width: '20px', height: '20px', background: 'var(--blue)', borderRadius: '4px'}}></div>
+                                <span style={{fontSize: '0.85rem', color: '#64748b'}}>Chart</span>
+                            </div>
+                            <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                                <div style={{width: '20px', height: '20px', background: 'var(--orange)', borderRadius: '4px'}}></div>
+                                <span style={{fontSize: '0.85rem', color: '#64748b'}}>Table</span>
+                            </div>
+                            <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                                <div style={{width: '20px', height: '20px', background: 'linear-gradient(to right, var(--blue) 50%, var(--orange) 50%)', borderRadius: '4px'}}></div>
+                                <span style={{fontSize: '0.85rem', color: '#64748b'}}>Both</span>
+                            </div>
+                        </div>
+                        <div style={{display: 'flex', alignItems: 'center', gap: '16px'}}>
+                            <span style={{fontWeight: '600', color: 'var(--dark-blue)', fontSize: '0.9rem'}}>
+                                {(() => {
+                                    const chartCount = Object.values(selections).filter(s => s?.chart).length;
+                                    const tableCount = Object.values(selections).filter(s => s?.table).length;
+                                    if (chartCount === 0 && tableCount === 0) return 'Nothing selected';
+                                    return `${chartCount} chart${chartCount !== 1 ? 's' : ''}, ${tableCount} table${tableCount !== 1 ? 's' : ''} selected`;
+                                })()}
+                            </span>
+                            <div style={{display: 'flex', gap: '10px'}}>
+                                <button 
+                                    disabled={Object.values(selections).filter(s => s?.chart || s?.table).length === 0}
+                                    style={{
+                                        padding: '8px 16px',
+                                        borderRadius: '6px',
+                                        fontSize: '0.85rem',
+                                        background: 'white',
+                                        color: 'var(--blue)',
+                                        border: '2px solid var(--blue)',
+                                        fontWeight: '600',
+                                        cursor: Object.values(selections).filter(s => s?.chart || s?.table).length === 0 ? 'not-allowed' : 'pointer',
+                                        opacity: Object.values(selections).filter(s => s?.chart || s?.table).length === 0 ? 0.5 : 1
+                                    }}
+                                >📄 Docs</button>
+                                <button 
+                                    disabled={Object.values(selections).filter(s => s?.chart || s?.table).length === 0}
+                                    style={{
+                                        padding: '8px 16px',
+                                        borderRadius: '6px',
+                                        fontSize: '0.85rem',
+                                        background: 'var(--blue)',
+                                        color: 'white',
+                                        border: 'none',
+                                        fontWeight: '600',
+                                        cursor: Object.values(selections).filter(s => s?.chart || s?.table).length === 0 ? 'not-allowed' : 'pointer',
+                                        opacity: Object.values(selections).filter(s => s?.chart || s?.table).length === 0 ? 0.5 : 1
+                                    }}
+                                >📊 Sheets</button>
+                                <button 
+                                    disabled={Object.values(selections).filter(s => s?.chart || s?.table).length === 0}
+                                    style={{
+                                        padding: '8px 16px',
+                                        borderRadius: '6px',
+                                        fontSize: '0.85rem',
+                                        background: 'linear-gradient(135deg, var(--orange) 0%, #e56a1a 100%)',
+                                        color: 'white',
+                                        border: 'none',
+                                        fontWeight: '600',
+                                        cursor: Object.values(selections).filter(s => s?.chart || s?.table).length === 0 ? 'not-allowed' : 'pointer',
+                                        opacity: Object.values(selections).filter(s => s?.chart || s?.table).length === 0 ? 0.5 : 1,
+                                        boxShadow: '0 2px 8px rgba(244, 121, 32, 0.3)'
+                                    }}
+                                >🖼️ Slides</button>
+                            </div>
+                        </div>
+                    </div>
+                    
                     {/* Cards Grid */}
                     <div style={{maxWidth: '1600px', margin: '0 auto', padding: '24px'}}>
                         {!selectedEntityType ? (
@@ -6543,31 +6800,53 @@
                                             selectionState={getSelectionState(card.id)}
                                             onFlip={() => toggleFlip(card.id)}
                                             onSelect={(side) => toggleSelection(card.id, side)}
+                                            onExpand={() => {
+                                                setExpandedCard(card);
+                                                setExpandedChartType(card.chartType || COLUMN_CONFIG[selectedColumn]?.defaultChart || 'bar');
+                                            }}
+                                            columnConfig={COLUMN_CONFIG[selectedColumn]}
                                         />
                                     );
                                 })}
                             </div>
                         )}
                     </div>
+                    
+                    {/* Expanded Modal */}
+                    {expandedCard && (
+                        <ExpandedModal 
+                            card={expandedCard}
+                            chartType={expandedChartType}
+                            onChartTypeChange={setExpandedChartType}
+                            onClose={() => setExpandedCard(null)}
+                            columnConfig={COLUMN_CONFIG[selectedColumn]}
+                        />
+                    )}
                 </div>
             );
         };
 
         // Report Builder Card Component
-        const ReportBuilderCard = ({ card, isFlipped, selection, selectionState, onFlip, onSelect }) => {
+        const ReportBuilderCard = ({ card, isFlipped, selection, selectionState, onFlip, onSelect, onExpand, columnConfig }) => {
             console.log("CARD DATA:", card.title, card);
+            
             const getCardClass = () => {
                 switch(selectionState) {
                     case 'chart':
+                        return {
+                            border: '4px solid var(--blue)',
+                            boxShadow: '0 0 0 2px rgba(20, 70, 115, 0.15)'
+                        };
                     case 'table':
                         return {
-                            border: '2px solid #93c5fd',
-                            boxShadow: '0 0 0 3px rgba(147, 197, 253, 0.2)'
+                            border: '4px solid var(--orange)',
+                            boxShadow: '0 0 0 2px rgba(244, 121, 32, 0.15)'
                         };
                     case 'both':
                         return {
-                            border: '3px solid var(--blue)',
-                            boxShadow: '0 0 0 4px rgba(20, 70, 115, 0.3)'
+                            border: '4px solid transparent',
+                            background: 'linear-gradient(white, white) padding-box, linear-gradient(to right, var(--blue) 50%, var(--orange) 50%) border-box',
+                            boxShadow: '0 0 0 2px rgba(20, 70, 115, 0.1)'
                         };
                     default:
                         return {
@@ -6576,34 +6855,79 @@
                 }
             };
             
-            const getBadgeStyle = () => {
-                switch(selectionState) {
-                    case 'chart':
-                    case 'table':
-                        return {
-                            background: 'linear-gradient(135deg, #93c5fd 0%, #60a5fa 100%)'
-                        };
-                    case 'both':
-                        return {
-                            background: 'linear-gradient(135deg, var(--blue) 0%, var(--dark-blue) 100%)'
-                        };
-                    default:
-                        return { display: 'none' };
+            // Handle dropdown change
+            const handleSelectionChange = (e) => {
+                e.stopPropagation();
+                const value = e.target.value;
+                // Call onSelect with the appropriate type based on dropdown value
+                if (value === 'none') {
+                    onSelect('clear');
+                } else if (value === 'chart') {
+                    onSelect('chartOnly');
+                } else if (value === 'table') {
+                    onSelect('tableOnly');
+                } else if (value === 'both') {
+                    onSelect('both');
                 }
             };
             
-            const getBadgeText = () => {
+            // Get dropdown style based on selection
+            const getDropdownStyle = () => {
+                const baseStyle = {
+                    padding: '6px 10px',
+                    borderRadius: '6px',
+                    fontSize: '0.75rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    outline: 'none'
+                };
+                
                 switch(selectionState) {
                     case 'chart':
-                        return 'Chart Selected';
+                        return {
+                            ...baseStyle,
+                            background: 'var(--blue)',
+                            color: 'white',
+                            border: '2px solid var(--blue)'
+                        };
                     case 'table':
-                        return 'Table Selected';
+                        return {
+                            ...baseStyle,
+                            background: 'var(--orange)',
+                            color: 'white',
+                            border: '2px solid var(--orange)'
+                        };
                     case 'both':
-                        return 'Both Selected';
+                        return {
+                            ...baseStyle,
+                            background: 'linear-gradient(to right, var(--blue) 50%, var(--orange) 50%)',
+                            color: 'white',
+                            border: '2px solid var(--blue)'
+                        };
                     default:
-                        return '';
+                        return {
+                            ...baseStyle,
+                            background: 'white',
+                            color: '#374151',
+                            border: '1px solid #d1d5db'
+                        };
                 }
             };
+            
+            // Selection dropdown component
+            const SelectionDropdown = () => (
+                <select
+                    value={selectionState === 'unselected' ? 'none' : selectionState}
+                    onChange={handleSelectionChange}
+                    onClick={(e) => e.stopPropagation()}
+                    style={getDropdownStyle()}
+                >
+                    <option value="none">Not Selected</option>
+                    <option value="chart">📊 Chart</option>
+                    <option value="table">📋 Table</option>
+                    <option value="both">📊📋 Both</option>
+                </select>
+            );
             
             return (
                 <div style={{
@@ -6630,66 +6954,14 @@
                             overflow: 'hidden',
                             ...getCardClass()
                         }}>
-                            {selectionState !== 'unselected' && (
-                                <div style={{
-                                    position: 'absolute',
-                                    top: '12px',
-                                    left: '12px',
-                                    zIndex: 10,
-                                    padding: '6px 12px',
-                                    borderRadius: '6px',
-                                    fontSize: '11px',
-                                    fontWeight: '700',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                    color: 'white',
-                                    boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-                                    ...getBadgeStyle()
-                                }}>
-                                    {getBadgeText()}
-                                </div>
-                            )}
+                            {/* Selection dropdown in top-right */}
                             <div style={{
                                 position: 'absolute',
                                 top: '12px',
                                 right: '12px',
-                                zIndex: 10,
-                                background: 'white',
-                                padding: '6px 10px',
-                                borderRadius: '6px',
-                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px'
+                                zIndex: 10
                             }}>
-                                <div 
-                                    onClick={() => onSelect('chart')}
-                                    style={{
-                                        width: '20px',
-                                        height: '20px',
-                                        border: '2px solid #d1d5db',
-                                        borderRadius: '4px',
-                                        cursor: 'pointer',
-                                        position: 'relative',
-                                        transition: 'all 0.2s',
-                                        background: selection?.chart ? 'var(--blue)' : 'white',
-                                        borderColor: selection?.chart ? 'var(--blue)' : '#d1d5db'
-                                    }}
-                                >
-                                    {selection?.chart && (
-                                        <div style={{
-                                            position: 'absolute',
-                                            top: '50%',
-                                            left: '50%',
-                                            transform: 'translate(-50%, -50%)',
-                                            color: 'white',
-                                            fontWeight: 'bold',
-                                            fontSize: '14px'
-                                        }}>✓</div>
-                                    )}
-                                </div>
-                                <span style={{fontSize: '0.75rem', color: '#6b7280'}}>Chart</span>
+                                <SelectionDropdown />
                             </div>
                             <div style={{padding: '16px', borderBottom: '1px solid #e5e7eb'}}>
                                 <div style={{fontSize: '1rem', fontWeight: '600', color: 'var(--dark-blue)'}}>
@@ -6740,25 +7012,60 @@
                                 </div>
                             )}
                         </div>
-                            <div 
-                                onClick={onFlip}
-                                style={{
-                                    position: 'absolute',
-                                    bottom: '0',
-                                    left: '0',
-                                    right: '0',
-                                    padding: '12px',
-                                    background: '#f8f9fa',
-                                    borderTop: '1px solid #e5e7eb',
-                                    cursor: 'pointer',
-                                    textAlign: 'center',
-                                    transition: 'all 0.2s',
-                                    fontSize: '0.75rem',
-                                    color: '#6b7280',
-                                    fontWeight: '600'
-                                }}
-                            >
-                                🔄 Click to see table view
+                            {/* Card Footer with Flip and Expand buttons */}
+                            <div style={{
+                                position: 'absolute',
+                                bottom: '0',
+                                left: '0',
+                                right: '0',
+                                padding: '8px 12px',
+                                background: '#f8f9fa',
+                                borderTop: '1px solid #e5e7eb',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                gap: '8px'
+                            }}>
+                                <button 
+                                    onClick={onFlip}
+                                    style={{
+                                        flex: 1,
+                                        padding: '6px 12px',
+                                        background: 'white',
+                                        border: '1px solid #d1d5db',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        fontSize: '0.75rem',
+                                        color: '#6b7280',
+                                        fontWeight: '600',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '4px'
+                                    }}
+                                >
+                                    🔄 Flip to Table
+                                </button>
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); onExpand && onExpand(); }}
+                                    style={{
+                                        flex: 1,
+                                        padding: '6px 12px',
+                                        background: 'var(--blue)',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        fontSize: '0.75rem',
+                                        color: 'white',
+                                        fontWeight: '600',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '4px'
+                                    }}
+                                >
+                                    🔍 Expand
+                                </button>
                             </div>
                         </div>
                         
@@ -6775,66 +7082,14 @@
                             transform: 'rotateY(180deg)',
                             ...getCardClass()
                         }}>
-                            {selectionState !== 'unselected' && (
-                                <div style={{
-                                    position: 'absolute',
-                                    top: '12px',
-                                    left: '12px',
-                                    zIndex: 10,
-                                    padding: '6px 12px',
-                                    borderRadius: '6px',
-                                    fontSize: '11px',
-                                    fontWeight: '700',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '6px',
-                                    color: 'white',
-                                    boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
-                                    ...getBadgeStyle()
-                                }}>
-                                    {getBadgeText()}
-                                </div>
-                            )}
+                            {/* Selection dropdown in top-right */}
                             <div style={{
                                 position: 'absolute',
                                 top: '12px',
                                 right: '12px',
-                                zIndex: 10,
-                                background: 'white',
-                                padding: '6px 10px',
-                                borderRadius: '6px',
-                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px'
+                                zIndex: 10
                             }}>
-                                <div 
-                                    onClick={() => onSelect('table')}
-                                    style={{
-                                        width: '20px',
-                                        height: '20px',
-                                        border: '2px solid #d1d5db',
-                                        borderRadius: '4px',
-                                        cursor: 'pointer',
-                                        position: 'relative',
-                                        transition: 'all 0.2s',
-                                        background: selection?.table ? 'var(--blue)' : 'white',
-                                        borderColor: selection?.table ? 'var(--blue)' : '#d1d5db'
-                                    }}
-                                >
-                                    {selection?.table && (
-                                        <div style={{
-                                            position: 'absolute',
-                                            top: '50%',
-                                            left: '50%',
-                                            transform: 'translate(-50%, -50%)',
-                                            color: 'white',
-                                            fontWeight: 'bold',
-                                            fontSize: '14px'
-                                        }}>✓</div>
-                                    )}
-                                </div>
-                                <span style={{fontSize: '0.75rem', color: '#6b7280'}}>Table</span>
+                                <SelectionDropdown />
                             </div>
                             <div style={{padding: '16px', borderBottom: '1px solid #e5e7eb'}}>
                                 <div style={{fontSize: '1rem', fontWeight: '600', color: 'var(--dark-blue)'}}>
@@ -6875,30 +7130,345 @@
                                     </table>
                                 </div>
                             </div>
-                            <div 
-                                onClick={onFlip}
-                                style={{
-                                    position: 'absolute',
-                                    bottom: '0',
-                                    left: '0',
-                                    right: '0',
-                                    padding: '12px',
-                                    background: '#f8f9fa',
-                                    borderTop: '1px solid #e5e7eb',
-                                    cursor: 'pointer',
-                                    textAlign: 'center',
-                                    transition: 'all 0.2s',
-                                    fontSize: '0.75rem',
-                                    color: '#6b7280',
-                                    fontWeight: '600'
-                                }}
-                            >
-                                📊 Click to see chart view
+                            {/* Card Footer with Flip and Expand buttons */}
+                            <div style={{
+                                position: 'absolute',
+                                bottom: '0',
+                                left: '0',
+                                right: '0',
+                                padding: '8px 12px',
+                                background: '#f8f9fa',
+                                borderTop: '1px solid #e5e7eb',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                gap: '8px'
+                            }}>
+                                <button 
+                                    onClick={onFlip}
+                                    style={{
+                                        flex: 1,
+                                        padding: '6px 12px',
+                                        background: 'white',
+                                        border: '1px solid #d1d5db',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        fontSize: '0.75rem',
+                                        color: '#6b7280',
+                                        fontWeight: '600',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '4px'
+                                    }}
+                                >
+                                    📊 Flip to Chart
+                                </button>
+                                <button 
+                                    onClick={(e) => { e.stopPropagation(); onExpand && onExpand(); }}
+                                    style={{
+                                        flex: 1,
+                                        padding: '6px 12px',
+                                        background: 'var(--blue)',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer',
+                                        fontSize: '0.75rem',
+                                        color: 'white',
+                                        fontWeight: '600',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '4px'
+                                    }}
+                                >
+                                    🔍 Expand
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
             );
+        };
+
+        // Expanded Modal Component - Full screen view with chart type switcher
+        // Expanded Modal - Shows same chart/table as card but bigger, with flip
+        const ExpandedModal = ({ card, chartType, onChartTypeChange, onClose, columnConfig }) => {
+            if (!card) return null;
+            
+            const [isFlipped, setIsFlipped] = React.useState(false);
+            
+            return (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(0,0,0,0.6)',
+                    zIndex: 10000,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '40px'
+                }} onClick={onClose}>
+                    <div style={{
+                        background: 'white',
+                        borderRadius: '12px',
+                        width: '85%',
+                        maxWidth: '1000px',
+                        height: 'auto',
+                        maxHeight: '80vh',
+                        overflow: 'hidden',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        boxShadow: '0 25px 50px rgba(0,0,0,0.3)'
+                    }} onClick={(e) => e.stopPropagation()}>
+                        {/* Card Header */}
+                        <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '16px 20px',
+                            borderBottom: '1px solid #e5e7eb',
+                            flexShrink: 0
+                        }}>
+                            <h3 style={{
+                                margin: 0,
+                                fontSize: '1.2rem',
+                                fontWeight: '600',
+                                color: 'var(--dark-blue)'
+                            }}>{card.title}</h3>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                {/* Flip to Table/Chart button */}
+                                <button 
+                                    onClick={() => setIsFlipped(!isFlipped)}
+                                    style={{
+                                        background: '#f3f4f6',
+                                        border: '1px solid #d1d5db',
+                                        color: '#374151',
+                                        padding: '8px 16px',
+                                        borderRadius: '6px',
+                                        fontSize: '0.85rem',
+                                        fontWeight: '600',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '6px'
+                                    }}
+                                >
+                                    {isFlipped ? '📊 Flip to Chart' : '📋 Flip to Table'}
+                                </button>
+                                <button 
+                                    onClick={onClose}
+                                    style={{
+                                        background: '#f3f4f6',
+                                        border: 'none',
+                                        color: '#6b7280',
+                                        width: '36px',
+                                        height: '36px',
+                                        borderRadius: '50%',
+                                        fontSize: '1.3rem',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center'
+                                    }}
+                                >×</button>
+                            </div>
+                        </div>
+                        
+                        {/* Content - Chart or Table */}
+                        <div style={{
+                            flex: '1 1 auto',
+                            padding: '20px',
+                            overflow: 'auto',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}>
+                            {isFlipped ? (
+                                /* Table View */
+                                <div style={{ width: '100%', maxHeight: '100%', overflow: 'auto' }}>
+                                    {card.tableData?.rows?.length > 0 ? (
+                                        <table style={{ 
+                                            width: '100%', 
+                                            borderCollapse: 'collapse', 
+                                            fontSize: '0.95rem'
+                                        }}>
+                                            <thead>
+                                                <tr>
+                                                    {card.tableData.headers.map((header, idx) => (
+                                                        <th key={idx} style={{
+                                                            background: 'var(--dark-blue)',
+                                                            color: 'white',
+                                                            padding: '12px 16px',
+                                                            textAlign: 'left',
+                                                            fontWeight: '600',
+                                                            position: 'sticky',
+                                                            top: 0
+                                                        }}>{header}</th>
+                                                    ))}
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {card.tableData.rows.map((row, idx) => (
+                                                    <tr key={idx} style={{ 
+                                                        background: idx % 2 === 0 ? 'white' : '#f8f9fa'
+                                                    }}>
+                                                        {row.map((cell, cellIdx) => (
+                                                            <td key={cellIdx} style={{
+                                                                padding: '10px 16px',
+                                                                borderBottom: '1px solid #e5e7eb'
+                                                            }}>{cell}</td>
+                                                        ))}
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    ) : (
+                                        <div style={{ 
+                                            textAlign: 'center', 
+                                            color: '#64748b', 
+                                            padding: '40px' 
+                                        }}>
+                                            <div style={{ fontSize: '3rem', marginBottom: '12px' }}>📋</div>
+                                            <p>No table data available</p>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                /* Chart View - constrained to fit */
+                                <div style={{ 
+                                    width: '100%',
+                                    height: '350px',
+                                    maxWidth: '700px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center'
+                                }}>
+                                    {card.chartData ? (
+                                        <ExpandedChartComponent card={card} />
+                                    ) : (
+                                        <div style={{ textAlign: 'center', color: '#64748b' }}>
+                                            <div style={{ fontSize: '3rem', marginBottom: '12px' }}>📊</div>
+                                            <p>No chart data available</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                        
+                        {/* Footer with buttons */}
+                        <div style={{
+                            padding: '12px 20px',
+                            borderTop: '1px solid #e5e7eb',
+                            display: 'flex',
+                            justifyContent: 'flex-end',
+                            gap: '12px',
+                            flexShrink: 0
+                        }}>
+                            <button 
+                                onClick={onClose}
+                                style={{
+                                    padding: '10px 20px',
+                                    borderRadius: '6px',
+                                    border: '1px solid #d1d5db',
+                                    background: 'white',
+                                    color: '#374151',
+                                    fontSize: '0.9rem',
+                                    fontWeight: '600',
+                                    cursor: 'pointer'
+                                }}
+                            >Close</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        
+        // Expanded Chart Component - renders same chart type but bigger
+        const ExpandedChartComponent = ({ card }) => {
+            const canvasRef = React.useRef(null);
+            const chartInstanceRef = React.useRef(null);
+
+            React.useEffect(() => {
+                if (!card.chartData || !canvasRef.current) return;
+
+                // Destroy existing chart if it exists
+                if (chartInstanceRef.current) {
+                    chartInstanceRef.current.destroy();
+                }
+
+                const ctx = canvasRef.current.getContext('2d');
+                
+                // Clean up chartOptions to remove string callbacks
+                let cleanOptions = card.chartOptions || {};
+                
+                // Deep clone to avoid modifying original
+                cleanOptions = JSON.parse(JSON.stringify(cleanOptions));
+                
+                // Force maintainAspectRatio for expanded view
+                cleanOptions.responsive = true;
+                cleanOptions.maintainAspectRatio = true;
+                
+                // Ensure plugins object exists
+                if (!cleanOptions.plugins) {
+                    cleanOptions.plugins = {};
+                }
+                
+                // Show legend for pie/doughnut charts
+                if (card.chartType === 'pie' || card.chartType === 'doughnut') {
+                    cleanOptions.plugins.legend = {
+                        display: true,
+                        position: 'right'
+                    };
+                }
+                
+                // Remove callback strings that cause errors
+                if (cleanOptions?.plugins?.tooltip?.callbacks) {
+                    delete cleanOptions.plugins.tooltip.callbacks;
+                }
+                if (cleanOptions?.scales?.x?.ticks?.callback) {
+                    delete cleanOptions.scales.x.ticks.callback;
+                }
+                if (cleanOptions?.scales?.y?.ticks?.callback) {
+                    delete cleanOptions.scales.y.ticks.callback;
+                }
+                if (cleanOptions?.scales?.y1?.ticks?.callback) {
+                    delete cleanOptions.scales.y1.ticks.callback;
+                }
+                
+                // Add currency formatting for bar charts
+                if (card.chartType === 'bar' && cleanOptions.scales) {
+                    const isHorizontal = cleanOptions.indexAxis === 'y';
+                    const valueAxis = isHorizontal ? 'x' : 'y';
+                    
+                    if (!cleanOptions.scales[valueAxis]) {
+                        cleanOptions.scales[valueAxis] = {};
+                    }
+                    if (!cleanOptions.scales[valueAxis].ticks) {
+                        cleanOptions.scales[valueAxis].ticks = {};
+                    }
+                    cleanOptions.scales[valueAxis].ticks.callback = function(value) {
+                        return window.formatCurrencyShort ? window.formatCurrencyShort(value) : value;
+                    };
+                }
+
+                chartInstanceRef.current = new Chart(ctx, {
+                    type: card.chartType === 'horizontalBar' ? 'bar' : card.chartType,
+                    data: card.chartData,
+                    options: cleanOptions
+                });
+
+                return () => {
+                    if (chartInstanceRef.current) {
+                        chartInstanceRef.current.destroy();
+                    }
+                };
+            }, [card]);
+
+            return <canvas ref={canvasRef} />;
         };
 
        
@@ -6911,37 +7481,47 @@
             const [selectedType, setSelectedType] = useState('All Types');
 
             useEffect(() => {
+                console.log('📊 ReportsView: Component mounted, loading reports...');
                 loadReports();
             }, []);
 
             const loadReports = async () => {
                 setLoading(true);
+                console.log('📊 ReportsView: loadReports() called');
                 try {
                     // Load simple reports directly
                     const result = await new Promise((resolve, reject) => {
                         // Set a timeout to prevent hanging
                         const timeout = setTimeout(() => {
+                            console.error('📊 ReportsView: Function call timeout after 10s');
                             reject(new Error('Function call timeout'));
                         }, 10000);
                         
+                        console.log('📊 ReportsView: Calling getSimpleReports()...');
                         google.script.run
                             .withSuccessHandler((data) => {
+                                console.log('📊 ReportsView: getSimpleReports SUCCESS:', data);
                                 clearTimeout(timeout);
                                 resolve(data);
                             })
                             .withFailureHandler((error) => {
+                                console.error('📊 ReportsView: getSimpleReports FAILED:', error);
                                 clearTimeout(timeout);
                                 reject(error);
                             })
                             .getSimpleReports();
                     });
                     let finalResult = result;
+                    console.log('📊 ReportsView: Final result:', finalResult);
 
                     // Handle both old and new response formats with null check
                     const allReports = finalResult?.reports || 
                                      [...(finalResult?.activeReports || []), ...(finalResult?.archivedReports || [])];
                     
+                    console.log('📊 ReportsView: Extracted reports count:', allReports?.length || 0);
+                    
                     if (finalResult && allReports && allReports.length > 0) {
+                        console.log('📊 ReportsView: First report:', allReports[0]);
                         // Sort reports by timestamp (most recent first)
                         const sortedReports = allReports.sort((a, b) => {
                             const dateA = new Date(a.timestamp || 0);
@@ -6960,9 +7540,11 @@
                             }
                         });
                         
+                        console.log('📊 ReportsView: Report types:', Object.keys(typeReports));
                         setAllReports(sortedReports);
                         setReportsByType(typeReports);
                     } else {
+                        console.log('📊 ReportsView: No reports found in result');
                     }
                 } catch (error) {
                     console.error('ReportsView: Error loading report types:', error);
@@ -7151,11 +7733,18 @@
                                 const reportsOfType = reportsByType[report.reportType] || [];
                                 const hasOlderReports = reportsOfType.length > 1;
                                 const isExpanded = expandedTypes.has(report.reportType);
+                                const isLinkReport = report.isLinkReport || (!report.reportData && report.driveUrl);
                                 
                                 return (
                                 <div 
                                     key={`${report.reportType}-${report.rowNum}`}
-                                    onClick={() => openReportViewer(report)}
+                                    onClick={() => {
+                                        if (isLinkReport && report.driveUrl) {
+                                            window.open(report.driveUrl, '_blank');
+                                        } else {
+                                            openReportViewer(report);
+                                        }
+                                    }}
                                     style={{ 
                                         background: 'white', 
                                         padding: '24px', 
@@ -7179,6 +7768,19 @@
                                     <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>{getIcon(report.reportType)}</div>
                                     <h3 style={{ color: 'var(--blue)', marginBottom: '8px', fontSize: '1.1rem' }}>{report.reportType}</h3>
                                     
+                                    {/* Show description for link-based reports or if description exists */}
+                                    {report.description && (
+                                        <p style={{
+                                            fontSize: '0.9rem',
+                                            color: '#374151',
+                                            marginBottom: '12px',
+                                            lineHeight: '1.4'
+                                        }}>
+                                            {report.description}
+                                        </p>
+                                    )}
+                                    
+                                    {/* Show data summary for JSON-based reports */}
                                     {summary && summary.hasData && (
                                         <>
                                             <div style={{ 
@@ -7209,6 +7811,36 @@
                                                 )}
                                             </div>
                                         </>
+                                    )}
+                                    
+                                    {/* Show creator and timestamp info */}
+                                    {(report.creator || report.timestamp) && (
+                                        <div style={{ 
+                                            fontSize: '0.8rem',
+                                            color: '#9ca3af',
+                                            marginBottom: '8px'
+                                        }}>
+                                            {report.creator && <span>By {report.creator.split('@')[0]}</span>}
+                                            {report.creator && report.timestamp && <span> • </span>}
+                                            {report.timestamp && <span>{new Date(report.timestamp).toLocaleDateString()}</span>}
+                                        </div>
+                                    )}
+                                    
+                                    {/* Show link indicator for link-based reports */}
+                                    {isLinkReport && (
+                                        <div style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '4px',
+                                            background: '#f0f9ff',
+                                            color: '#0369a1',
+                                            padding: '4px 8px',
+                                            borderRadius: '4px',
+                                            fontSize: '0.75rem',
+                                            marginBottom: '8px'
+                                        }}>
+                                            🔗 External Document
+                                        </div>
                                     )}
                                     
                                     <div style={{ 

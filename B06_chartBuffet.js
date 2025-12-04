@@ -1390,8 +1390,9 @@ function getColumnDisplayName(columnId) {
 /**
  * Main entry point to replace existing generateColumnReports
  */
-function generateColumnReportsBuffet(entityType, columnId, topN = 10, selectedEntities = []) {
+function generateColumnReportsBuffet(entityType, columnId, topN = 10, selectedEntities = [], deptFilter = 'all', tierFilter = 'all') {
   console.log('🍽️ Chart Buffet: Generating visualization suite for', entityType, columnId);
+  console.log('🍽️ Chart Buffet: Filters - deptFilter:', deptFilter, 'tierFilter:', tierFilter);
   
   try {
     // Get DataManager instance
@@ -1402,7 +1403,9 @@ function generateColumnReportsBuffet(entityType, columnId, topN = 10, selectedEn
       entityType: entityType,
       columnId: columnId,
       topN: topN,
-      selectedEntities: selectedEntities
+      selectedEntities: selectedEntities,
+      deptFilter: deptFilter,
+      tierFilter: tierFilter
     };
     
     // Load entities for report building - EMERGENCY FIX
@@ -1433,10 +1436,38 @@ function generateColumnReportsBuffet(entityType, columnId, topN = 10, selectedEn
       return [];
     }
     
+    // Apply DOD/Civilian filter if specified
+    if (deptFilter && deptFilter !== 'all') {
+      const DOD_AGENCIES = ['DEPARTMENT OF DEFENSE', 'DEPARTMENT OF THE ARMY', 'DEPARTMENT OF THE NAVY', 
+        'DEPARTMENT OF THE AIR FORCE', 'DEFENSE LOGISTICS AGENCY', 'DEFENSE INFORMATION SYSTEMS AGENCY',
+        'DEFENSE HEALTH AGENCY', 'DEFENSE CONTRACT MANAGEMENT AGENCY', 'MISSILE DEFENSE AGENCY',
+        'NATIONAL SECURITY AGENCY', 'DEFENSE INTELLIGENCE AGENCY', 'NATIONAL GEOSPATIAL-INTELLIGENCE AGENCY',
+        'DEFENSE ADVANCED RESEARCH PROJECTS AGENCY', 'DISA', 'DLA', 'ARMY', 'NAVY', 'AIR FORCE', 'USAF', 'USA', 'USN', 'DOD'];
+      
+      reportEntities = reportEntities.filter(entity => {
+        const name = (entity.name || '').toUpperCase();
+        const isDOD = DOD_AGENCIES.some(dod => name.includes(dod));
+        return deptFilter === 'dod' ? isDOD : !isDOD;
+      });
+      console.log('🍽️ After dept filter:', reportEntities.length, 'entities');
+    }
+    
+    // Apply OneGov Tier filter if specified (uses oneGovTier.mode_tier field)
+    if (tierFilter && tierFilter !== 'all') {
+      reportEntities = reportEntities.filter(entity => {
+        // Get tier from oneGovTier.mode_tier (same as KPI carousel)
+        const entityTier = entity.oneGovTier?.mode_tier || '';
+        return entityTier.toUpperCase() === tierFilter.toUpperCase();
+      });
+      console.log('🍽️ After OneGov Tier filter:', reportEntities.length, 'entities');
+    }
+    
     // Generate the complete chart buffet
     const cards = generateChartBuffet(entityType, columnId, reportEntities, {
       topN: topN,
-      selectedEntities: selectedEntities
+      selectedEntities: selectedEntities,
+      deptFilter: deptFilter,
+      tierFilter: tierFilter
     });
     
     console.log(`🍽️ Chart Buffet: Generated ${cards.length} visualizations`);

@@ -1490,12 +1490,18 @@ function getEntityNames(entityType) {
 /**
  * Generate column-specific reports using Chart Buffet System
  */
-function generateColumnReports(entityType, columnId, topN = 10, selectedEntities = []) {
-  // Validate column exists for this entity type
+function generateColumnReports(entityType, columnId, topN = 10, selectedEntities = [], deptFilter = 'all', tierFilter = 'all') {
+  // Expanded valid columns matching KPI Carousel (removed discount, discountOfferings, activeContracts)
   const validColumns = {
-    agency: ['obligations', 'smallBusiness', 'sumTier', 'sumType', 'contractVehicle', 'fundingDepartment'],
-    oem: ['obligations', 'smallBusiness', 'sumTier', 'aiProduct', 'reseller', 'contractVehicle'],
-    vendor: ['obligations', 'smallBusiness', 'sumTier', 'contractVehicle']
+    agency: ['obligations', 'smallBusiness', 'sumTier', 'sumType', 'contractVehicle', 'fundingDepartment', 
+             'topRefPiid', 'topPiid', 'aiProduct', 'aiCategories', 'topBicProducts', 'reseller', 
+             'bicReseller', 'bicOem', 'fasOem', 'fundingAgency', 'oneGovTier'],
+    oem: ['obligations', 'smallBusiness', 'sumTier', 'sumType', 'contractVehicle', 'fundingDepartment',
+          'topRefPiid', 'topPiid', 'aiProduct', 'aiCategories', 'topBicProducts', 'reseller',
+          'bicReseller', 'bicOem', 'fasOem', 'fundingAgency', 'oneGovTier'],
+    vendor: ['obligations', 'smallBusiness', 'sumTier', 'sumType', 'contractVehicle', 'fundingDepartment',
+             'topRefPiid', 'topPiid', 'aiProduct', 'aiCategories', 'topBicProducts', 'reseller',
+             'bicReseller', 'bicOem', 'fasOem', 'fundingAgency', 'oneGovTier']
   };
   
   if (!validColumns[entityType] || !validColumns[entityType].includes(columnId)) {
@@ -1503,8 +1509,8 @@ function generateColumnReports(entityType, columnId, topN = 10, selectedEntities
     return [];
   }
   
-  // Use the new Chart Buffet system
-  return generateColumnReportsBuffet(entityType, columnId, topN, selectedEntities);
+  // Use the new Chart Buffet system with filters
+  return generateColumnReportsBuffet(entityType, columnId, topN, selectedEntities, deptFilter, tierFilter);
 }
 
 /**
@@ -3511,35 +3517,206 @@ function getSimpleReportByRow(rowNum) {
 }
 
 /**
- * Super simple reports function for testing
+ * Get reports for the Reports view - reads from Reports sheet
+ * Handles both JSON-based and link-based reports
+ * 
+ * Reports Sheet Columns (0-indexed):
+ *   0 (A): Report Type
+ *   1 (B): Data Link  
+ *   2 (C): Report JSON
+ *   3 (D): Report Drive URL
+ *   4 (E): Report Creator
+ *   5 (F): Report Timestamp
  */
 function getSimpleReports() {
-  
-  const testReport = {
-    reportType: 'OneGov Monthly Savings',
-    rowNum: 2,
-    creator: 'gerald.mavis@gsa.gov',
-    timestamp: '12/2/2025',
-    canView: true,
-    reportData: {
-      reportingPeriod: 'Jun 2025 - Sep 2025',
-      totalSavings: 11015086.17,
-      totalSavingsFormatted: '$11.0M',
-      overallDiscountRate: '59.36%',
-      totalTransactions: 13,
-      oemCount: 6,
-      vendorCount: 2
+  Logger.log('getSimpleReports v2: Starting...');
+  try {
+    Logger.log('getSimpleReports: Opening spreadsheet...');
+    var ss = SpreadsheetApp.openById('18h0TYPAPiWCKPB09v7kChoICQOELJSLBfwaZwpYheXE');
+    var reportsSheet = ss.getSheetByName('Reports');
+    
+    if (!reportsSheet) {
+      Logger.log('getSimpleReports: Reports sheet not found!');
+      return { 
+        activeReports: [], 
+        archivedReports: [], 
+        success: false, 
+        error: 'Reports sheet not found' 
+      };
     }
-  };
-  
-  const result = {
-    activeReports: [testReport],
-    archivedReports: [],
-    success: true,
-    message: 'Simple reports function working'
-  };
-  
-  return result;
+    
+    var lastRow = reportsSheet.getLastRow();
+    Logger.log('getSimpleReports: Last row = ' + lastRow);
+    
+    if (lastRow < 2) {
+      return { 
+        activeReports: [], 
+        archivedReports: [], 
+        success: true, 
+        message: 'No reports found - sheet empty' 
+      };
+    }
+    
+    // Read 11 columns (A-K) for structure
+    var data = reportsSheet.getRange(2, 1, lastRow - 1, 11).getValues();
+    Logger.log('getSimpleReports: Read ' + data.length + ' rows');
+    var activeReports = [];
+    var archivedReports = [];
+    
+    for (var i = 0; i < data.length; i++) {
+      var row = data[i];
+      var rowNum = i + 2;
+      
+      // Log first row for debugging
+      if (i === 0) {
+        Logger.log('getSimpleReports: First row data: ' + JSON.stringify(row.slice(0, 7)));
+      }
+      
+      // Column mapping for 11-column structure (A-K):
+      // A(0): Report Type, B(1): Description, C(2): Data Link, D(3): JSON
+      // E(4): Drive URL, F(5): Creator, G(6): Timestamp
+      // H(7): Level 1 Reviewer, I(8): Level 1 Timestamp, J(9): Level 2 Reviewer, K(10): Level 2 Timestamp
+      var reportType = row[0];     // A: Report Type
+      var description = row[1];    // B: Report Description
+      var dataLink = row[2];       // C: Report Data Link
+      var jsonStr = row[3];        // D: Report JSON
+      var driveUrl = row[4] || row[2];  // E: Report Drive URL (fallback to C: Data Link)
+      var creator = row[5];        // F: Report Creator
+      var timestamp = row[6];      // G: Report Timestamp
+      
+      // Skip empty rows
+      if (!reportType && !driveUrl && !jsonStr) continue;
+      
+      var parsedJson = null;
+      var reportData = {};
+      var isLinkReport = false;
+      
+      // Try to parse JSON
+      if (jsonStr && typeof jsonStr === 'string' && jsonStr.trim() !== '') {
+        try {
+          parsedJson = JSON.parse(jsonStr);
+          
+          // Handle both old format (summary) and new format (executiveSummary.data)
+          var summaryData = null;
+          if (parsedJson.executiveSummary && parsedJson.executiveSummary.data) {
+            summaryData = parsedJson.executiveSummary.data;
+          } else if (parsedJson.summary) {
+            summaryData = parsedJson.summary;
+          }
+          
+          if (summaryData) {
+            reportData = {
+              reportingPeriod: parsedJson.reportingPeriod || 'N/A',
+              totalSavings: summaryData.totalSavings || 0,
+              totalSavingsFormatted: summaryData.totalSavingsFormatted || formatCurrencyForReports(summaryData.totalSavings),
+              overallDiscountRate: summaryData.overallDiscountRate || 'N/A',
+              totalTransactions: summaryData.totalTransactions || summaryData.transactionCount || 0,
+              oemCount: summaryData.oemCount || 0,
+              vendorCount: summaryData.vendorCount || 0,
+              topOEM: summaryData.topOEM || null,
+              topOEMSavings: summaryData.topOEMSavings || null
+            };
+          }
+        } catch (e) {
+          Logger.log('Failed to parse JSON for row ' + rowNum + ': ' + e);
+        }
+      }
+      
+      // Check if this is a link-based report (no valid JSON but has drive URL or data link)
+      if (!parsedJson && (driveUrl || dataLink)) {
+        isLinkReport = true;
+      }
+      
+      // Ensure all values are serializable (convert dates, etc.)
+      var safeTimestamp = timestamp ? String(timestamp) : '';
+      var safeCreator = creator ? String(creator) : '';
+      var safeDescription = description ? String(description) : '';
+      
+      // Build report object
+      var report = {
+        rowNum: rowNum,
+        reportType: reportType || 'Document',
+        description: safeDescription,
+        dataLink: dataLink || '',
+        driveUrl: driveUrl || dataLink || '',  // Use dataLink as fallback for driveUrl
+        creator: safeCreator,
+        timestamp: safeTimestamp,
+        canView: !!(parsedJson || driveUrl || dataLink),
+        isLinkReport: isLinkReport,
+        reportData: reportData
+      };
+      
+      Logger.log('getSimpleReports: Built report #' + rowNum + ': type=' + report.reportType + ', hasData=' + (Object.keys(reportData).length > 0));
+      
+      // All reports go to active for now (could add archive logic based on date)
+      activeReports.push(report);
+    }
+    
+    Logger.log('getSimpleReports: Found ' + activeReports.length + ' reports');
+    
+    // Build return object and verify it's serializable
+    var result = {
+      activeReports: activeReports,
+      archivedReports: archivedReports,
+      success: true,
+      message: 'Loaded ' + activeReports.length + ' reports'
+    };
+    
+    // Test serialization
+    try {
+      var testJson = JSON.stringify(result);
+      Logger.log('getSimpleReports: Return object size: ' + testJson.length + ' chars');
+    } catch (serializeError) {
+      Logger.log('getSimpleReports: Serialization error: ' + serializeError);
+    }
+    
+    return result;
+    
+  } catch (error) {
+    Logger.log('Error in getSimpleReports: ' + error);
+    return {
+      activeReports: [],
+      archivedReports: [],
+      success: false,
+      error: error.toString()
+    };
+  }
+}
+
+// Helper function to format currency for reports
+function formatCurrencyForReports(value) {
+  if (!value || isNaN(value)) return 'N/A';
+  var num = Number(value);
+  if (num >= 1e9) return '$' + (num / 1e9).toFixed(1) + 'B';
+  if (num >= 1e6) return '$' + (num / 1e6).toFixed(1) + 'M';
+  if (num >= 1e3) return '$' + (num / 1e3).toFixed(0) + 'K';
+  return '$' + num.toFixed(0);
+}
+
+// Helper to get top key from object by 'savings' property
+function getTopKey(obj) {
+  if (!obj || typeof obj !== 'object') return null;
+  var topKey = null;
+  var topVal = 0;
+  for (var key in obj) {
+    var val = obj[key].savings || obj[key].total || 0;
+    if (val > topVal) {
+      topVal = val;
+      topKey = key;
+    }
+  }
+  return topKey;
+}
+
+// Helper to get top value from object
+function getTopValue(obj) {
+  if (!obj || typeof obj !== 'object') return 0;
+  var topVal = 0;
+  for (var key in obj) {
+    var val = obj[key].savings || obj[key].total || 0;
+    if (val > topVal) topVal = val;
+  }
+  return topVal;
 }
 
 /**

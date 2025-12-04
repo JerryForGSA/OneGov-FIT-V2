@@ -347,17 +347,19 @@
             };
             
             const handleReportsLoaded = (result) => {
+                console.log('📊 Reports loaded:', result);
                 setIsLoading(false);
                 
                 if (result.error) {
+                    console.error('📊 Reports error:', result.error);
                     setError(result.error);
                 } else if (result.activeReports !== undefined && result.archivedReports !== undefined) {
                     // New function format with active/archived separation
                     const activeReports = result.activeReports || [];
                     const archivedReports = result.archivedReports || [];
                     
-                    
-                    // Log first active report for debugging
+                    console.log('📊 Active reports:', activeReports.length);
+                    console.log('📊 First report:', activeReports[0]);
                     
                     setActiveReports(activeReports);
                     setArchivedReports(archivedReports);
@@ -398,6 +400,11 @@
             };
             
             const openReport = (report) => {
+                // Check if this is a link-based report (no JSON but has driveUrl)
+                if (report.isLinkReport && report.driveUrl) {
+                    window.open(report.driveUrl, '_blank');
+                    return;
+                }
                 
                 // Navigate to the OneGov Savings Report viewer
                 if (report.reportType === 'OneGov Monthly Savings') {
@@ -410,7 +417,56 @@
                 }
             };
             
+            // Link-based Report Card (when JSON is empty but Drive URL exists)
+            const LinkReportCard = ({ report }) => {
+                return (
+                    <div className="report-card" onClick={() => openReport(report)} style={{cursor: 'pointer'}}>
+                        <div className="report-card-header">
+                            <div className="report-type">{report.reportType || 'Document'}</div>
+                            <div className="report-period">{formatDate(report.timestamp)}</div>
+                        </div>
+                        <div className="report-card-body" style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '180px'}}>
+                            <div style={{fontSize: '3rem', marginBottom: '16px'}}>📄</div>
+                            <div style={{fontSize: '1rem', fontWeight: '600', color: 'var(--dark-blue)', marginBottom: '8px', textAlign: 'center'}}>
+                                {report.reportType || 'External Document'}
+                            </div>
+                            <div style={{fontSize: '0.85rem', color: '#6b7280', marginBottom: '16px'}}>
+                                Click to open in Google Drive
+                            </div>
+                            <div style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                padding: '8px 16px',
+                                background: 'var(--blue)',
+                                color: 'white',
+                                borderRadius: '6px',
+                                fontSize: '0.85rem',
+                                fontWeight: '600'
+                            }}>
+                                🔗 Open Document
+                            </div>
+                            <div className="report-meta" style={{marginTop: '16px', width: '100%'}}>
+                                <div className="report-creator">
+                                    <span>👤</span>
+                                    <span>{report.creator || 'Unknown'}</span>
+                                </div>
+                                <div className="report-timestamp">
+                                    <span>📅</span>
+                                    <span>{formatDate(report.timestamp)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+            
             const ReportCard = ({ report }) => {
+                // Check if this is a link-based report
+                if (report.isLinkReport) {
+                    return <LinkReportCard report={report} />;
+                }
+                
                 const data = report.reportData || {};
                 
                 
