@@ -370,10 +370,10 @@
             background: white;
             border-radius: 6px;
             box-shadow: var(--shadow);
-            overflow: hidden;
+            overflow: visible;
             transition: all 0.3s ease;
             border: 1px solid rgba(0,0,0,0.05);
-            height: 480px;
+            min-height: 480px;
             position: relative;
             width: 100%;
             cursor: pointer;
@@ -451,8 +451,8 @@
 
         .entity-card-body {
             padding: 6px;
-            height: 460px;
-            overflow: hidden;
+            min-height: 460px;
+            overflow: visible;
             display: flex;
             flex-direction: column;
             gap: 3px;
@@ -2619,7 +2619,7 @@
                             {/* Top Left: SUM Tier Distribution */}
                             <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb'}}>
                                 <div style={{color: 'var(--blue)', fontWeight: 600, marginBottom: '3px', textAlign: 'center'}}>SUM Tier</div>
-                                <div style={{maxHeight: '120px', overflowY: 'auto'}}>
+                                <div style={{maxHeight: '200px', overflowY: 'auto'}}>
                                     <table style={{width: '100%', fontSize: '0.8rem'}}>
                                         <colgroup>
                                             <col style={{width: '70%'}} />
@@ -2669,7 +2669,7 @@
                             {/* Top Right: Contract Vehicles */}
                             <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb'}}>
                                 <div style={{color: 'var(--blue)', fontWeight: 600, marginBottom: '3px', textAlign: 'center'}}>Contract Vehicles</div>
-                                <div style={{maxHeight: '120px', overflowY: 'auto'}}>
+                                <div style={{maxHeight: '200px', overflowY: 'auto'}}>
                                     <table style={{width: '100%', fontSize: '0.85rem'}}>
                                         <colgroup>
                                             <col style={{width: '70%'}} />
@@ -2926,7 +2926,7 @@
                                 return (
                                     <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb'}}>
                                         <div style={{color: 'var(--blue)', fontWeight: 600, marginBottom: '3px', textAlign: 'center'}}>{firstTableTitle}</div>
-                                        <div style={{maxHeight: '120px', overflowY: 'auto'}}>
+                                        <div style={{maxHeight: '200px', overflowY: 'auto'}}>
                                             <table style={{width: '100%', fontSize: '0.85rem'}}>
                                                 <colgroup>
                                                     <col style={{width: '70%'}} />
@@ -3171,7 +3171,7 @@
                                 return (
                                     <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb'}}>
                                         <div style={{color: 'var(--blue)', fontWeight: 600, marginBottom: '3px', textAlign: 'center'}}>{secondTableTitle}</div>
-                                        <div style={{maxHeight: '120px', overflowY: 'auto'}}>
+                                        <div style={{maxHeight: '200px', overflowY: 'auto'}}>
                                             <table style={{width: '100%', fontSize: '0.85rem'}}>
                                                 <colgroup>
                                                     <col style={{width: '70%'}} />
