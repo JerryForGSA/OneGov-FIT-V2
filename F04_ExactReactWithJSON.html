@@ -3239,6 +3239,9 @@
             });
             if (!entity) return;
             
+            // Store entity data for profile generation
+            window.currentEntityData = entity;
+            
             // Process entity JSON data for charts
             const processEntityData = (entity) => {
                 const processed = {
@@ -3419,6 +3422,26 @@
                                            onmouseout="this.style.background='#0077B5'">
                                             💼 LinkedIn
                                         </a>` : ''}
+                                        <button onclick="openProfileSelector()"
+                                               style="
+                                                   display: flex; 
+                                                   align-items: center; 
+                                                   gap: 6px; 
+                                                   padding: 8px 16px; 
+                                                   background: var(--orange); 
+                                                   color: white; 
+                                                   text-decoration: none; 
+                                                   border: none;
+                                                   border-radius: 6px; 
+                                                   font-size: 0.9rem; 
+                                                   font-weight: 500;
+                                                   cursor: pointer;
+                                                   transition: background-color 0.2s;
+                                               "
+                                               onmouseover="this.style.background='#e67e22'"
+                                               onmouseout="this.style.background='var(--orange)'">
+                                            📄 Get Profiles
+                                        </button>
                                     </div>
                                 </div>
                                 <div style="font-size: 1rem; line-height: 1.6; color: var(--text-dark); padding: 16px; background: #f8f9fa; border-radius: 6px; border-left: 4px solid var(--orange); min-height: 80px; height: auto; word-wrap: break-word; overflow-wrap: break-word;">
@@ -8365,9 +8388,335 @@
             );
         };
 
+
         // Render with React 18 syntax
         const root = ReactDOM.createRoot(document.getElementById('app'));
         root.render(<App />);
+    </script>
+    
+    <script>
+        // Profile button functions - moved outside React script block for global access
+        window.openProfileSelector = function() {
+            const entity = window.currentEntityData;
+            if (!entity) {
+                alert('No entity data available');
+                return;
+            }
+            
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.6); z-index: 10000; display: flex;
+                align-items: center; justify-content: center;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: white; border-radius: 12px; padding: 0; max-width: 450px; width: 90%; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+                    <div style="background: linear-gradient(135deg, #0a2240 0%, #144673 100%); color: white; padding: 20px 24px;">
+                        <h3 style="margin: 0; font-size: 1.2rem;">📄 Generate Profile for ${entity.name}</h3>
+                    </div>
+                    <div style="padding: 24px;">
+                        <p style="margin: 0 0 20px 0; color: #666;">Select a profile type:</p>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;">
+                            <button onclick="selectProfileType('Executive Profile')" style="padding: 16px; background: #f8f9fa; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="font-weight: 600; color: #0a2240;">📋 Executive Profile</div>
+                                    <div style="font-size: 0.8rem; color: #666;">One-page summary with key metrics</div>
+                                </div>
+                                <span style="background: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">✅ READY</span>
+                            </button>
+                            
+                            <button onclick="showComingSoon('Entity Profile')" style="padding: 16px; background: #fafafa; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; text-align: left; opacity: 0.7; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="font-weight: 600; color: #0a2240;">🏢 Entity Profile</div>
+                                    <div style="font-size: 0.8rem; color: #666;">Detailed organizational overview</div>
+                                </div>
+                                <span style="background: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">🟡 IN DEV</span>
+                            </button>
+                            
+                            <button onclick="showComingSoon('Product Profile')" style="padding: 16px; background: #fafafa; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; text-align: left; opacity: 0.7; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="font-weight: 600; color: #0a2240;">📦 Product Profile</div>
+                                    <div style="font-size: 0.8rem; color: #666;">Product and service analysis</div>
+                                </div>
+                                <span style="background: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">🟡 IN DEV</span>
+                            </button>
+                            
+                            <button onclick="showComingSoon('Market Profile')" style="padding: 16px; background: #fafafa; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; text-align: left; opacity: 0.7; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="font-weight: 600; color: #0a2240;">📊 Market Profile</div>
+                                    <div style="font-size: 0.8rem; color: #666;">Market positioning and trends</div>
+                                </div>
+                                <span style="background: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">🟡 IN DEV</span>
+                            </button>
+                            
+                            <button onclick="showComingSoon('Complete Profile')" style="padding: 16px; background: #fafafa; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; text-align: left; opacity: 0.7; display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="font-weight: 600; color: #0a2240;">📋 Complete Profile</div>
+                                    <div style="font-size: 0.8rem; color: #666;">Comprehensive full report</div>
+                                </div>
+                                <span style="background: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">🟡 IN DEV</span>
+                            </button>
+                        </div>
+                        
+                        <div style="text-align: center;">
+                            <button onclick="closeProfileModal()" style="padding: 10px 28px; background: #e5e7eb; color: #333; border: none; border-radius: 6px; cursor: pointer; font-size: 0.95rem;">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            window.profileModal = modal;
+            
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeProfileModal();
+            });
+        };
+        
+        window.closeProfileModal = function() {
+            if (window.profileModal) {
+                window.profileModal.remove();
+                window.profileModal = null;
+            }
+        };
+        
+        window.selectProfileType = function(profileType) {
+            closeProfileModal();
+            
+            // For Executive Profile, call the actual generation function
+            if (profileType === 'Executive Profile') {
+                generateExecutiveProfile();
+            } else {
+                showComingSoon(profileType);
+            }
+        };
+        
+        window.showComingSoon = function(profileType) {
+            closeProfileModal();
+            
+            // Create a beautiful coming soon modal
+            const modal = document.createElement('div');
+            modal.id = 'coming-soon-modal';
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.6); z-index: 10001; display: flex;
+                align-items: center; justify-content: center;
+                animation: fadeIn 0.3s ease-in-out;
+            `;
+            
+            modal.innerHTML = `
+                <div style="
+                    background: white; 
+                    border-radius: 16px; 
+                    padding: 0; 
+                    max-width: 400px; 
+                    width: 90%; 
+                    overflow: hidden; 
+                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+                    animation: slideUp 0.3s ease-out;
+                ">
+                    <div style="
+                        background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); 
+                        padding: 24px; 
+                        text-align: center;
+                    ">
+                        <div style="
+                            width: 60px; 
+                            height: 60px; 
+                            background: rgba(255,255,255,0.2); 
+                            border-radius: 50%; 
+                            display: flex; 
+                            align-items: center; 
+                            justify-content: center; 
+                            margin: 0 auto 12px;
+                            font-size: 2rem;
+                        ">
+                            🚧
+                        </div>
+                        <h3 style="
+                            margin: 0; 
+                            color: white; 
+                            font-size: 1.3rem; 
+                            font-weight: 600;
+                        ">
+                            Coming Soon!
+                        </h3>
+                    </div>
+                    <div style="padding: 32px 24px;">
+                        <div style="
+                            background: #fef3c7; 
+                            border-left: 4px solid #f59e0b; 
+                            padding: 16px; 
+                            border-radius: 6px; 
+                            margin-bottom: 24px;
+                        ">
+                            <div style="
+                                font-weight: 600; 
+                                color: #92400e; 
+                                margin-bottom: 8px;
+                                font-size: 1.1rem;
+                            ">
+                                ${profileType}
+                            </div>
+                            <div style="
+                                color: #78350f; 
+                                font-size: 0.9rem;
+                                line-height: 1.5;
+                            ">
+                                This profile type is currently under development and will be available soon. 
+                                We're working hard to bring you this feature!
+                            </div>
+                        </div>
+                        
+                        <div style="
+                            text-align: center;
+                            color: #6b7280;
+                            font-size: 0.85rem;
+                            margin-bottom: 20px;
+                        ">
+                            <span style="
+                                background: #f3f4f6;
+                                padding: 4px 12px;
+                                border-radius: 12px;
+                                display: inline-block;
+                            ">
+                                Expected: Q1 2026
+                            </span>
+                        </div>
+                        
+                        <button onclick="document.getElementById('coming-soon-modal').remove()" style="
+                            width: 100%;
+                            padding: 12px 24px;
+                            background: linear-gradient(135deg, #0a2240 0%, #144673 100%);
+                            color: white;
+                            border: none;
+                            border-radius: 8px;
+                            font-size: 1rem;
+                            font-weight: 600;
+                            cursor: pointer;
+                            transition: transform 0.2s;
+                        "
+                        onmouseover="this.style.transform='scale(1.02)'"
+                        onmouseout="this.style.transform='scale(1)'">
+                            Got it!
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Add fadeIn animation
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                @keyframes slideUp {
+                    from { 
+                        opacity: 0;
+                        transform: translateY(20px);
+                    }
+                    to { 
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+            `;
+            if (!document.head.querySelector('style[data-coming-soon]')) {
+                style.setAttribute('data-coming-soon', 'true');
+                document.head.appendChild(style);
+            }
+            
+            document.body.appendChild(modal);
+            
+            // Click outside to close
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.remove();
+            });
+        };
+        
+        window.generateExecutiveProfile = function() {
+            const entity = window.currentEntityData;
+            if (!entity) {
+                console.error('No entity data available');
+                return;
+            }
+            
+            // Show loading modal
+            const loadingModal = document.createElement('div');
+            loadingModal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.6); z-index: 10001; display: flex;
+                align-items: center; justify-content: center;
+            `;
+            
+            loadingModal.innerHTML = `
+                <div style="
+                    background: white; 
+                    border-radius: 12px; 
+                    padding: 32px; 
+                    text-align: center;
+                    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+                ">
+                    <div style="
+                        width: 50px;
+                        height: 50px;
+                        border: 3px solid #f3f4f6;
+                        border-top-color: #144673;
+                        border-radius: 50%;
+                        margin: 0 auto 20px;
+                        animation: spin 1s linear infinite;
+                    "></div>
+                    <div style="font-weight: 600; color: #0a2240; font-size: 1.1rem;">
+                        Generating Executive Profile...
+                    </div>
+                    <div style="color: #6b7280; margin-top: 8px; font-size: 0.9rem;">
+                        for ${entity.name}
+                    </div>
+                </div>
+            `;
+            
+            // Add spin animation if not already added
+            if (!document.head.querySelector('style[data-spin]')) {
+                const style = document.createElement('style');
+                style.setAttribute('data-spin', 'true');
+                style.textContent = `
+                    @keyframes spin {
+                        to { transform: rotate(360deg); }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            document.body.appendChild(loadingModal);
+            
+            // Call the backend to generate the profile
+            google.script.run
+                .withSuccessHandler((result) => {
+                    loadingModal.remove();
+                    
+                    if (result && result.inDevelopment) {
+                        // Show the coming soon message for now
+                        showComingSoon('Executive Profile');
+                    } else if (result && result.success) {
+                        // Handle successful profile generation
+                        window.open(result.url, '_blank');
+                    } else {
+                        // Show error
+                        showComingSoon('Executive Profile');
+                    }
+                })
+                .withFailureHandler((error) => {
+                    console.error('Profile generation error:', error);
+                    loadingModal.remove();
+                    showComingSoon('Executive Profile');
+                })
+                .generateEntityProfile(entity.name, entity.type, 'executive');
+        };
     </script>
 </body>
 </html>

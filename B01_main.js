@@ -22,19 +22,25 @@ function doGet(e) {
     
     // Handle page routing
     if (page === 'reportbuilder') {
-      return HtmlService.createHtmlOutputFromFile('F03_ReportBuilder')
+      return HtmlService.createHtmlOutputFromFile('F02_ReportBuilder')
         .setTitle('OneGov FIT Market - Report Builder')
         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
     }
     
     if (page === 'reporttable') {
-      return HtmlService.createHtmlOutputFromFile('F04_ReportTable')
+      return HtmlService.createHtmlOutputFromFile('F03_ReportTable')
         .setTitle('OneGov FIT Market - Report Table')
         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
     }
     
+    if (page === 'exactreact') {
+      return HtmlService.createHtmlOutputFromFile('F04_ExactReactWithJSON')
+        .setTitle('OneGov FIT Market - Exact React')
+        .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+    }
+    
     if (page === 'savingsreport') {
-      return HtmlService.createHtmlOutputFromFile('F06_OneGovSavingsReport')
+      return HtmlService.createHtmlOutputFromFile('F05_OneGovSavingsReport')
         .setTitle('OneGov FIT Market - Savings Report')
         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
     }
@@ -42,7 +48,7 @@ function doGet(e) {
     // If no action or page specified, serve the main HTML page
     if (!action) {
       // Use the exact React version with advanced JSON architecture
-      return HtmlService.createHtmlOutputFromFile('F05_ExactReactWithJSON')
+      return HtmlService.createHtmlOutputFromFile('F04_ExactReactWithJSON')
         .setTitle('OneGov FIT Market')
         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
     }
