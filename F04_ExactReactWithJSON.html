@@ -373,7 +373,9 @@
             overflow: hidden;
             transition: all 0.3s ease;
             border: 1px solid rgba(0,0,0,0.05);
-            height: 420px;
+            height: 480px;
+            max-height: 480px;
+            min-height: 480px;
             position: relative;
             width: 100%;
             cursor: pointer;
@@ -396,7 +398,9 @@
             color: white;
             padding: 6px 8px;
             position: relative;
-            height: 36px;
+            height: 32px;
+            min-height: 32px;
+            max-height: 32px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -459,6 +463,8 @@
             display: flex;
             flex-direction: column;
             gap: 3px;
+            height: calc(100% - 32px);
+            max-height: calc(100% - 32px);
         }
 
         .obligated-amount {
@@ -2617,10 +2623,12 @@
                             gridTemplateColumns: '1fr 1fr', 
                             gap: '8px', 
                             marginTop: '8px',
-                            fontSize: '0.9rem'
+                            fontSize: '0.9rem',
+                            height: '280px',
+                            maxHeight: '280px'
                         }}>
                             {/* Top Left: SUM Tier Distribution */}
-                            <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb', height: '110px', display: 'flex', flexDirection: 'column'}}>
+                            <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb', height: '135px', display: 'flex', flexDirection: 'column'}}>
                                 <div style={{color: 'var(--blue)', fontWeight: 600, marginBottom: '3px', textAlign: 'center'}}>SUM Tier</div>
                                 <div style={{flex: 1, overflowY: 'auto'}}>
                                     <table style={{width: '100%', fontSize: '0.8rem'}}>
@@ -2670,7 +2678,7 @@
                             </div>
 
                             {/* Top Right: Contract Vehicles */}
-                            <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb', height: '110px', display: 'flex', flexDirection: 'column'}}>
+                            <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb', height: '135px', display: 'flex', flexDirection: 'column'}}>
                                 <div style={{color: 'var(--blue)', fontWeight: 600, marginBottom: '3px', textAlign: 'center'}}>Contract Vehicles</div>
                                 <div style={{flex: 1, overflowY: 'auto'}}>
                                     <table style={{width: '100%', fontSize: '0.85rem'}}>
@@ -2927,7 +2935,7 @@
                                 }
                                 
                                 return (
-                                    <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb', height: '110px', display: 'flex', flexDirection: 'column'}}>
+                                    <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb', height: '135px', display: 'flex', flexDirection: 'column'}}>
                                         <div style={{color: 'var(--blue)', fontWeight: 600, marginBottom: '3px', textAlign: 'center'}}>{firstTableTitle}</div>
                                         <div style={{flex: 1, overflowY: 'auto'}}>
                                             <table style={{width: '100%', fontSize: '0.85rem'}}>
@@ -3172,7 +3180,7 @@
                                 }
                                 
                                 return (
-                                    <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb', height: '110px', display: 'flex', flexDirection: 'column'}}>
+                                    <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb', height: '135px', display: 'flex', flexDirection: 'column'}}>
                                         <div style={{color: 'var(--blue)', fontWeight: 600, marginBottom: '3px', textAlign: 'center'}}>{secondTableTitle}</div>
                                         <div style={{flex: 1, overflowY: 'auto'}}>
                                             <table style={{width: '100%', fontSize: '0.85rem'}}>

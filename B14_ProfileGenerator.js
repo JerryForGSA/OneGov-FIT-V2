@@ -145,12 +145,23 @@ function generateEntityProfile(entityData, profileType, letterhead, generateDoc)
     console.log(`📄 Generating ${profileType} for ${entityData.name} with ${letterhead} letterhead`);
     console.log(`📅 Using Fiscal Year: ${REPORT_FISCAL_YEAR}`);
     
-    // Always return "Coming Soon" for now
-    return {
-      success: false,
-      inDevelopment: true,
-      message: 'Coming Soon'
-    };
+    // Build placeholder data from entity JSON
+    const placeholders = buildPlaceholderData(entityData);
+    
+    if (!generateDoc) {
+      // Return preview data
+      return {
+        success: true,
+        preview: true,
+        placeholders: placeholders,
+        html: generateHTMLProfile(placeholders, profileType, letterhead)
+      };
+    } else {
+      // Generate actual document
+      const html = generateHTMLProfile(placeholders, profileType, letterhead);
+      const result = saveHTMLAsFile(html, entityData.name, profileType, letterhead);
+      return result;
+    }
     
   } catch (error) {
     console.error('Error generating entity profile:', error);
@@ -676,25 +687,165 @@ function formatCurrencyFull(value) {
 // ============================================================================
 
 /**
- * Generate and email entity profile
+ * Generate HTML profile from template
  * 
- * @param {Object} entityData - Entity data from frontend
- * @param {string} profileType - Profile type
+ * @param {Object} placeholders - All placeholder values
+ * @param {string} profileType - Type of profile
  * @param {string} letterhead - 'GSA' or 'ITVMO'
- * @param {string} format - 'gdoc', 'docx', or 'pdf'
- * @returns {Object} Result with success/error
+ * @returns {string} HTML string with placeholders replaced
  */
-function generateAndEmailProfile(entityData, profileType, letterhead, format) {
+function generateHTMLProfile(placeholders, profileType, letterhead) {
+  // Get the HTML template
+  let html = HtmlService.createHtmlOutputFromFile('F06_ExecutiveProfile').getContent();
+  
+  // Replace all placeholders
+  for (const [key, value] of Object.entries(placeholders)) {
+    const regex = new RegExp(`{{${key}}}`, 'g');
+    html = html.replace(regex, String(value || 'N/A'));
+  }
+  
+  // Update letterhead if ITVMO
+  if (letterhead === 'ITVMO') {
+    html = html.replace('GSA', 'ITVMO');
+    html = html.replace('#0a2240', '#1a472a'); // Change to green theme for ITVMO
+  }
+  
+  return html;
+}
+
+/**
+ * Save HTML as file in Drive
+ * 
+ * @param {string} html - HTML content
+ * @param {string} entityName - Entity name for filename
+ * @param {string} profileType - Profile type
+ * @param {string} letterhead - Letterhead type
+ * @returns {Object} Result with file URL
+ */
+function saveHTMLAsFile(html, entityName, profileType, letterhead) {
   try {
-    // Always return "Coming Soon" for now
+    // Create folder if needed
+    let folder;
+    try {
+      folder = DriveApp.getFolderById(PROFILES_FOLDER_ID);
+    } catch (e) {
+      folder = DriveApp.getRootFolder();
+    }
+    
+    // Generate filename
+    const timestamp = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd_HHmm');
+    const fileName = `${entityName}_Executive_Profile_${letterhead}_FY${getFY2Digit()}_${timestamp}.html`;
+    
+    // Create the HTML file
+    const blob = Utilities.newBlob(html, 'text/html', fileName);
+    const file = folder.createFile(blob);
+    
+    // Set sharing permissions
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    
+    console.log(`✅ HTML Profile generated: ${fileName}`);
+    
     return {
-      success: false,
-      inDevelopment: true,
-      message: 'Coming Soon'
+      success: true,
+      fileId: file.getId(),
+      url: file.getUrl(),
+      viewUrl: `https://drive.google.com/file/d/${file.getId()}/preview`,
+      fileName: fileName
     };
+  } catch (error) {
+    console.error('Error saving HTML file:', error);
+    return { success: false, error: error.toString() };
+  }
+}
+
+/**
+ * Generate PDF from HTML
+ * 
+ * @param {string} html - HTML content
+ * @returns {Object} Result with PDF URL
+ */
+function generatePDF(html) {
+  try {
+    // Create temporary HTML file
+    const blob = Utilities.newBlob(html, 'text/html', 'temp.html');
+    
+    // Convert to PDF
+    const pdfBlob = blob.getAs('application/pdf');
+    
+    // Save PDF to Drive
+    let folder;
+    try {
+      folder = DriveApp.getFolderById(PROFILES_FOLDER_ID);
+    } catch (e) {
+      folder = DriveApp.getRootFolder();
+    }
+    
+    const timestamp = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd_HHmm');
+    const fileName = `Executive_Profile_${timestamp}.pdf`;
+    
+    const file = folder.createFile(pdfBlob).setName(fileName);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    
+    return {
+      success: true,
+      url: file.getUrl(),
+      downloadUrl: `https://drive.google.com/uc?export=download&id=${file.getId()}`
+    };
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    return { success: false, error: error.toString() };
+  }
+}
+
+/**
+ * Email profile report
+ * 
+ * @param {string} recipient - Email address
+ * @param {string} html - HTML content
+ * @returns {Object} Result
+ */
+function emailProfileReport(recipient, html) {
+  try {
+    // Generate PDF attachment
+    const pdfResult = generatePDF(html);
+    if (!pdfResult.success) {
+      return { success: false, error: 'Failed to generate PDF' };
+    }
+    
+    // Get the PDF file
+    const fileId = pdfResult.url.match(/\/d\/([a-zA-Z0-9-_]+)/)[1];
+    const file = DriveApp.getFileById(fileId);
+    
+    // Send email
+    MailApp.sendEmail({
+      to: recipient,
+      subject: 'OneGov FIT Market - Executive Profile Report',
+      body: 'Please find attached the Executive Profile Report generated from OneGov FIT Market.',
+      htmlBody: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px;">
+          <h2 style="color: #0a2240;">OneGov FIT Market - Executive Profile</h2>
+          <p>Please find attached the Executive Profile Report.</p>
+          <p style="margin-top: 20px;">
+            <a href="${pdfResult.url}" 
+               style="background: #f47920; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">
+              View Report Online
+            </a>
+          </p>
+          <hr style="margin-top: 30px; border: none; border-top: 1px solid #ddd;">
+          <p style="color: #666; font-size: 12px;">
+            This email contains confidential government procurement data.<br>
+            © 2024 General Services Administration
+          </p>
+        </div>
+      `,
+      attachments: [file.getBlob()]
+    });
+    
+    console.log(`✅ Profile emailed to: ${recipient}`);
+    return { success: true };
     
   } catch (error) {
-    console.error('Error generating and emailing profile:', error);
+    console.error('Error emailing profile:', error);
     return { success: false, error: error.toString() };
   }
 }
