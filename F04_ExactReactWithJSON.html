@@ -370,13 +370,15 @@
             background: white;
             border-radius: 6px;
             box-shadow: var(--shadow);
-            overflow: visible;
+            overflow: hidden;
             transition: all 0.3s ease;
             border: 1px solid rgba(0,0,0,0.05);
-            min-height: auto;
+            height: 420px;
             position: relative;
             width: 100%;
             cursor: pointer;
+            display: flex;
+            flex-direction: column;
         }
         
         .entity-card.onegov {
@@ -452,8 +454,8 @@
         .entity-card-body {
             padding: 6px;
             padding-bottom: 2px;
-            min-height: auto;
-            overflow: visible;
+            flex: 1;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
             gap: 3px;
@@ -2618,9 +2620,9 @@
                             fontSize: '0.9rem'
                         }}>
                             {/* Top Left: SUM Tier Distribution */}
-                            <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb'}}>
+                            <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb', height: '110px', display: 'flex', flexDirection: 'column'}}>
                                 <div style={{color: 'var(--blue)', fontWeight: 600, marginBottom: '3px', textAlign: 'center'}}>SUM Tier</div>
-                                <div style={{maxHeight: '200px', overflowY: 'auto'}}>
+                                <div style={{flex: 1, overflowY: 'auto'}}>
                                     <table style={{width: '100%', fontSize: '0.8rem'}}>
                                         <colgroup>
                                             <col style={{width: '70%'}} />
@@ -2668,9 +2670,9 @@
                             </div>
 
                             {/* Top Right: Contract Vehicles */}
-                            <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb'}}>
+                            <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb', height: '110px', display: 'flex', flexDirection: 'column'}}>
                                 <div style={{color: 'var(--blue)', fontWeight: 600, marginBottom: '3px', textAlign: 'center'}}>Contract Vehicles</div>
-                                <div style={{maxHeight: '200px', overflowY: 'auto'}}>
+                                <div style={{flex: 1, overflowY: 'auto'}}>
                                     <table style={{width: '100%', fontSize: '0.85rem'}}>
                                         <colgroup>
                                             <col style={{width: '70%'}} />
@@ -2925,9 +2927,9 @@
                                 }
                                 
                                 return (
-                                    <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb'}}>
+                                    <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb', height: '110px', display: 'flex', flexDirection: 'column'}}>
                                         <div style={{color: 'var(--blue)', fontWeight: 600, marginBottom: '3px', textAlign: 'center'}}>{firstTableTitle}</div>
-                                        <div style={{maxHeight: '200px', overflowY: 'auto'}}>
+                                        <div style={{flex: 1, overflowY: 'auto'}}>
                                             <table style={{width: '100%', fontSize: '0.85rem'}}>
                                                 <colgroup>
                                                     <col style={{width: '70%'}} />
@@ -3170,9 +3172,9 @@
                                 }
                                 
                                 return (
-                                    <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb'}}>
+                                    <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb', height: '110px', display: 'flex', flexDirection: 'column'}}>
                                         <div style={{color: 'var(--blue)', fontWeight: 600, marginBottom: '3px', textAlign: 'center'}}>{secondTableTitle}</div>
-                                        <div style={{maxHeight: '200px', overflowY: 'auto'}}>
+                                        <div style={{flex: 1, overflowY: 'auto'}}>
                                             <table style={{width: '100%', fontSize: '0.85rem'}}>
                                                 <colgroup>
                                                     <col style={{width: '70%'}} />
@@ -8715,7 +8717,7 @@
                     loadingModal.remove();
                     showComingSoon('Executive Profile');
                 })
-                .generateEntityProfile(entity.name, entity.type, 'executive');
+                .generateEntityProfile(entity, 'Executive Profile', 'GSA', false);
         };
     </script>
 </body>
