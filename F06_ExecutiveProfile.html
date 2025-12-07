@@ -4,7 +4,7 @@
     <base target="_top">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Executive Profile - {{COMPANY_NAME}}</title>
+    <title>Entity Profile - {{COMPANY_NAME}}</title>
     
     <style>
         @page {
@@ -319,6 +319,18 @@
             z-index: 1000;
         }
         
+        /* Hide action bar when in iframe */
+        @media all {
+            body {
+                overflow-x: hidden;
+            }
+        }
+        
+        /* Detect iframe and hide action bar */
+        .in-iframe .action-bar {
+            display: none !important;
+        }
+        
         .action-btn {
             padding: 10px 20px;
             border: none;
@@ -359,8 +371,7 @@
 <body>
     <!-- Action Bar (won't print) -->
     <div class="action-bar no-print">
-        <button class="action-btn btn-download" onclick="downloadPDF()">📥 Download PDF</button>
-        <button class="action-btn btn-email" onclick="emailProfile()">📧 Email Profile</button>
+        <button class="action-btn btn-email" onclick="emailProfile()">📧 Email PDF</button>
         <button class="action-btn btn-close" onclick="closeProfile()">✕ Close</button>
     </div>
 
@@ -374,7 +385,7 @@
                 </svg>
                 <div class="header-text">
                     <div class="header-title">OneGov FIT Market</div>
-                    <div class="header-subtitle">Executive Profile Report</div>
+                    <div class="header-subtitle">Entity Profile Report</div>
                 </div>
             </div>
             <div class="header-right">
@@ -568,6 +579,11 @@
     </div>
 
     <script>
+        // Detect if page is in iframe and hide action bar
+        if (window.self !== window.top) {
+            document.body.classList.add('in-iframe');
+        }
+        
         // JavaScript functions for download, email, and close
         function downloadPDF() {
             // This will be called from Google Apps Script
@@ -586,21 +602,19 @@
         }
         
         function emailProfile() {
-            const recipient = prompt('Enter email address:');
-            if (recipient) {
-                google.script.run
-                    .withSuccessHandler(function(result) {
-                        if (result.success) {
-                            alert('Profile sent successfully to ' + recipient);
-                        } else {
-                            alert('Error sending email: ' + result.error);
-                        }
-                    })
-                    .withFailureHandler(function(error) {
-                        alert('Error: ' + error.message);
-                    })
-                    .emailProfileReport(recipient, getProfileHTML());
-            }
+            // Email automatically to current user - no prompt needed
+            google.script.run
+                .withSuccessHandler(function(result) {
+                    if (result.success) {
+                        alert('Profile PDF sent to your email successfully!');
+                    } else {
+                        alert('Error sending email: ' + result.error);
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    alert('Error: ' + error.message);
+                })
+                .emailProfileReport(null, getProfileHTML()); // null = auto-detect user email
         }
         
         function closeProfile() {

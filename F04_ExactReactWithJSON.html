@@ -8429,9 +8429,9 @@
                         <p style="margin: 0 0 20px 0; color: #666;">Select a profile type:</p>
                         
                         <div style="display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px;">
-                            <button onclick="selectProfileType('Executive Profile')" style="padding: 16px; background: #f8f9fa; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center;">
+                            <button onclick="selectProfileType('Entity Profile')" style="padding: 16px; background: #f8f9fa; border: 2px solid #e5e7eb; border-radius: 8px; cursor: pointer; text-align: left; display: flex; justify-content: space-between; align-items: center;">
                                 <div>
-                                    <div style="font-weight: 600; color: #0a2240;">📋 Executive Profile</div>
+                                    <div style="font-weight: 600; color: #0a2240;">📋 Entity Profile</div>
                                     <div style="font-size: 0.8rem; color: #666;">One-page summary with key metrics</div>
                                 </div>
                                 <span style="background: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">✅ READY</span>
@@ -8497,11 +8497,62 @@
         window.selectProfileType = function(profileType) {
             closeProfileModal();
             
-            // For Executive Profile, call the actual generation function
-            if (profileType === 'Executive Profile') {
-                generateExecutiveProfile();
+            // For Entity Profile, show letterhead selection
+            if (profileType === 'Entity Profile') {
+                showLetterheadSelection();
             } else {
                 showComingSoon(profileType);
+            }
+        };
+        
+        // Show letterhead selection modal
+        window.showLetterheadSelection = function() {
+            const entity = window.currentEntityData;
+            if (!entity) {
+                alert('No entity data available');
+                return;
+            }
+            
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10001;';
+            
+            modal.innerHTML = `
+                <div style="background: white; border-radius: 12px; padding: 0; max-width: 450px; width: 90%; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+                    <div style="background: linear-gradient(135deg, #0a2240 0%, #144673 100%); color: white; padding: 20px 24px;">
+                        <h3 style="margin: 0; font-size: 1.2rem;">🎨 Select Letterhead</h3>
+                    </div>
+                    <div style="padding: 24px;">
+                        <p style="margin: 0 0 20px 0; color: #666;">Choose letterhead for Entity Profile:</p>
+                        
+                        <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+                            <button onclick="generateEntityProfile('GSA')" style="flex: 1; padding: 20px; background: #0a2240; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 600; transition: all 0.3s;" onmouseover="this.style.background='#144673'" onmouseout="this.style.background='#0a2240'">
+                                GSA
+                                <div style="font-size: 0.75rem; font-weight: 400; margin-top: 4px;">General Services Admin</div>
+                            </button>
+                            <button onclick="generateEntityProfile('ITVMO')" style="flex: 1; padding: 20px; background: #1a472a; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 600; transition: all 0.3s;" onmouseover="this.style.background='#2e5a3e'" onmouseout="this.style.background='#1a472a'">
+                                ITVMO
+                                <div style="font-size: 0.75rem; font-weight: 400; margin-top: 4px;">IT Vendor Management</div>
+                            </button>
+                        </div>
+                        
+                        <div style="text-align: center;">
+                            <button onclick="closeLetterheadModal()" style="padding: 10px 28px; background: #e5e7eb; color: #333; border: none; border-radius: 6px; cursor: pointer; font-size: 0.95rem;">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            window.letterheadModal = modal;
+        };
+        
+        // Close letterhead modal
+        window.closeLetterheadModal = function() {
+            if (window.letterheadModal) {
+                window.letterheadModal.remove();
+                window.letterheadModal = null;
             }
         };
         
@@ -8649,7 +8700,9 @@
             });
         };
         
-        window.generateExecutiveProfile = function() {
+        window.generateEntityProfile = function(letterhead = 'GSA') {
+            closeLetterheadModal();
+            
             const entity = window.currentEntityData;
             if (!entity) {
                 console.error('No entity data available');
@@ -8682,7 +8735,7 @@
                         animation: spin 1s linear infinite;
                     "></div>
                     <div style="font-weight: 600; color: #0a2240; font-size: 1.1rem;">
-                        Generating Executive Profile...
+                        Creating Entity Profile...
                     </div>
                     <div style="color: #6b7280; margin-top: 8px; font-size: 0.9rem;">
                         for ${entity.name}
@@ -8704,28 +8757,337 @@
             
             document.body.appendChild(loadingModal);
             
-            // Call the backend to generate the profile
+            // Call the backend to create the actual Google Doc
             google.script.run
                 .withSuccessHandler((result) => {
                     loadingModal.remove();
+                    console.log('✅ Entity Profile Result:', result);
                     
-                    if (result && result.inDevelopment) {
-                        // Show the coming soon message for now
-                        showComingSoon('Executive Profile');
-                    } else if (result && result.success) {
-                        // Handle successful profile generation
-                        window.open(result.url, '_blank');
+                    if (result && result.success && result.docUrl) {
+                        // Display the Google Doc in a modal iframe
+                        const modal = document.createElement('div');
+                        modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center; padding: 20px;';
+                        
+                        const container = document.createElement('div');
+                        container.style.cssText = 'background: white; width: 100%; max-width: 1200px; height: 90vh; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column;';
+                        
+                        const header = document.createElement('div');
+                        header.style.cssText = 'padding: 15px 20px; background: #0a2240; color: white; display: flex; justify-content: space-between; align-items: center;';
+                        header.innerHTML = `
+                            <h3 style="margin: 0;">Entity Profile - ${entity.name}</h3>
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <button onclick="window.open('${result.docUrl}', '_blank')" style="background: #144673; border: none; color: white; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: 500;">📝 Edit Doc</button>
+                                <button onclick="downloadExistingProfileAsPDF('${result.docId}', '${entity.name}')" style="background: #f47920; border: none; color: white; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: 500;">📄 Download PDF</button>
+                                <button onclick="emailExistingProfile('${result.docId}', '${entity.name}', 'pdf')" style="background: #22c55e; border: none; color: white; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: 500;">📧 Email PDF</button>
+                                <button onclick="emailExistingProfile('${result.docId}', '${entity.name}', 'doc')" style="background: #8b5cf6; border: none; color: white; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem; font-weight: 500;">📩 Share Doc</button>
+                                <button onclick="this.closest('[style*=fixed]').remove()" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">✕ Close</button>
+                            </div>
+                        `;
+                        
+                        const iframe = document.createElement('iframe');
+                        iframe.style.cssText = 'flex: 1; width: 100%; border: none;';
+                        // Use the Google Docs viewer URL instead of edit URL
+                        const viewerUrl = result.docUrl.replace('/edit', '/preview');
+                        iframe.src = viewerUrl;
+                        
+                        container.appendChild(header);
+                        container.appendChild(iframe);
+                        modal.appendChild(container);
+                        document.body.appendChild(modal);
+                        
+                        console.log('✅ Entity Profile Google Doc displayed in modal');
+                        
+                    } else if (result && result.error) {
+                        console.error('❌ Profile generation error:', result.error);
+                        showErrorDialog('Profile Generation Failed', result.error);
                     } else {
-                        // Show error
-                        showComingSoon('Executive Profile');
+                        console.error('❌ Unknown result:', result);
+                        showErrorDialog('Profile Generation Error', 'Unexpected response from server');
                     }
                 })
                 .withFailureHandler((error) => {
                     console.error('Profile generation error:', error);
                     loadingModal.remove();
-                    showComingSoon('Executive Profile');
+                    showErrorDialog('Profile Generation Error', error.message || 'Failed to communicate with server');
                 })
-                .generateEntityProfile(entity, 'Executive Profile', 'GSA', false);
+                .exportProfileAsDoc(entity, letterhead);
+        };
+        
+        // Download PDF function
+        window.downloadProfilePDF = function(entityName, letterhead) {
+            const entity = window.currentEntityData;
+            if (!entity) {
+                alert('No entity data available');
+                return;
+            }
+            
+            // Show loading
+            const loadingModal = document.createElement('div');
+            loadingModal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10003;';
+            loadingModal.innerHTML = `
+                <div style="background: white; padding: 30px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">📄</div>
+                    <div style="color: #333; font-weight: 600;">Generating PDF...</div>
+                    <div style="color: #666; font-size: 0.9rem; margin-top: 5px;">Please wait</div>
+                </div>
+            `;
+            document.body.appendChild(loadingModal);
+            
+            // Call backend to generate PDF
+            google.script.run
+                .withSuccessHandler((result) => {
+                    loadingModal.remove();
+                    if (result && result.success && result.docUrl) {
+                        // Open the Google Doc (which can be downloaded as PDF)
+                        window.open(result.docUrl, '_blank');
+                    } else if (result && result.pdfUrl) {
+                        // Direct PDF download
+                        window.open(result.pdfUrl, '_blank');
+                    } else {
+                        showErrorDialog('PDF Generation Failed', result?.error || 'Unknown error occurred while generating PDF');
+                    }
+                })
+                .withFailureHandler((error) => {
+                    loadingModal.remove();
+                    showErrorDialog('PDF Generation Error', error.message || 'Failed to communicate with server');
+                })
+                .exportProfileAsPDF(entity, letterhead);
+        };
+        
+        // Download Google Doc function
+        window.downloadProfileDoc = function(entityName, letterhead) {
+            const entity = window.currentEntityData;
+            if (!entity) {
+                alert('No entity data available');
+                return;
+            }
+            
+            // Show loading
+            const loadingModal = document.createElement('div');
+            loadingModal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10003;';
+            loadingModal.innerHTML = `
+                <div style="background: white; padding: 30px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">📝</div>
+                    <div style="color: #333; font-weight: 600;">Creating Google Doc...</div>
+                    <div style="color: #666; font-size: 0.9rem; margin-top: 5px;">Please wait</div>
+                </div>
+            `;
+            document.body.appendChild(loadingModal);
+            
+            // Call backend to generate Google Doc
+            google.script.run
+                .withSuccessHandler((result) => {
+                    loadingModal.remove();
+                    if (result && result.success && result.docUrl) {
+                        // Open the Google Doc
+                        window.open(result.docUrl, '_blank');
+                    } else {
+                        showErrorDialog('Google Doc Creation Failed', result?.error || 'Unknown error occurred while creating document');
+                    }
+                })
+                .withFailureHandler((error) => {
+                    loadingModal.remove();
+                    showErrorDialog('Document Creation Error', error.message || 'Failed to communicate with server');
+                })
+                .exportProfileAsDoc(entity, letterhead);
+        };
+        
+        // Email PDF function
+        window.emailProfilePDF = function(entityName, letterhead) {
+            const entity = window.currentEntityData;
+            if (!entity) {
+                alert('No entity data available');
+                return;
+            }
+            
+            // Prompt for recipient email
+            const recipient = prompt('Enter recipient email address:');
+            if (!recipient) {
+                return; // User cancelled
+            }
+            
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(recipient)) {
+                showErrorDialog('Invalid Email', 'Please enter a valid email address');
+                return;
+            }
+            
+            // Show loading
+            const loadingModal = document.createElement('div');
+            loadingModal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10003;';
+            loadingModal.innerHTML = `
+                <div style="background: white; padding: 30px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">📧</div>
+                    <div style="color: #333; font-weight: 600;">Sending PDF via Email...</div>
+                    <div style="color: #666; font-size: 0.9rem; margin-top: 5px;">to ${recipient}</div>
+                </div>
+            `;
+            document.body.appendChild(loadingModal);
+            
+            // Call backend to email PDF
+            google.script.run
+                .withSuccessHandler((result) => {
+                    loadingModal.remove();
+                    if (result && result.success) {
+                        showSuccessDialog('Email Sent', `Executive Profile PDF sent successfully to ${recipient}!`);
+                    } else {
+                        showErrorDialog('Email Failed', result?.error || 'Unknown error occurred while sending email');
+                    }
+                })
+                .withFailureHandler((error) => {
+                    loadingModal.remove();
+                    showErrorDialog('Email Error', error.message || 'Failed to communicate with server');
+                })
+                .emailProfile(entity, letterhead, recipient, 'pdf');
+        };
+        
+        // Email Google Doc function
+        window.emailProfileDoc = function(entityName, letterhead) {
+            const entity = window.currentEntityData;
+            if (!entity) {
+                alert('No entity data available');
+                return;
+            }
+            
+            // Prompt for recipient email
+            const recipient = prompt('Enter recipient email address:');
+            if (!recipient) {
+                return; // User cancelled
+            }
+            
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(recipient)) {
+                showErrorDialog('Invalid Email', 'Please enter a valid email address');
+                return;
+            }
+            
+            // Show loading
+            const loadingModal = document.createElement('div');
+            loadingModal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10003;';
+            loadingModal.innerHTML = `
+                <div style="background: white; padding: 30px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">📩</div>
+                    <div style="color: #333; font-weight: 600;">Sharing Google Doc via Email...</div>
+                    <div style="color: #666; font-size: 0.9rem; margin-top: 5px;">to ${recipient}</div>
+                </div>
+            `;
+            document.body.appendChild(loadingModal);
+            
+            // Call backend to email Google Doc
+            google.script.run
+                .withSuccessHandler((result) => {
+                    loadingModal.remove();
+                    if (result && result.success) {
+                        showSuccessDialog('Document Shared', `Executive Profile Google Doc shared successfully with ${recipient}!`);
+                    } else {
+                        showErrorDialog('Sharing Failed', result?.error || 'Unknown error occurred while sharing document');
+                    }
+                })
+                .withFailureHandler((error) => {
+                    loadingModal.remove();
+                    showErrorDialog('Sharing Error', error.message || 'Failed to communicate with server');
+                })
+                .emailProfile(entity, letterhead, recipient, 'doc');
+        };
+        
+        // Show styled error dialog instead of ugly browser alert
+        function showErrorDialog(title, message) {
+            const errorModal = document.createElement('div');
+            errorModal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10004; font-family: Arial, sans-serif;';
+            
+            errorModal.innerHTML = `
+                <div style="background: white; max-width: 500px; margin: 20px; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden;">
+                    <div style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white; padding: 20px; text-align: center;">
+                        <div style="font-size: 3rem; margin-bottom: 10px;">⚠️</div>
+                        <div style="font-size: 1.25rem; font-weight: 600;">${title}</div>
+                    </div>
+                    <div style="padding: 20px;">
+                        <div style="color: #374151; line-height: 1.5; margin-bottom: 20px;">${message}</div>
+                        <div style="text-align: right;">
+                            <button onclick="this.closest('[style*=fixed]').remove()" style="background: #ef4444; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 500;">Close</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(errorModal);
+            
+            // Auto-close after 10 seconds
+            setTimeout(() => {
+                if (document.body.contains(errorModal)) {
+                    errorModal.remove();
+                }
+            }, 10000);
+        }
+        
+        // Show styled success dialog
+        function showSuccessDialog(title, message) {
+            const successModal = document.createElement('div');
+            successModal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10004; font-family: Arial, sans-serif;';
+            
+            successModal.innerHTML = `
+                <div style="background: white; max-width: 500px; margin: 20px; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden;">
+                    <div style="background: linear-gradient(135deg, #22c55e, #16a34a); color: white; padding: 20px; text-align: center;">
+                        <div style="font-size: 3rem; margin-bottom: 10px;">✅</div>
+                        <div style="font-size: 1.25rem; font-weight: 600;">${title}</div>
+                    </div>
+                    <div style="padding: 20px;">
+                        <div style="color: #374151; line-height: 1.5; margin-bottom: 20px;">${message}</div>
+                        <div style="text-align: right;">
+                            <button onclick="this.closest('[style*=fixed]').remove()" style="background: #22c55e; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 500;">OK</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(successModal);
+            
+            // Auto-close after 5 seconds
+            setTimeout(() => {
+                if (document.body.contains(successModal)) {
+                    successModal.remove();
+                }
+            }, 5000);
+        }
+        
+        // Helper functions for the new buttons
+        window.downloadExistingProfileAsPDF = function(docId, entityName) {
+            const loadingModal = document.createElement('div');
+            loadingModal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10005;';
+            loadingModal.innerHTML = `
+                <div style="background: white; padding: 30px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">📄</div>
+                    <div style="color: #333; font-weight: 600;">Converting to PDF...</div>
+                </div>
+            `;
+            document.body.appendChild(loadingModal);
+            
+            // Convert existing doc to PDF
+            const pdfUrl = `https://docs.google.com/document/d/${docId}/export?format=pdf`;
+            window.open(pdfUrl, '_blank');
+            setTimeout(() => loadingModal.remove(), 2000);
+        };
+        
+        window.emailExistingProfile = function(docId, entityName, format) {
+            const recipient = prompt('Enter recipient email address:');
+            if (!recipient) return;
+            
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(recipient)) {
+                showErrorDialog('Invalid Email', 'Please enter a valid email address');
+                return;
+            }
+            
+            if (format === 'pdf') {
+                const pdfUrl = `https://docs.google.com/document/d/${docId}/export?format=pdf`;
+                showSuccessDialog('PDF Ready', `PDF is ready for download. Please save it and email manually to ${recipient}.`);
+                window.open(pdfUrl, '_blank');
+            } else {
+                const docUrl = `https://docs.google.com/document/d/${docId}/edit`;
+                showSuccessDialog('Document Ready', `Document link: ${docUrl}\n\nPlease copy this link and email it to ${recipient}.`);
+            }
         };
     </script>
 </body>

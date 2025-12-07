@@ -719,12 +719,304 @@
         
         window.selectProfileType = function(profileType) {
             closeProfileModal();
-            showComingSoon(profileType);
+            
+            if (profileType === 'Executive Profile') {
+                // Show letterhead selection modal
+                showLetterheadSelection(profileType);
+            } else {
+                showComingSoon(profileType);
+            }
         };
         
         window.showComingSoon = function(profileType) {
             closeProfileModal();
             alert(`${profileType} is coming soon!\n\nThis profile type is currently in development.`);
+        };
+        
+        // Show letterhead selection modal
+        window.showLetterheadSelection = function(profileType) {
+            const entity = window.currentEntityData;
+            if (!entity) {
+                alert('No entity data available');
+                return;
+            }
+            
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10001; animation: fadeIn 0.2s;';
+            
+            modal.innerHTML = `
+                <div style="background: white; border-radius: 12px; padding: 0; max-width: 450px; width: 90%; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+                    <div style="background: linear-gradient(135deg, #0a2240 0%, #144673 100%); color: white; padding: 20px 24px;">
+                        <h3 style="margin: 0; font-size: 1.2rem;">🎨 Select Letterhead</h3>
+                    </div>
+                    <div style="padding: 24px;">
+                        <p style="margin: 0 0 20px 0; color: #666;">Choose letterhead for ${profileType}:</p>
+                        
+                        <div style="display: flex; gap: 12px; margin-bottom: 24px;">
+                            <button onclick="generateProfile('${profileType}', 'GSA')" style="flex: 1; padding: 20px; background: #0a2240; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 600; transition: all 0.3s;" onmouseover="this.style.background='#144673'" onmouseout="this.style.background='#0a2240'">
+                                GSA
+                                <div style="font-size: 0.75rem; font-weight: 400; margin-top: 4px;">General Services Admin</div>
+                            </button>
+                            <button onclick="generateProfile('${profileType}', 'ITVMO')" style="flex: 1; padding: 20px; background: #1a472a; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 600; transition: all 0.3s;" onmouseover="this.style.background='#2e5a3e'" onmouseout="this.style.background='#1a472a'">
+                                ITVMO
+                                <div style="font-size: 0.75rem; font-weight: 400; margin-top: 4px;">IT Vendor Management</div>
+                            </button>
+                        </div>
+                        
+                        <div style="text-align: center;">
+                            <button onclick="closeLetterheadModal()" style="padding: 10px 28px; background: #e5e7eb; color: #333; border: none; border-radius: 6px; cursor: pointer; font-size: 0.95rem;">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            window.letterheadModal = modal;
+            
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeLetterheadModal();
+            });
+        };
+        
+        // Close letterhead modal
+        window.closeLetterheadModal = function() {
+            if (window.letterheadModal) {
+                window.letterheadModal.remove();
+                window.letterheadModal = null;
+            }
+        };
+        
+        // Check if google.script.run exists
+        window.checkGoogleScriptRun = function() {
+            console.log('Checking google.script.run...');
+            console.log('typeof google:', typeof window.google);
+            console.log('google exists:', !!window.google);
+            console.log('google.script exists:', !!window.google?.script);
+            console.log('google.script.run exists:', !!window.google?.script?.run);
+            console.log('Window location:', window.location.href);
+            console.log('Parent window:', window.parent !== window);
+            
+            if (!window.google?.script?.run) {
+                alert('❌ google.script.run is not available in this context!\nLocation: ' + window.location.href);
+                return false;
+            } else {
+                alert('✅ google.script.run is available!');
+                return true;
+            }
+        };
+
+        // Simple test function
+        window.testSimple = function() {
+            console.log('Testing simple function...');
+            
+            if (!window.checkGoogleScriptRun()) {
+                return;
+            }
+            
+            google.script.run
+                .withSuccessHandler(function(result) {
+                    console.log('✅ Simple test SUCCESS:', result);
+                    alert('Simple test worked! Result: ' + result);
+                })
+                .withFailureHandler(function(error) {
+                    console.error('❌ Simple test FAILED:', error);
+                    alert('Simple test failed: ' + error.message);
+                })
+                .testSimple();
+        };
+
+        // Minimal HTML test
+        window.testMinimal = function() {
+            console.log('Testing minimal HTML...');
+            google.script.run
+                .withSuccessHandler(function(result) {
+                    console.log('✅ Minimal HTML test SUCCESS:', result);
+                    if (result && result.html) {
+                        alert('Minimal HTML test worked! HTML length: ' + result.html.length);
+                    } else {
+                        alert('Minimal HTML test failed: no HTML returned');
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    console.error('❌ Minimal HTML test FAILED:', error);
+                    alert('Minimal HTML test failed: ' + error.message);
+                })
+                .testMinimalHTML();
+        };
+
+        // Test function
+        window.testProfile = function() {
+            console.log('Testing profile generation...');
+            google.script.run
+                .withSuccessHandler(function(result) {
+                    console.log('Test success:', result);
+                    if (result && result.html) {
+                        // Show in simple modal
+                        const modal = document.createElement('div');
+                        modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center;';
+                        modal.innerHTML = `
+                            <div style="background: white; padding: 20px; border-radius: 8px; max-width: 500px;">
+                                ${result.html}
+                                <button onclick="this.closest('[style*=fixed]').remove()" style="margin-top: 15px; padding: 5px 15px; background: #dc3545; color: white; border: none; border-radius: 4px;">Close</button>
+                            </div>
+                        `;
+                        document.body.appendChild(modal);
+                    } else {
+                        alert('Test failed: no HTML returned');
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    console.error('Test failed:', error);
+                    alert('Test failed: ' + error.message);
+                })
+                .testProfileGeneration();
+        };
+
+        // Generate profile function
+        window.generateProfile = function(profileType, letterhead) {
+            closeLetterheadModal();
+            
+            const entity = window.currentEntityData;
+            if (!entity) {
+                alert('No entity data available');
+                return;
+            }
+            
+            // Show loading indicator
+            const loadingModal = document.createElement('div');
+            loadingModal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10002;';
+            loadingModal.innerHTML = `
+                <div style="background: white; padding: 30px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">⏳</div>
+                    <div style="color: #333; font-weight: 600;">Generating ${profileType}...</div>
+                    <div style="color: #666; font-size: 0.9rem; margin-top: 5px;">Please wait</div>
+                    <button onclick="checkGoogleScriptRun()" style="margin-top: 15px; padding: 5px 15px; background: #ffc107; color: black; border: none; border-radius: 4px;">Check API</button>
+                    <button onclick="testSimple()" style="margin-top: 15px; padding: 5px 15px; background: #28a745; color: white; border: none; border-radius: 4px;">Test Simple</button>
+                    <button onclick="testMinimal()" style="margin-top: 15px; padding: 5px 15px; background: #17a2b8; color: white; border: none; border-radius: 4px;">Test HTML</button>
+                    <button onclick="testProfile()" style="margin-top: 15px; padding: 5px 15px; background: #007bff; color: white; border: none; border-radius: 4px;">Test Full</button>
+                </div>
+            `;
+            document.body.appendChild(loadingModal);
+            
+            // Call backend to generate profile
+            console.log('Calling backend with entity:', entity.name, 'letterhead:', letterhead);
+            
+            google.script.run
+                .withSuccessHandler(function(result) {
+                    loadingModal.remove();
+                    console.log('✅ Success handler called');
+                    console.log('Full result object:', result);
+                    console.log('Result type:', typeof result);
+                    console.log('Result keys:', result ? Object.keys(result) : 'null');
+                    console.log('Result.success:', result?.success);
+                    console.log('Result.html exists:', !!result?.html);
+                    console.log('HTML length:', result?.html ? result.html.length : 0);
+                    console.log('First 200 chars of HTML:', result?.html ? result.html.substring(0, 200) : 'no html');
+                    
+                    if (!result) {
+                        alert('No response from server');
+                        return;
+                    }
+                    
+                    if (result.error) {
+                        alert('Error: ' + result.error);
+                        return;
+                    }
+                    
+                    if (result.html) {
+                        console.log('Attempting to display HTML...');
+                        
+                        // Try method 1: Direct write to new window
+                        try {
+                            const newWindow = window.open('about:blank', '_blank');
+                            if (newWindow) {
+                                newWindow.document.open();
+                                newWindow.document.write(result.html);
+                                newWindow.document.close();
+                                console.log('✅ HTML written to new window');
+                            } else {
+                                throw new Error('Popup blocked');
+                            }
+                        } catch (e) {
+                            console.error('Failed to open new window:', e);
+                            
+                            // Method 2: Show in iframe modal
+                            const modal = document.createElement('div');
+                            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center;';
+                            
+                            const container = document.createElement('div');
+                            container.style.cssText = 'width: 90%; max-width: 1200px; height: 90vh; background: white; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column;';
+                            
+                            const header = document.createElement('div');
+                            header.style.cssText = 'padding: 15px; background: #f8f9fa; border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center;';
+                            header.innerHTML = `
+                                <h3 style="margin: 0;">Executive Profile - ${entity.name}</h3>
+                                <button onclick="this.closest('[style*=fixed]').remove()" style="background: #dc3545; color: white; border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer;">Close</button>
+                            `;
+                            
+                            const iframe = document.createElement('iframe');
+                            iframe.style.cssText = 'flex: 1; width: 100%; border: none;';
+                            iframe.srcdoc = result.html;
+                            
+                            container.appendChild(header);
+                            container.appendChild(iframe);
+                            modal.appendChild(container);
+                            document.body.appendChild(modal);
+                            
+                            console.log('✅ HTML displayed in modal iframe');
+                        }
+                    } else {
+                        console.error('No HTML in result');
+                        alert('No HTML content generated. Check console for details.');
+                    }
+                })
+                .withFailureHandler(function(error) {
+                    loadingModal.remove();
+                    alert('Error: ' + error.message);
+                })
+                .generateExecutiveProfileDirect(entity, letterhead);
+        };
+        
+        // Show profile preview
+        window.showProfilePreview = function(html, profileType, letterhead) {
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 10002; padding: 20px;';
+            
+            const container = document.createElement('div');
+            container.style.cssText = 'background: white; width: 100%; max-width: 900px; height: 90vh; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;';
+            
+            container.innerHTML = `
+                <div style="background: linear-gradient(135deg, #0a2240 0%, #144673 100%); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="margin: 0; font-size: 1.1rem;">${profileType} Preview - ${letterhead}</h3>
+                    <button onclick="closePreviewModal()" style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 10px; border-radius: 4px; cursor: pointer;">✕ Close</button>
+                </div>
+                <div style="flex: 1; overflow: auto; padding: 20px;">
+                    ${html}
+                </div>
+                <div style="padding: 15px; background: #f8f9fa; border-top: 1px solid #dee2e6; text-align: center;">
+                    <button onclick="generateFinalDocument('${profileType}', '${letterhead}')" style="background: #f47920; color: white; border: none; padding: 10px 30px; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer;">📄 Generate Document</button>
+                </div>
+            `;
+            
+            modal.appendChild(container);
+            document.body.appendChild(modal);
+            window.previewModal = modal;
+        };
+        
+        // Close preview modal
+        window.closePreviewModal = function() {
+            if (window.previewModal) {
+                window.previewModal.remove();
+                window.previewModal = null;
+            }
+        };
+        
+        // Generate final document
+        window.generateFinalDocument = function(profileType, letterhead) {
+            closePreviewModal();
+            generateProfile(profileType, letterhead);
         };
         
         // Make showEntityDetail available to React
