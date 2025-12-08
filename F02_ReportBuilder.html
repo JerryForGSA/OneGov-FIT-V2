@@ -400,19 +400,89 @@
             };
             
             const openReport = (report) => {
-                // Check if this is a link-based report (no JSON but has driveUrl)
-                if (report.isLinkReport && report.driveUrl) {
-                    window.open(report.driveUrl, '_blank');
+                console.log('🔍 DEBUG: openReport called with:', report);
+                console.log('🔍 DEBUG: report.driveUrl:', report.driveUrl);
+                console.log('🔍 DEBUG: report.reportType:', report.reportType);
+                console.log('🔍 DEBUG: report.isLinkReport:', report.isLinkReport);
+                
+                // ALWAYS show generating popup for ANY report that has a driveUrl (prioritize over reportType)
+                if (report.driveUrl && report.driveUrl.trim() !== '') {
+                    console.log('🔍 DEBUG: Using driveUrl path');
+                    // Show generating popup like Entity Profile
+                    const loadingModal = document.createElement('div');
+                    loadingModal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10002;';
+                    loadingModal.innerHTML = `
+                        <div style="background: white; padding: 30px; border-radius: 12px; text-align: center;">
+                            <div style="font-size: 2rem; margin-bottom: 10px;">📄</div>
+                            <div style="color: #333; font-weight: 600;">Opening Document...</div>
+                            <div style="color: #666; font-size: 0.9rem; margin-top: 5px;">Please wait</div>
+                        </div>
+                    `;
+                    document.body.appendChild(loadingModal);
+                    
+                    // Add a small delay to show the modal, then open the URL
+                    setTimeout(() => {
+                        try {
+                            const popup = window.open(report.driveUrl, '_blank');
+                            loadingModal.remove();
+                            
+                            // Check if popup was blocked
+                            if (!popup || popup.closed || typeof popup.closed == 'undefined') {
+                                // Show error popup instead of generic browser message
+                                const errorModal = document.createElement('div');
+                                errorModal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10003;';
+                                errorModal.innerHTML = `
+                                    <div style="background: white; padding: 30px; border-radius: 12px; text-align: center; max-width: 400px;">
+                                        <div style="font-size: 2rem; margin-bottom: 10px; color: #ef4444;">❌</div>
+                                        <div style="color: #333; font-weight: 600; margin-bottom: 10px;">Popup Blocked</div>
+                                        <div style="color: #666; font-size: 0.9rem; margin-bottom: 20px;">Please allow popups for this site and try again</div>
+                                        <div style="display: flex; gap: 10px; justify-content: center;">
+                                            <button onclick="window.open('${report.driveUrl}', '_blank'); this.closest('.modal-overlay').remove();" 
+                                                style="padding: 10px 20px; background: var(--orange); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                                                Try Again
+                                            </button>
+                                            <button onclick="this.closest('div[style*=\"position: fixed\"]').remove();" 
+                                                style="padding: 10px 20px; background: #e5e7eb; color: #333; border: none; border-radius: 6px; cursor: pointer;">
+                                                Close
+                                            </button>
+                                        </div>
+                                    </div>
+                                `;
+                                document.body.appendChild(errorModal);
+                            }
+                        } catch (error) {
+                            console.error('Error opening document:', error);
+                            loadingModal.remove();
+                            
+                            // Show error popup with the actual error
+                            const errorModal = document.createElement('div');
+                            errorModal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10003;';
+                            errorModal.innerHTML = `
+                                <div style="background: white; padding: 30px; border-radius: 12px; text-align: center; max-width: 400px;">
+                                    <div style="font-size: 2rem; margin-bottom: 10px; color: #ef4444;">❌</div>
+                                    <div style="color: #333; font-weight: 600; margin-bottom: 10px;">Document Access Failed</div>
+                                    <div style="color: #666; font-size: 0.9rem; margin-bottom: 20px;">Unable to open the document. Please check your permissions or try again later.</div>
+                                    <button onclick="this.closest('div[style*=\"position: fixed\"]').remove();" 
+                                        style="padding: 10px 20px; background: var(--orange); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                                        Close
+                                    </button>
+                                </div>
+                            `;
+                            document.body.appendChild(errorModal);
+                        }
+                    }, 800); // 800ms delay to show the loading modal
                     return;
                 }
                 
-                // Navigate to the OneGov Savings Report viewer
+                // Navigate to the OneGov Savings Report viewer (only if no driveUrl)
                 if (report.reportType === 'OneGov Monthly Savings') {
-                    // Use rowNum parameter to match what F06 expects
+                    console.log('🔍 DEBUG: Using reportType navigation path');
+                    // Use rowNum parameter to match what F05 expects
                     const url = `?page=savingsreport&rowNum=${report.rowNum}`;
-                    console.log(' Navigating to:', url);
+                    console.log('🔍 DEBUG: Navigating to:', url);
                     window.location.href = url;
                 } else {
+                    console.log('🔍 DEBUG: Using fallback alert');
                     alert(`Opening ${report.reportType} report (row ${report.rowNum})`);
                 }
             };
@@ -420,7 +490,7 @@
             // Link-based Report Card (when JSON is empty but Drive URL exists)
             const LinkReportCard = ({ report }) => {
                 return (
-                    <div className="report-card" onClick={() => openReport(report)} style={{cursor: 'pointer'}}>
+                    <div className="report-card" onClick={() => { console.log('🚨 LINK CARD CLICKED:', report); openReport(report); }} style={{cursor: 'pointer'}}>
                         <div className="report-card-header">
                             <div className="report-type">{report.reportType || 'Document'}</div>
                             <div className="report-period">{formatDate(report.timestamp)}</div>
@@ -482,7 +552,7 @@
                     : (data.reportingPeriod || formatDate(report.timestamp));
                 
                 return (
-                    <div className="report-card" onClick={() => openReport(report)}>
+                    <div className="report-card" onClick={() => { console.log('🚨 CARD CLICKED:', report); openReport(report); }}>
                         <div className="report-card-header">
                             <div className="report-type">{cardTitle}</div>
                             <div className="report-period">{cardSubtitle}</div>

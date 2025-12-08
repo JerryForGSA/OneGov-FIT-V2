@@ -4,7 +4,7 @@
 // This script processes report requests from the Reports sheet and generates
 // JSON outputs for various report types. Charts are rendered by the web app.
 //
-// VERSION: 3.1.0 - Updated column structure with Description column
+// VERSION: 3.2.0 - Added allEntities for template placeholders
 // 
 // REPORTS SHEET COLUMNS (A-M):
 //   A: Report Type
@@ -40,21 +40,19 @@ const REPORT_CONFIG = {
   // Reports sheet name
   REPORTS_SHEET_NAME: 'Reports',
   
-  // Column indices (0-based for array access) - UPDATED for new structure
+  // Column indices (0-based for array access)
   COLUMNS: {
     REPORT_TYPE: 0,           // A
-    DESCRIPTION: 1,           // B (NEW)
+    DESCRIPTION: 1,           // B
     DATA_LINK: 2,             // C
     JSON: 3,                  // D
-    IMAGE_1: 4,               // E
-    IMAGE_2: 5,               // F
-    DRIVE_URL: 6,             // G
-    CREATOR: 7,               // H
-    TIMESTAMP: 8,             // I
-    LEVEL1_REVIEWER: 9,       // J
-    LEVEL1_TIMESTAMP: 10,     // K
-    LEVEL2_REVIEWER: 11,      // L
-    LEVEL2_TIMESTAMP: 12      // M
+    DRIVE_URL: 4,             // E - Report URL
+    CREATOR: 5,               // F
+    TIMESTAMP: 6,             // G
+    LEVEL1_REVIEWER: 7,       // H
+    LEVEL1_TIMESTAMP: 8,      // I
+    LEVEL2_REVIEWER: 9,       // J
+    LEVEL2_TIMESTAMP: 10      // K
   },
   
   // Supported report types
@@ -109,7 +107,7 @@ function generateDiscountOffersReports() {
       return;
     }
     
-    const dataRange = reportsSheet.getRange(2, 1, lastRow - 1, 13);
+    const dataRange = reportsSheet.getRange(2, 1, lastRow - 1, 11);
     const data = dataRange.getValues();
     
     let processedCount = 0;
@@ -260,7 +258,7 @@ function generateMonthlyOneGovSavingsReport() {
       return;
     }
     
-    const dataRange = reportsSheet.getRange(2, 1, lastRow - 1, 13);
+    const dataRange = reportsSheet.getRange(2, 1, lastRow - 1, 11);
     const data = dataRange.getValues();
     
     let processedCount = 0;
@@ -463,6 +461,15 @@ function processOneGovSavingsData(rawData) {
   
   const overallDiscountRate = totalCPL > 0 ? ((totalCPL - totalPaid) / totalCPL * 100).toFixed(2) : 0;
   
+  // Track OEMs by month for detecting new OEMs
+  const oemsByMonth = {};
+  for (const t of transactions) {
+    if (!oemsByMonth[t.reportingPeriod]) {
+      oemsByMonth[t.reportingPeriod] = new Set();
+    }
+    oemsByMonth[t.reportingPeriod].add(t.oem);
+  }
+  
   return {
     summary: {
       totalSavings: totalSavings,
@@ -479,6 +486,7 @@ function processOneGovSavingsData(rawData) {
     byVendor: byVendor,
     byContract: byContract,
     transactions: transactions,
+    oemsByMonth: oemsByMonth,
     rawRowCount: rawData.length,
     validRowCount: validRows.length
   };
@@ -486,7 +494,7 @@ function processOneGovSavingsData(rawData) {
 
 /**
  * Build the complete JSON structure for OneGov Monthly Savings Report
- * FIXED: Proper array structure for savingsByOEM
+ * Version 3.2 - Added allEntities for template placeholders
  */
 function buildOneGovSavingsJSON(processedData) {
   const now = new Date();
@@ -542,13 +550,114 @@ function buildOneGovSavingsJSON(processedData) {
     ? `${periods[0]} - ${periods[periods.length - 1]}`
     : periods[0] || 'Unknown';
   
-  // Build the JSON structure - ensuring arrays are properly formed
+  // =========================================================================
+  // NEW: Build allEntities for template placeholders
+  // =========================================================================
+  
+  // Get ALL unique vendors from data (sorted alphabetically)
+  const allVendorsList = Object.keys(processedData.byVendor).sort();
+  const allVendorsFormatted = formatListWithAnd(allVendorsList);
+  
+  // Get ALL unique OEMs from data (sorted alphabetically)
+  const allOEMsList = Object.keys(processedData.byOEM).sort();
+  const allOEMsFormatted = formatListWithAnd(allOEMsList);
+  
+  // Get ALL unique contracts
+  const allContractsList = Object.keys(processedData.byContract).sort();
+  const allContractsFormatted = allContractsList.join(', ');
+  
+  // Detect NEW OEMs this month (only appear in last reporting period)
+  const lastPeriod = periods[periods.length - 1] || 'Unknown';
+  const previousPeriods = periods.slice(0, -1);
+  
+  const oemsInPreviousPeriods = new Set();
+  for (const period of previousPeriods) {
+    if (processedData.oemsByMonth && processedData.oemsByMonth[period]) {
+      for (const oem of processedData.oemsByMonth[period]) {
+        oemsInPreviousPeriods.add(oem);
+      }
+    }
+  }
+  
+  const oemsInLastPeriod = processedData.oemsByMonth?.[lastPeriod] || new Set();
+  const newOEMsThisMonth = [];
+  for (const oem of oemsInLastPeriod) {
+    if (!oemsInPreviousPeriods.has(oem)) {
+      newOEMsThisMonth.push(oem);
+    }
+  }
+  const newOEMsFormatted = formatListWithAnd(newOEMsThisMonth.sort());
+  
+  // Get current month stats (last period in range)
+  const currentMonthData = processedData.byMonth[lastPeriod] || { transactions: 0, savings: 0, cpl: 0, paid: 0 };
+  const currentMonthTransactionCount = currentMonthData.transactions;
+  const currentMonthSavings = currentMonthData.savings;
+  
+  // Get OEMs active in current month
+  const currentMonthOEMsList = Array.from(processedData.oemsByMonth?.[lastPeriod] || []).sort();
+  const currentMonthOEMsFormatted = formatListWithAnd(currentMonthOEMsList);
+  
+  // Get vendors active in current month
+  const currentMonthVendors = new Set();
+  for (const t of processedData.transactions) {
+    if (t.reportingPeriod === lastPeriod) {
+      currentMonthVendors.add(t.vendor);
+    }
+  }
+  const currentMonthVendorsList = Array.from(currentMonthVendors).sort();
+  const currentMonthVendorsFormatted = formatListWithAnd(currentMonthVendorsList);
+  
+  // =========================================================================
+  // Build the JSON structure
+  // =========================================================================
+  
   const reportJSON = {
     reportType: 'OneGov Monthly Savings',
-    reportVersion: '3.1',
+    reportVersion: '3.2',
     generatedAt: now.toISOString(),
     generatedBy: Session.getActiveUser().getEmail(),
     reportingPeriod: reportingPeriod,
+    
+    // NEW: All entities from source data (for template placeholders)
+    allEntities: {
+      vendors: {
+        list: allVendorsList,
+        formatted: allVendorsFormatted,
+        count: allVendorsList.length
+      },
+      oems: {
+        list: allOEMsList,
+        formatted: allOEMsFormatted,
+        count: allOEMsList.length
+      },
+      contracts: {
+        list: allContractsList,
+        formatted: allContractsFormatted,
+        count: allContractsList.length
+      },
+      newOEMsThisMonth: {
+        list: newOEMsThisMonth,
+        formatted: newOEMsFormatted,
+        count: newOEMsThisMonth.length,
+        period: lastPeriod
+      },
+      currentMonth: {
+        period: lastPeriod,
+        transactionCount: currentMonthTransactionCount,
+        savings: currentMonthSavings,
+        savingsFormatted: formatCurrencyCompact(currentMonthSavings),
+        oems: {
+          list: currentMonthOEMsList,
+          formatted: currentMonthOEMsFormatted,
+          count: currentMonthOEMsList.length
+        },
+        vendors: {
+          list: currentMonthVendorsList,
+          formatted: currentMonthVendorsFormatted,
+          count: currentMonthVendorsList.length
+        }
+      }
+    },
     
     // Configuration for web app
     config: {
@@ -577,7 +686,6 @@ function buildOneGovSavingsJSON(processedData) {
     
     financialOverview: {
       data: {
-        // FIXED: These are now clean arrays, not corrupted
         savingsByOEM: oemsSorted,
         savingsByMonth: monthsSorted
       },
@@ -703,6 +811,18 @@ function formatCurrencyCompact(value) {
   } else {
     return sign + '$' + absValue.toFixed(0);
   }
+}
+
+/**
+ * Format a list with "and" before the last item
+ * @param {Array} items - Array of strings
+ * @returns {string} Formatted string
+ */
+function formatListWithAnd(items) {
+  if (!items || items.length === 0) return 'N/A';
+  if (items.length === 1) return items[0];
+  if (items.length === 2) return items.join(' and ');
+  return items.slice(0, -1).join(', ') + ', and ' + items[items.length - 1];
 }
 
 // ============================================================================
@@ -1061,7 +1181,7 @@ function getReportsForWebApp() {
     return { reports: [] };
   }
   
-  const data = reportsSheet.getRange(2, 1, lastRow - 1, 13).getValues();
+  const data = reportsSheet.getRange(2, 1, lastRow - 1, 11).getValues();
   const reports = [];
   
   for (let i = 0; i < data.length; i++) {
@@ -1084,8 +1204,6 @@ function getReportsForWebApp() {
       description: row[REPORT_CONFIG.COLUMNS.DESCRIPTION],
       dataLink: row[REPORT_CONFIG.COLUMNS.DATA_LINK],
       json: parsedJson,
-      image1: row[REPORT_CONFIG.COLUMNS.IMAGE_1],
-      image2: row[REPORT_CONFIG.COLUMNS.IMAGE_2],
       driveUrl: row[REPORT_CONFIG.COLUMNS.DRIVE_URL],
       creator: row[REPORT_CONFIG.COLUMNS.CREATOR],
       timestamp: row[REPORT_CONFIG.COLUMNS.TIMESTAMP],
@@ -1112,7 +1230,7 @@ function getReportByRow(rowNum) {
     return { error: 'Reports sheet not found' };
   }
   
-  const row = reportsSheet.getRange(rowNum, 1, 1, 13).getValues()[0];
+  const row = reportsSheet.getRange(rowNum, 1, 1, 11).getValues()[0];
   
   let parsedJson = null;
   const jsonStr = row[REPORT_CONFIG.COLUMNS.JSON];
@@ -1130,8 +1248,6 @@ function getReportByRow(rowNum) {
     description: row[REPORT_CONFIG.COLUMNS.DESCRIPTION],
     dataLink: row[REPORT_CONFIG.COLUMNS.DATA_LINK],
     json: parsedJson,
-    image1: row[REPORT_CONFIG.COLUMNS.IMAGE_1],
-    image2: row[REPORT_CONFIG.COLUMNS.IMAGE_2],
     driveUrl: row[REPORT_CONFIG.COLUMNS.DRIVE_URL],
     creator: row[REPORT_CONFIG.COLUMNS.CREATOR],
     timestamp: row[REPORT_CONFIG.COLUMNS.TIMESTAMP]
@@ -1139,20 +1255,14 @@ function getReportByRow(rowNum) {
 }
 
 /**
- * Update report after export (save image URLs and drive URL) - UPDATED
+ * Update report after export (save drive URL)
  */
-function updateReportAfterExport(rowNum, image1Url, image2Url, driveUrl) {
+function updateReportAfterExport(rowNum, driveUrl) {
   try {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const reportsSheet = ss.getSheetByName(REPORT_CONFIG.REPORTS_SHEET_NAME);
     
-    // Column E (5) = Image 1, Column F (6) = Image 2, Column G (7) = Drive URL
-    if (image1Url) {
-      reportsSheet.getRange(rowNum, REPORT_CONFIG.COLUMNS.IMAGE_1 + 1).setValue(image1Url);
-    }
-    if (image2Url) {
-      reportsSheet.getRange(rowNum, REPORT_CONFIG.COLUMNS.IMAGE_2 + 1).setValue(image2Url);
-    }
+    // Column E = Drive URL
     if (driveUrl) {
       reportsSheet.getRange(rowNum, REPORT_CONFIG.COLUMNS.DRIVE_URL + 1).setValue(driveUrl);
     }

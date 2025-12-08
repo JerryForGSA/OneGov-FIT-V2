@@ -3586,7 +3586,7 @@ function getSimpleReports() {
       var description = row[1];    // B: Report Description
       var dataLink = row[2];       // C: Report Data Link
       var jsonStr = row[3];        // D: Report JSON
-      var driveUrl = row[4] || row[2];  // E: Report Drive URL (fallback to C: Data Link)
+      var driveUrl = row[4] || '';       // E: Report Drive URL (no fallback to CSV data link)
       var creator = row[5];        // F: Report Creator
       var timestamp = row[6];      // G: Report Timestamp
       
@@ -3628,8 +3628,9 @@ function getSimpleReports() {
         }
       }
       
-      // Check if this is a link-based report (no valid JSON but has drive URL or data link)
-      if (!parsedJson && (driveUrl || dataLink)) {
+      // Check if this is a link-based report (no valid JSON but has drive URL - NOT dataLink)
+      // dataLink (column C) is for CSV source data, not for opening reports
+      if (!parsedJson && driveUrl) {
         isLinkReport = true;
       }
       
@@ -3644,12 +3645,13 @@ function getSimpleReports() {
         reportType: reportType || 'Document',
         description: safeDescription,
         dataLink: dataLink || '',
-        driveUrl: driveUrl || dataLink || '',  // Use dataLink as fallback for driveUrl
+        driveUrl: driveUrl || '',  // Do NOT use dataLink as fallback - column E only
         creator: safeCreator,
         timestamp: safeTimestamp,
-        canView: !!(parsedJson || driveUrl || dataLink),
+        canView: !!(parsedJson || driveUrl),  // Remove dataLink from canView logic
         isLinkReport: isLinkReport,
-        reportData: reportData
+        reportData: reportData,
+        hasJson: !!parsedJson  // Add flag to indicate if JSON data exists
       };
       
       Logger.log('getSimpleReports: Built report #' + rowNum + ': type=' + report.reportType + ', hasData=' + (Object.keys(reportData).length > 0));
@@ -3908,6 +3910,37 @@ function generateAndEmailEntityReport(entityData, reportType, letterhead, format
     
   } catch (error) {
     console.error('Error emailing entity report:', error);
+    return { success: false, error: error.toString() };
+  }
+}
+
+/**
+ * Update Report Document URL in Reports Sheet Column E
+ * Called after generating a document to save the URL
+ * @param {number} rowNum - Row number in Reports sheet
+ * @param {string} docUrl - Google Drive URL of generated document
+ * @returns {Object} Success status
+ */
+function updateReportDocumentUrl(rowNum, docUrl) {
+  try {
+    console.log(`📝 Updating report document URL for row ${rowNum}: ${docUrl}`);
+    
+    const ss = SpreadsheetApp.openById('18h0TYPAPiWCKPB09v7kChoICQOELJSLBfwaZwpYheXE');
+    const reportsSheet = ss.getSheetByName('Reports');
+    
+    if (!reportsSheet) {
+      return { success: false, error: 'Reports sheet not found' };
+    }
+    
+    // Column E (index 5 in 1-based) for Drive URL
+    reportsSheet.getRange(rowNum, 5).setValue(docUrl);
+    SpreadsheetApp.flush();
+    
+    console.log(`✅ Report URL updated successfully in row ${rowNum}, column E`);
+    return { success: true, docUrl: docUrl };
+    
+  } catch (error) {
+    console.error('Error updating report document URL:', error);
     return { success: false, error: error.toString() };
   }
 }
