@@ -755,6 +755,7 @@ function buildPlaceholderData(entityData) {
   placeholders.FISCAL_YEAR = FY;
   placeholders.FY = FY2;
   placeholders.REPORT_DATE = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'MMMM d, yyyy');
+  placeholders['CURRENT_MONTH.PERIOD_FULL'] = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'MMMM yyyy');
   
   // -------------------------------------------------------------------------
   // I. Company Name & Website (Column AC + AD)

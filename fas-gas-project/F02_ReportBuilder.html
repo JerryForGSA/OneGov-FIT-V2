@@ -163,31 +163,11 @@
             overflow: hidden;
             transition: all 0.3s ease;
             cursor: pointer;
-            position: relative;
         }
         
         .report-card:hover {
             transform: translateY(-4px);
             box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-            outline: 2px solid var(--orange);
-        }
-        
-        .report-card::after {
-            content: '↗️';
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            font-size: 1rem;
-            background: white;
-            padding: 4px;
-            border-radius: 4px;
-            z-index: 10;
-        }
-        
-        .report-card:hover::after {
-            opacity: 0.8;
         }
         
         .report-card-header {
@@ -420,33 +400,253 @@
             };
             
             const openReport = (report) => {
-                // If any report has a driveUrl, open it in a new tab
-                if (report.driveUrl) {
-                    window.open(report.driveUrl, '_blank');
+                console.log('🔍 DEBUG: openReport called with:', report);
+                console.log('🔍 DEBUG: report.driveUrl:', report.driveUrl);
+                console.log('🔍 DEBUG: report.reportType:', report.reportType);
+                console.log('🔍 DEBUG: report.isLinkReport:', report.isLinkReport);
+                
+                // ALWAYS show generating popup for ANY report that has a driveUrl (prioritize over reportType)
+                if (report.driveUrl && report.driveUrl.trim() !== '') {
+                    console.log('🔍 DEBUG: Using driveUrl path');
+                    // Show generating popup like Entity Profile
+                    const loadingModal = document.createElement('div');
+                    loadingModal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10002;';
+                    loadingModal.innerHTML = `
+                        <div style="background: white; padding: 30px; border-radius: 12px; text-align: center;">
+                            <div style="font-size: 2rem; margin-bottom: 10px;">📄</div>
+                            <div style="color: #333; font-weight: 600;">Opening Document...</div>
+                            <div style="color: #666; font-size: 0.9rem; margin-top: 5px;">Please wait</div>
+                        </div>
+                    `;
+                    document.body.appendChild(loadingModal);
+                    
+                    // Add a small delay to show the modal, then open the URL
+                    setTimeout(() => {
+                        try {
+                            const popup = window.open(report.driveUrl, '_blank');
+                            loadingModal.remove();
+                            
+                            // Check if popup was blocked
+                            if (!popup || popup.closed || typeof popup.closed == 'undefined') {
+                                // Show error popup instead of generic browser message
+                                const errorModal = document.createElement('div');
+                                errorModal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10003;';
+                                errorModal.innerHTML = `
+                                    <div style="background: white; padding: 30px; border-radius: 12px; text-align: center; max-width: 400px;">
+                                        <div style="font-size: 2rem; margin-bottom: 10px; color: #ef4444;">❌</div>
+                                        <div style="color: #333; font-weight: 600; margin-bottom: 10px;">Popup Blocked</div>
+                                        <div style="color: #666; font-size: 0.9rem; margin-bottom: 20px;">Please allow popups for this site and try again</div>
+                                        <div style="display: flex; gap: 10px; justify-content: center;">
+                                            <button onclick="window.open('${report.driveUrl}', '_blank'); this.closest('.modal-overlay').remove();" 
+                                                style="padding: 10px 20px; background: var(--orange); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                                                Try Again
+                                            </button>
+                                            <button onclick="this.closest('div[style*=\"position: fixed\"]').remove();" 
+                                                style="padding: 10px 20px; background: #e5e7eb; color: #333; border: none; border-radius: 6px; cursor: pointer;">
+                                                Close
+                                            </button>
+                                        </div>
+                                    </div>
+                                `;
+                                document.body.appendChild(errorModal);
+                            }
+                        } catch (error) {
+                            console.error('Error opening document:', error);
+                            loadingModal.remove();
+                            
+                            // Show error popup with the actual error
+                            const errorModal = document.createElement('div');
+                            errorModal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10003;';
+                            errorModal.innerHTML = `
+                                <div style="background: white; padding: 30px; border-radius: 12px; text-align: center; max-width: 400px;">
+                                    <div style="font-size: 2rem; margin-bottom: 10px; color: #ef4444;">❌</div>
+                                    <div style="color: #333; font-weight: 600; margin-bottom: 10px;">Document Access Failed</div>
+                                    <div style="color: #666; font-size: 0.9rem; margin-bottom: 20px;">Unable to open the document. Please check your permissions or try again later.</div>
+                                    <button onclick="this.closest('div[style*=\"position: fixed\"]').remove();" 
+                                        style="padding: 10px 20px; background: var(--orange); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                                        Close
+                                    </button>
+                                </div>
+                            `;
+                            document.body.appendChild(errorModal);
+                        }
+                    }, 800); // 800ms delay to show the loading modal
                     return;
                 }
                 
-                // If it has a dataLink (fallback), open that
-                if (report.dataLink) {
-                    window.open(report.dataLink, '_blank');
-                    return;
-                }
+                // Generate document using Google Doc template
+                console.log('🔍 DEBUG: No document URL found, generating from JSON');
+                generateReportDocument(report);
+            };
+            
+            // Generate report document from JSON using Google Doc templates
+            const generateReportDocument = (report) => {
+                console.log('🔄 Generating report document for:', report.reportType);
                 
-                // Navigate to the OneGov Savings Report viewer for reports with JSON data
-                if (report.reportType === 'OneGov Monthly Savings' && report.hasJson) {
-                    // Use rowNum parameter to match what F06 expects
-                    const url = `?page=savingsreport&rowNum=${report.rowNum}`;
-                    console.log(' Navigating to:', url);
-                    window.location.href = url;
+                // Show loading indicator while generating document
+                const loadingModal = document.createElement('div');
+                loadingModal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10002;';
+                loadingModal.innerHTML = `
+                    <div style="background: white; padding: 30px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 2rem; margin-bottom: 10px;">📄</div>
+                        <div style="color: #333; font-weight: 600;">Generating Document...</div>
+                        <div style="color: #666; font-size: 0.9rem; margin-top: 5px;">Creating from template</div>
+                    </div>
+                `;
+                
+                document.body.appendChild(loadingModal);
+                
+                // Call backend to generate document from template
+                google.script.run
+                    .withSuccessHandler((result) => {
+                        loadingModal.remove();
+                        
+                        if (result.success && result.documentUrl) {
+                            console.log('✅ Document generated successfully:', result.documentUrl);
+                            
+                            // Update the report object with the new URL
+                            report.driveUrl = result.documentUrl;
+                            
+                            // Show the document preview popup (like Entity Profile)
+                            showDocumentPreview(result.documentUrl, report);
+                        } else {
+                            console.error('❌ Document generation failed:', result.error);
+                            showErrorDialog('Document generation failed', result.error || 'Unknown error occurred');
+                        }
+                    })
+                    .withFailureHandler((error) => {
+                        loadingModal.remove();
+                        console.error('❌ Error calling backend:', error);
+                        showErrorDialog('Connection Failed', 'Unable to connect to server. Please try again.');
+                    })
+                    .generateReportDocument(report.rowNum);
+            };
+            
+            // Show document preview like Entity Profile with document content and action buttons
+            const showDocumentPreview = (documentUrl, report) => {
+                console.log('📄 Showing document preview for:', report.reportType);
+                
+                const modal = document.createElement('div');
+                modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 10002; padding: 20px;';
+                
+                const container = document.createElement('div');
+                container.style.cssText = 'background: white; width: 100%; max-width: 900px; height: 90vh; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;';
+                
+                // Create header
+                const header = document.createElement('div');
+                header.style.cssText = 'background: linear-gradient(135deg, #0a2240 0%, #144673 100%); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;';
+                
+                const title = document.createElement('h3');
+                title.style.cssText = 'margin: 0; font-size: 1.1rem;';
+                title.textContent = `${report.reportType} Preview`;
+                
+                const buttonContainer = document.createElement('div');
+                buttonContainer.style.cssText = 'display: flex; gap: 10px; align-items: center;';
+                
+                // Create buttons
+                const viewBtn = document.createElement('button');
+                viewBtn.style.cssText = 'background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 0.9rem;';
+                viewBtn.textContent = '🔍 View';
+                viewBtn.onclick = () => window.open(documentUrl, '_blank');
+                
+                const downloadBtn = document.createElement('button');
+                downloadBtn.style.cssText = 'background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 0.9rem;';
+                downloadBtn.textContent = '📥 Download';
+                downloadBtn.onclick = () => downloadDocument(documentUrl);
+                
+                const emailBtn = document.createElement('button');
+                emailBtn.style.cssText = 'background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 0.9rem;';
+                emailBtn.textContent = '📧 Email';
+                emailBtn.onclick = () => emailDocument(documentUrl, report.reportType);
+                
+                const closeBtn = document.createElement('button');
+                closeBtn.style.cssText = 'background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 10px; border-radius: 4px; cursor: pointer;';
+                closeBtn.textContent = '✕ Close';
+                closeBtn.onclick = () => modal.remove();
+                
+                buttonContainer.appendChild(viewBtn);
+                buttonContainer.appendChild(downloadBtn);
+                buttonContainer.appendChild(emailBtn);
+                buttonContainer.appendChild(closeBtn);
+                
+                header.appendChild(title);
+                header.appendChild(buttonContainer);
+                
+                // Create document content area
+                const contentArea = document.createElement('div');
+                contentArea.style.cssText = 'flex: 1; overflow: auto; padding: 0;';
+                
+                // Use Google Drive embed
+                const iframe = document.createElement('iframe');
+                iframe.style.cssText = 'width: 100%; height: 100%; border: none;';
+                // Extract document ID and use proper embed URL
+                const docIdMatch = documentUrl.match(/\/document\/d\/([a-zA-Z0-9-_]+)/);
+                if (docIdMatch) {
+                    iframe.src = `https://docs.google.com/document/d/${docIdMatch[1]}/preview`;
                 } else {
-                    alert(`No URL available for ${report.reportType} report (row ${report.rowNum})`);
+                    iframe.src = documentUrl;
                 }
+                
+                contentArea.appendChild(iframe);
+                
+                container.appendChild(header);
+                container.appendChild(contentArea);
+                modal.appendChild(container);
+                document.body.appendChild(modal);
+                
+                // Store reference for cleanup
+                window.currentDocumentPreview = modal;
+            };
+            
+            // Show error dialog
+            const showErrorDialog = (title, message) => {
+                const modal = document.createElement('div');
+                modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10003;';
+                
+                modal.innerHTML = `
+                    <div style="background: white; padding: 30px; border-radius: 12px; text-align: center; max-width: 400px;">
+                        <div style="font-size: 2rem; margin-bottom: 10px; color: #ef4444;">❌</div>
+                        <div style="color: #333; font-weight: 600; margin-bottom: 10px;">${title}</div>
+                        <div style="color: #666; font-size: 0.9rem; margin-bottom: 20px;">${message}</div>
+                        <button onclick="this.closest('div[style*=\"position: fixed\"]').remove();" 
+                            style="padding: 10px 20px; background: var(--orange); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                            Close
+                        </button>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+            };
+            
+            // Download document as PDF
+            window.downloadDocument = function(documentUrl) {
+                console.log('📥 Downloading document:', documentUrl);
+                // Extract document ID from URL and create PDF download link
+                const docIdMatch = documentUrl.match(/\/document\/d\/([a-zA-Z0-9-_]+)/);
+                if (docIdMatch) {
+                    const docId = docIdMatch[1];
+                    const pdfUrl = `https://docs.google.com/document/d/${docId}/export?format=pdf`;
+                    window.open(pdfUrl, '_blank');
+                } else {
+                    alert('Unable to download document. Please use the View Document option instead.');
+                }
+            };
+            
+            // Email document
+            window.emailDocument = function(documentUrl, reportType) {
+                console.log('📧 Emailing document:', reportType);
+                
+                const subject = encodeURIComponent(`${reportType} - OneGov FIT Market`);
+                const body = encodeURIComponent(`Please find the ${reportType} document at the following link:\n\n${documentUrl}\n\nGenerated by OneGov FIT Market`);
+                const mailtoLink = `mailto:?subject=${subject}&body=${body}`;
+                
+                window.location.href = mailtoLink;
             };
             
             // Link-based Report Card (when JSON is empty but Drive URL exists)
             const LinkReportCard = ({ report }) => {
                 return (
-                    <div className="report-card" onClick={() => openReport(report)} style={{cursor: 'pointer'}}>
+                    <div className="report-card" onClick={() => { console.log('🚨 LINK CARD CLICKED:', report); openReport(report); }} style={{cursor: 'pointer'}}>
                         <div className="report-card-header">
                             <div className="report-type">{report.reportType || 'Document'}</div>
                             <div className="report-period">{formatDate(report.timestamp)}</div>
@@ -508,7 +708,7 @@
                     : (data.reportingPeriod || formatDate(report.timestamp));
                 
                 return (
-                    <div className="report-card" onClick={() => openReport(report)}>
+                    <div className="report-card" onClick={() => { console.log('🚨 CARD CLICKED:', report); openReport(report); }}>
                         <div className="report-card-header">
                             <div className="report-type">{cardTitle}</div>
                             <div className="report-period">{cardSubtitle}</div>
