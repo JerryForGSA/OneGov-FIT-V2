@@ -373,9 +373,9 @@
             overflow: hidden;
             transition: all 0.3s ease;
             border: 1px solid rgba(0,0,0,0.05);
-            height: 480px;
-            max-height: 480px;
-            min-height: 480px;
+            height: 520px;
+            max-height: 520px;
+            min-height: 520px;
             position: relative;
             width: 100%;
             cursor: pointer;
@@ -457,7 +457,7 @@
 
         .entity-card-body {
             padding: 6px;
-            padding-bottom: 2px;
+            padding-bottom: 0px;
             flex: 1;
             overflow: hidden;
             display: flex;
@@ -2622,13 +2622,13 @@
                             display: 'grid', 
                             gridTemplateColumns: '1fr 1fr', 
                             gap: '8px', 
-                            marginTop: '8px',
+                            marginTop: '6px',
                             fontSize: '0.9rem',
-                            height: '280px',
-                            maxHeight: '280px'
+                            height: '320px',
+                            maxHeight: '320px'
                         }}>
                             {/* Top Left: SUM Tier Distribution */}
-                            <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb', height: '135px', display: 'flex', flexDirection: 'column'}}>
+                            <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb', height: '150px', display: 'flex', flexDirection: 'column'}}>
                                 <div style={{color: 'var(--blue)', fontWeight: 600, marginBottom: '3px', textAlign: 'center'}}>SUM Tier</div>
                                 <div style={{flex: 1, overflowY: 'auto'}}>
                                     <table style={{width: '100%', fontSize: '0.8rem'}}>
@@ -2678,7 +2678,7 @@
                             </div>
 
                             {/* Top Right: Contract Vehicles */}
-                            <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb', height: '135px', display: 'flex', flexDirection: 'column'}}>
+                            <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb', height: '150px', display: 'flex', flexDirection: 'column'}}>
                                 <div style={{color: 'var(--blue)', fontWeight: 600, marginBottom: '3px', textAlign: 'center'}}>Contract Vehicles</div>
                                 <div style={{flex: 1, overflowY: 'auto'}}>
                                     <table style={{width: '100%', fontSize: '0.85rem'}}>
@@ -2917,25 +2917,11 @@
                                     .sort((a, b) => b.total - a.total)
                                     .slice(0, 5);
                                 
-                                // Calculate total from the full JSON data for percentage calculation
-                                let jsonTotal = 0;
-                                if (entityType === 'Agencies') {
-                                    // Use FAS OEM data for total calculation - top_15
-                                    if (entity.fasOem?.top_15_oem_summaries) {
-                                        jsonTotal = Object.values(entity.fasOem.top_15_oem_summaries).reduce((sum, data) => 
-                                            sum + (data?.total_obligations || data?.total || 0), 0);
-                                    } else if (entity.bicOem?.top_15_manufacturers) {
-                                        // Fallback to BIC OEM
-                                        jsonTotal = entity.bicOem.top_15_manufacturers.reduce((sum, manufacturer) => 
-                                            sum + (manufacturer?.total || manufacturer?.value || manufacturer?.amount || 0), 0);
-                                    }
-                                } else if ((entityType === 'OEMs' || entityType === 'Vendors') && entity.fundingAgency?.top_10_agency_summaries) {
-                                    jsonTotal = Object.values(entity.fundingAgency.top_10_agency_summaries).reduce((sum, data) => 
-                                        sum + (typeof data === 'object' ? data.total || 0 : 0), 0);
-                                }
+                                // Calculate total from the entire data source for percentage calculation
+                                const jsonTotal = Object.values(firstTableData).reduce((sum, total) => sum + (total || 0), 0);
                                 
                                 return (
-                                    <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb', height: '135px', display: 'flex', flexDirection: 'column'}}>
+                                    <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb', height: '150px', display: 'flex', flexDirection: 'column'}}>
                                         <div style={{color: 'var(--blue)', fontWeight: 600, marginBottom: '3px', textAlign: 'center'}}>{firstTableTitle}</div>
                                         <div style={{flex: 1, overflowY: 'auto'}}>
                                             <table style={{width: '100%', fontSize: '0.85rem'}}>
@@ -2981,42 +2967,21 @@
                                     // Agency cards show Vendors table
                                     secondTableTitle = 'Vendors';
                                     
-                                    // The vendor data for agencies might be in fundingAgency column (misnamed)
-                                    // Check if fundingAgency actually contains vendor/reseller data
-                                    if (entity.fundingAgency?.top_10_vendor_summaries) {
-                                        console.log(`🏪 AGENCY->VENDOR: Found top_10_vendor_summaries in fundingAgency`);
-                                        Object.entries(entity.fundingAgency.top_10_vendor_summaries).forEach(([vendorName, data]) => {
-                                            const amount = typeof data === 'object' ? (data.total || data.amount || 0) : data || 0;
-                                            if (amount > 0) {
-                                                secondTableData[vendorName] = (secondTableData[vendorName] || 0) + amount;
-                                            }
-                                        });
-                                    } else if (entity.fundingAgency?.top_15_reseller_summaries) {
-                                        console.log(`🏪 AGENCY->VENDOR: Found top_15_reseller_summaries in fundingAgency`);
-                                        Object.entries(entity.fundingAgency.top_15_reseller_summaries).forEach(([vendorName, data]) => {
-                                            const amount = typeof data === 'object' ? (data.total || data.amount || 0) : data || 0;
-                                            if (amount > 0) {
-                                                secondTableData[vendorName] = (secondTableData[vendorName] || 0) + amount;
-                                            }
-                                        });
-                                    } else if (entity.resellers?.top_15_reseller_summaries) {
-                                        // Check for resellers (plural) that we added for agencies
-                                        console.log(`🏪 AGENCY->VENDOR: Found top_15_reseller_summaries in resellers (plural)`);
+                                    // Look for vendor data in resellers column first (correct location)
+                                    if (entity.resellers?.top_15_reseller_summaries) {
+                                        console.log(`🏪 AGENCY->VENDOR: Found top_15_reseller_summaries in resellers`);
                                         Object.entries(entity.resellers.top_15_reseller_summaries).forEach(([resellerName, data]) => {
                                             const amount = typeof data === 'object' ? (data.total || data.amount || 0) : data || 0;
                                             if (amount > 0) {
                                                 secondTableData[resellerName] = (secondTableData[resellerName] || 0) + amount;
                                             }
                                         });
-                                    } else if (entity.resellers) {
-                                        // Fallback to direct resellers object (plural)
-                                        console.log(`🏪 AGENCY->VENDOR: Trying direct resellers object (plural)`);
-                                        Object.entries(entity.resellers).forEach(([resellerName, data]) => {
-                                            if (!['summary', 'yearly_totals', 'source_file', 'topResellers'].includes(resellerName)) {
-                                                const amount = typeof data === 'object' ? (data.total || data.amount || 0) : data || 0;
-                                                if (amount > 0) {
-                                                    secondTableData[resellerName] = (secondTableData[resellerName] || 0) + amount;
-                                                }
+                                    } else if (entity.bicReseller?.top_15_resellers && Array.isArray(entity.bicReseller.top_15_resellers)) {
+                                        // Try BIC reseller data if FAS reseller not available
+                                        console.log(`🏪 AGENCY->VENDOR: Using BIC reseller data`);
+                                        entity.bicReseller.top_15_resellers.forEach((reseller) => {
+                                            if (reseller && reseller.vendor_name && reseller.total_sales) {
+                                                secondTableData[reseller.vendor_name] = (secondTableData[reseller.vendor_name] || 0) + reseller.total_sales;
                                             }
                                         });
                                     } else {
@@ -3148,39 +3113,11 @@
                                     .sort((a, b) => b.total - a.total)
                                     .slice(0, 5);
                                 
-                                // Calculate total from the full JSON data for percentage calculation
-                                let jsonTotal = 0;
-                                if (entityType === 'Agencies') {
-                                    if (entity.resellers?.top_15_reseller_summaries) {
-                                        jsonTotal = Object.values(entity.resellers.top_15_reseller_summaries).reduce((sum, data) => 
-                                            sum + (typeof data === 'object' ? (data.total || data.amount || 0) : data || 0), 0);
-                                    } else if (entity.resellers) {
-                                        jsonTotal = Object.values(entity.resellers).reduce((sum, data) => 
-                                            sum + (typeof data === 'object' ? (data.total || data.amount || 0) : data || 0), 0);
-                                    }
-                                } else if (entityType === 'OEMs') {
-                                    // OEMs use entity.resellers (plural)
-                                    if (entity.resellers?.top_15_reseller_summaries) {
-                                        jsonTotal = Object.values(entity.resellers.top_15_reseller_summaries).reduce((sum, data) => 
-                                            sum + (typeof data === 'object' ? (data.total || data.amount || 0) : data || 0), 0);
-                                    } else if (entity.resellers) {
-                                        jsonTotal = Object.values(entity.resellers).reduce((sum, data) => 
-                                            sum + (typeof data === 'object' ? (data.total || data.amount || 0) : data || 0), 0);
-                                    }
-                                } else if (entityType === 'Vendors') {
-                                    // Use FAS OEM data for Vendor OEM relationships - top_15
-                                    if (entity.fasOem?.top_15_oem_summaries) {
-                                        jsonTotal = Object.values(entity.fasOem.top_15_oem_summaries).reduce((sum, data) => 
-                                            sum + (data?.total_obligations || data?.total || 0), 0);
-                                    } else if (entity.bicOem?.top_15_manufacturers) {
-                                        // Fallback to BIC OEM
-                                        jsonTotal = entity.bicOem.top_15_manufacturers.reduce((sum, manufacturer) => 
-                                            sum + (manufacturer?.total || manufacturer?.value || manufacturer?.amount || 0), 0);
-                                    }
-                                }
+                                // Calculate total from the entire data source for percentage calculation
+                                const jsonTotal = Object.values(secondTableData).reduce((sum, total) => sum + (total || 0), 0);
                                 
                                 return (
-                                    <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb', height: '135px', display: 'flex', flexDirection: 'column'}}>
+                                    <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb', height: '150px', display: 'flex', flexDirection: 'column'}}>
                                         <div style={{color: 'var(--blue)', fontWeight: 600, marginBottom: '3px', textAlign: 'center'}}>{secondTableTitle}</div>
                                         <div style={{flex: 1, overflowY: 'auto'}}>
                                             <table style={{width: '100%', fontSize: '0.85rem'}}>

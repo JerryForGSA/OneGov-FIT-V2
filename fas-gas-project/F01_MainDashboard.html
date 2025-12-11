@@ -484,6 +484,8 @@
                 <li><a href="#" onclick="openReportBuilder()">📊 Builder</a></li>
                 <li><a href="#">📋 Analytics</a></li>
                 <li><a href="#">⚙️ Settings</a></li>
+                <li><a href="#" onclick="testAccessLogging()" style="background: #ff6b6b;">🧪 Test Log</a></li>
+                <li><a href="#" onclick="simpleTest()" style="background: #00ff00; color: black;">✅ SIMPLE TEST</a></li>
             </ul>
         </div>
     </nav>
@@ -528,6 +530,34 @@
             console.log('🔍 DEBUG: showEntityDetail called');
             console.log('🔍 DEBUG: Entity name:', entity?.name);
             console.log('🔍 DEBUG: Full entity object:', entity);
+            
+            // First test if google.script.run is available
+            console.log('🔍 DEBUG: google.script.run available?', typeof google?.script?.run);
+            
+            // Log access based on entity type
+            if (entity && entity.type) {
+                const entityType = entity.type.toLowerCase();
+                
+                if (entityType === 'oem') {
+                    console.log('📊 Attempting to log OEM access...');
+                    google.script.run
+                        .withSuccessHandler((result) => console.log('✅ OEM access logged successfully:', result))
+                        .withFailureHandler((error) => console.error('❌ OEM access logging failed:', error))
+                        .logOEMAccess();
+                } else if (entityType === 'agency') {
+                    console.log('📊 Attempting to log Agency access...');
+                    google.script.run
+                        .withSuccessHandler((result) => console.log('✅ Agency access logged successfully:', result))
+                        .withFailureHandler((error) => console.error('❌ Agency access logging failed:', error))
+                        .logAgencyAccess();
+                } else if (entityType === 'vendor') {
+                    console.log('📊 Attempting to log Vendor access...');
+                    google.script.run
+                        .withSuccessHandler((result) => console.log('✅ Vendor access logged successfully:', result))
+                        .withFailureHandler((error) => console.error('❌ Vendor access logging failed:', error))
+                        .logVendorAccess();
+                }
+            }
             
             // Store entity data for report generation
             window.currentEntityData = entity;
@@ -1270,6 +1300,9 @@
         // Open report builder function
         const openReportBuilder = () => {
             try {
+                // Log access to Report Generator
+                google.script.run.logReportGeneratorAccess();
+                
                 google.script.run
                     .withSuccessHandler((url) => {
                         if (url) {
@@ -1288,6 +1321,58 @@
                 console.error('Error in openReportBuilder:', error);
                 alert('Error opening Report Builder. Please try again.');
             }
+        };
+
+        // Log dashboard access when page loads
+        if (window.google?.script?.run) {
+            google.script.run
+                .withSuccessHandler((result) => {
+                    // Silent success
+                })
+                .withFailureHandler((error) => {
+                    console.error('Dashboard access logging failed:', error);
+                })
+                .logAppAccess();
+        }
+        
+        // Add test button for debugging
+        window.testAccessLogging = function() {
+            console.log('🧪 Testing access logging...');
+            google.script.run
+                .withSuccessHandler((result) => {
+                    console.log('✅ Test result:', result);
+                    alert(`Test ${result.success ? 'succeeded' : 'failed'}: ${result.message}`);
+                })
+                .withFailureHandler((error) => {
+                    console.error('❌ Test failed:', error);
+                    alert('Test failed: ' + error.toString());
+                })
+                .testLogFromClient();
+        };
+        
+        // SIMPLE TEST - Test basic web->Apps Script communication
+        window.simpleTest = function() {
+            alert('Testing web->script communication...');
+            
+            // Test 1: Basic communication
+            google.script.run
+                .withSuccessHandler((result) => {
+                    alert('SUCCESS: ' + result);
+                    
+                    // Test 2: Try to log to sheet
+                    google.script.run
+                        .withSuccessHandler((logResult) => {
+                            alert('LOG RESULT: ' + logResult);
+                        })
+                        .withFailureHandler((logError) => {
+                            alert('LOG ERROR: ' + logError.toString());
+                        })
+                        .simpleWebLogTest();
+                })
+                .withFailureHandler((error) => {
+                    alert('COMMUNICATION ERROR: ' + error.toString());
+                })
+                .alertTest();
         };
 
         // Render the app
