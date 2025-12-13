@@ -102,7 +102,7 @@ function getReportBuilderUrl() {
  */
 function getVersion283Info() {
   return {
-    version: '302',
+    version: '320',
     features: [
       'Enhanced Chart Buffet with Top 5/10/15 selection',
       'All Other category aggregation',
@@ -966,32 +966,103 @@ function exportReport(reportData) {
  * Export to Google Docs
  */
 function exportToGoogleDocs(cards) {
+  console.log('📄 exportToGoogleDocs function called');
+  console.log('📄 Cards parameter type:', typeof cards);
+  console.log('📄 Cards length:', cards?.length || 'undefined');
+  
+  if (!cards || !Array.isArray(cards) || cards.length === 0) {
+    console.error('📄 Invalid cards parameter:', cards);
+    return createResponse(false, null, 'Invalid or empty cards array');
+  }
+  
   try {
-    const doc = DocumentApp.create('OneGov FIT Market Report - ' + new Date().toLocaleDateString());
+    console.log('📄 Cards data preview:', cards.map(c => ({ 
+      title: c.title, 
+      includeChart: c.includeChart, 
+      includeTable: c.includeTable,
+      hasChartData: !!c.chartData,
+      hasTableData: !!c.tableData,
+      chartType: c.chartType
+    })));
+    
+    console.log('📄 Getting user email...');
+    const userEmail = Session.getActiveUser().getEmail();
+    console.log('📄 User email retrieved:', userEmail);
+    
+    const timestamp = new Date();
+    const dateStr = Utilities.formatDate(timestamp, Session.getScriptTimeZone(), 'MM/dd/yyyy');
+    
+    const doc = DocumentApp.create(`OneGov FIT Market Report - ${dateStr} - ${userEmail}`);
     const body = doc.getBody();
     
     body.appendParagraph('OneGov FIT Market Analytics Report')
       .setHeading(DocumentApp.ParagraphHeading.TITLE);
     
-    body.appendParagraph('Generated on: ' + new Date().toLocaleString())
+    body.appendParagraph(`Generated on: ${timestamp.toLocaleString()} by ${userEmail}`)
       .setHeading(DocumentApp.ParagraphHeading.SUBTITLE);
+    
+    // Extract metadata for logging
+    const entityType = cards[0]?.metadata?.entityType || 'unknown';
+    const columnId = cards[0]?.metadata?.columnId || 'unknown';
     
     cards.forEach((card, index) => {
       body.appendParagraph(`${index + 1}. ${card.title}`)
         .setHeading(DocumentApp.ParagraphHeading.HEADING1);
       
-      if (card.selected === 'chart' || card.selected === 'both') {
-        body.appendParagraph(`Chart: ${card.chart.title}`);
+      if (card.includeChart) {
+        body.appendParagraph(`Chart Type: ${card.chartType || 'Unknown'}`);
+        if (card.chartData?.labels) {
+          body.appendParagraph(`Data Labels: ${card.chartData.labels.join(', ')}`);
+          
+          // Add chart data from datasets
+          if (card.chartData?.datasets && card.chartData.datasets.length > 0) {
+            card.chartData.datasets.forEach((dataset, dsIndex) => {
+              body.appendParagraph(`Dataset ${dsIndex + 1}: ${dataset.label || 'Unnamed'}`);
+              if (dataset.data && Array.isArray(dataset.data)) {
+                body.appendParagraph(`Values: ${dataset.data.join(', ')}`);
+              }
+            });
+          }
+        }
       }
       
-      if (card.selected === 'table' || card.selected === 'both') {
-        body.appendParagraph(`Table: ${card.table.title}`);
-        // Add table data here
+      if (card.includeTable && card.tableData) {
+        body.appendParagraph('Table Data:');
+        
+        // Create actual table in Google Doc
+        if (card.tableData.headers && card.tableData.rows) {
+          const table = body.appendTable();
+          
+          // Add header row
+          const headerRow = table.appendTableRow();
+          card.tableData.headers.forEach(header => {
+            const cell = headerRow.appendTableCell(header);
+            cell.getChild(0).asText().setBold(true);
+          });
+          
+          // Add data rows (limit to 15 rows for readability)
+          card.tableData.rows.slice(0, 15).forEach(row => {
+            const dataRow = table.appendTableRow();
+            row.forEach(cellData => {
+              dataRow.appendTableCell(String(cellData || ''));
+            });
+          });
+          
+          // Style the table
+          table.setBorderWidth(1);
+        } else if (card.tableData.headers) {
+          body.appendParagraph(`Headers: ${card.tableData.headers.join(' | ')}`);
+        }
       }
+      
+      body.appendParagraph(''); // Add spacing
     });
     
     const url = doc.getUrl();
     doc.saveAndClose();
+    
+    // Log to Report Generator sheet
+    logReportGeneration('docs', entityType, columnId, 'chart', userEmail, url, timestamp);
     
     return createResponse(true, { url }, null);
   } catch (error) {
@@ -1004,11 +1075,107 @@ function exportToGoogleDocs(cards) {
  * Export to Google Sheets
  */
 function exportToGoogleSheets(cards) {
+  console.log('📊 exportToGoogleSheets function called');
+  console.log('📊 Cards parameter type:', typeof cards);
+  console.log('📊 Cards length:', cards?.length || 'undefined');
+  
+  if (!cards || !Array.isArray(cards) || cards.length === 0) {
+    console.error('📊 Invalid cards parameter:', cards);
+    return createResponse(false, null, 'Invalid or empty cards array');
+  }
+  
   try {
-    // Implementation for Google Sheets export
-    const sheet = SpreadsheetApp.create('OneGov FIT Market Report - ' + new Date().toLocaleDateString());
-    const url = sheet.getUrl();
-    return createResponse(true, { url }, null);
+    console.log('📊 Getting user email...');
+    const userEmail = Session.getActiveUser().getEmail();
+    console.log('📊 User email retrieved:', userEmail);
+    
+    const timestamp = new Date();
+    const dateStr = Utilities.formatDate(timestamp, Session.getScriptTimeZone(), 'MM/dd/yyyy');
+    const title = `OneGov FIT Market Report - ${dateStr} - ${userEmail}`;
+    
+    console.log('📊 Creating spreadsheet with title:', title);
+    const spreadsheet = SpreadsheetApp.create(title);
+    console.log('📊 Spreadsheet created with ID:', spreadsheet.getId());
+    
+    // Extract metadata for logging
+    const entityType = cards[0]?.metadata?.entityType || 'unknown';
+    const columnId = cards[0]?.metadata?.columnId || 'unknown';
+    
+    cards.forEach((card, index) => {
+      const sheetName = `${card.title}`.substring(0, 30); // Limit sheet name length
+      let sheet;
+      
+      if (index === 0) {
+        sheet = spreadsheet.getActiveSheet();
+        sheet.setName(sheetName);
+      } else {
+        sheet = spreadsheet.insertSheet(sheetName);
+      }
+      
+      // Add header info
+      sheet.getRange(1, 1).setValue('OneGov FIT Market Analytics Report');
+      sheet.getRange(2, 1).setValue(`Generated: ${timestamp.toLocaleString()}`);
+      sheet.getRange(3, 1).setValue(`Created by: ${userEmail}`);
+      sheet.getRange(4, 1).setValue(`Card: ${card.title}`);
+      
+      let currentRow = 6;
+      
+      if (card.includeTable && card.tableData) {
+        // Add table headers
+        if (card.tableData.headers) {
+          const headers = card.tableData.headers;
+          for (let i = 0; i < headers.length; i++) {
+            sheet.getRange(currentRow, i + 1).setValue(headers[i]);
+          }
+          currentRow++;
+          
+          // Add table data
+          if (card.tableData.rows) {
+            card.tableData.rows.forEach(row => {
+              for (let i = 0; i < row.length && i < headers.length; i++) {
+                sheet.getRange(currentRow, i + 1).setValue(row[i]);
+              }
+              currentRow++;
+            });
+          }
+        }
+      }
+      
+      if (card.includeChart && card.chartData) {
+        currentRow += 2; // Add spacing
+        sheet.getRange(currentRow, 1).setValue('Chart Data:');
+        currentRow++;
+        
+        if (card.chartData.labels) {
+          sheet.getRange(currentRow, 1).setValue('Labels');
+          sheet.getRange(currentRow, 2).setValue(card.chartData.labels.join(', '));
+          currentRow++;
+        }
+        
+        if (card.chartData.datasets) {
+          card.chartData.datasets.forEach((dataset, dsIndex) => {
+            sheet.getRange(currentRow, 1).setValue(`Dataset ${dsIndex + 1} (${dataset.label || 'Unnamed'})`);
+            if (dataset.data) {
+              sheet.getRange(currentRow, 2).setValue(dataset.data.join(', '));
+            }
+            currentRow++;
+          });
+        }
+      }
+    });
+    
+    console.log('📊 Getting spreadsheet URL...');
+    const url = spreadsheet.getUrl();
+    console.log('📊 Spreadsheet URL:', url);
+    
+    // Log to Report Generator sheet
+    console.log('📊 Logging to Report Generator sheet...');
+    logReportGeneration('sheets', entityType, columnId, 'table', userEmail, url, timestamp);
+    
+    console.log('📊 Creating response with URL:', url);
+    const response = createResponse(true, { url }, null);
+    console.log('📊 Response created:', response);
+    return response;
   } catch (error) {
     console.error('Error exporting to Google Sheets:', error);
     return createResponse(false, null, error.toString());
@@ -1019,14 +1186,151 @@ function exportToGoogleSheets(cards) {
  * Export to Google Slides
  */
 function exportToGoogleSlides(cards) {
+  console.log('🎬 exportToGoogleSlides function called');
+  console.log('🎬 Cards parameter type:', typeof cards);
+  console.log('🎬 Cards length:', cards?.length || 'undefined');
+  
+  if (!cards || !Array.isArray(cards) || cards.length === 0) {
+    console.error('🎬 Invalid cards parameter:', cards);
+    return createResponse(false, null, 'Invalid or empty cards array');
+  }
+  
   try {
-    // Implementation for Google Slides export
-    const presentation = SlidesApp.create('OneGov FIT Market Report - ' + new Date().toLocaleDateString());
+    console.log('🎬 Getting user email...');
+    const userEmail = Session.getActiveUser().getEmail();
+    console.log('🎬 User email retrieved:', userEmail);
+    
+    const timestamp = new Date();
+    const dateStr = Utilities.formatDate(timestamp, Session.getScriptTimeZone(), 'MM/dd/yyyy');
+    const title = `OneGov FIT Market Report - ${dateStr} - ${userEmail}`;
+    
+    console.log('🎬 Creating presentation with title:', title);
+    const presentation = SlidesApp.create(title);
+    console.log('🎬 Presentation created with ID:', presentation.getId());
+    
+    // Extract metadata for logging
+    const entityType = cards[0]?.metadata?.entityType || 'unknown';
+    const columnId = cards[0]?.metadata?.columnId || 'unknown';
+    
+    // Get the default slide and update it as title slide
+    const slides = presentation.getSlides();
+    const titleSlide = slides[0];
+    
+    // Add title slide content
+    const titleLayout = SlidesApp.PredefinedLayout.TITLE_AND_BODY;
+    titleSlide.getShapes().forEach(shape => shape.remove()); // Clear existing content
+    
+    const titleShape = titleSlide.insertTextBox('OneGov FIT Market Analytics Report');
+    titleShape.getText().getTextStyle().setFontSize(24).setBold(true);
+    titleShape.setTop(100).setLeft(50).setWidth(600).setHeight(100);
+    
+    const subtitleShape = titleSlide.insertTextBox(`Generated: ${timestamp.toLocaleString()}\nCreated by: ${userEmail}\nEntity Type: ${entityType}\nColumn: ${columnId}`);
+    subtitleShape.getText().getTextStyle().setFontSize(14);
+    subtitleShape.setTop(200).setLeft(50).setWidth(600).setHeight(150);
+    
+    // Add slides for each card
+    cards.forEach((card, index) => {
+      const slide = presentation.appendSlide(SlidesApp.PredefinedLayout.TITLE_AND_BODY);
+      
+      // Add title
+      const titleBox = slide.insertTextBox(card.title);
+      titleBox.getText().getTextStyle().setFontSize(18).setBold(true);
+      titleBox.setTop(50).setLeft(50).setWidth(600).setHeight(80);
+      
+      let content = '';
+      
+      if (card.includeChart) {
+        content += `Chart Type: ${card.chartType || 'Unknown'}\n`;
+        if (card.chartData?.labels) {
+          content += `Data Points: ${card.chartData.labels.length}\n`;
+          content += `Labels: ${card.chartData.labels.slice(0, 5).join(', ')}${card.chartData.labels.length > 5 ? '...' : ''}\n`;
+          
+          // Add dataset information
+          if (card.chartData?.datasets && card.chartData.datasets.length > 0) {
+            card.chartData.datasets.forEach((dataset, dsIndex) => {
+              content += `Dataset ${dsIndex + 1}: ${dataset.label || 'Unnamed'}\n`;
+              if (dataset.data && Array.isArray(dataset.data)) {
+                content += `Values: ${dataset.data.slice(0, 5).join(', ')}${dataset.data.length > 5 ? '...' : ''}\n`;
+              }
+            });
+          }
+        }
+      }
+      
+      if (card.includeTable && card.tableData) {
+        content += `\nTable Data:\n`;
+        if (card.tableData.headers) {
+          content += `Columns: ${card.tableData.headers.join(' | ')}\n`;
+        }
+        if (card.tableData.rows) {
+          content += `Rows: ${card.tableData.rows.length}\n`;
+        }
+      }
+      
+      if (!content) {
+        content = 'No chart or table data available for this card.';
+      }
+      
+      const contentBox = slide.insertTextBox(content);
+      contentBox.getText().getTextStyle().setFontSize(12);
+      contentBox.setTop(150).setLeft(50).setWidth(600).setHeight(350);
+    });
+    
+    console.log('🎬 Getting presentation URL...');
     const url = presentation.getUrl();
-    return createResponse(true, { url }, null);
+    console.log('🎬 Presentation URL:', url);
+    
+    // Log to Report Generator sheet
+    console.log('🎬 Logging to Report Generator sheet...');
+    logReportGeneration('slides', entityType, columnId, 'chart', userEmail, url, timestamp);
+    
+    console.log('🎬 Creating response with URL:', url);
+    const response = createResponse(true, { url }, null);
+    console.log('🎬 Response created:', response);
+    return response;
   } catch (error) {
     console.error('Error exporting to Google Slides:', error);
     return createResponse(false, null, error.toString());
+  }
+}
+
+/**
+ * Log report generation to the Report Generator sheet
+ * Key    Type    column    chart    Created By    url    Generation Timestamp
+ */
+function logReportGeneration(type, entityType, columnId, chart, createdBy, url, timestamp) {
+  try {
+    const ss = SpreadsheetApp.openById('1sE1N0nnqFh_EWN4konURXLP2bEj0rqF3JIyOnpPmWJU');
+    const reportSheet = ss.getSheetByName('Report Generator');
+    
+    if (!reportSheet) {
+      console.error('Report Generator sheet not found');
+      return;
+    }
+    
+    // Generate key: type_column_MM/DD/YY_email
+    const dateKey = Utilities.formatDate(timestamp, Session.getScriptTimeZone(), 'MM/dd/yy');
+    const emailPrefix = createdBy.split('@')[0]; // Get part before @
+    const key = `${type}_${columnId}_${dateKey}_${emailPrefix}`;
+    
+    // Prepare row data: Key, Type, column, chart, Created By, url, Generation Timestamp
+    const rowData = [
+      key,
+      type,
+      columnId,
+      chart,
+      createdBy,
+      url,
+      timestamp.toLocaleString()
+    ];
+    
+    // Add to next available row
+    reportSheet.appendRow(rowData);
+    
+    console.log(`📊 Logged report generation: ${key} for ${createdBy}`);
+    
+  } catch (error) {
+    console.error('Error logging report generation:', error);
   }
 }
 

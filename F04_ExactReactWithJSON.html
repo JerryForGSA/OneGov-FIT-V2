@@ -6032,6 +6032,172 @@
         window.prevDetailSlide = prevDetailSlide;
 
         // Report Builder View Component
+        // Processing modal for export operations
+        const showProcessingModal = (title, message) => {
+            const modal = document.createElement('div');
+            modal.id = 'processing-modal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.6);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10001;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            `;
+            
+            modal.innerHTML = `
+                <div style="
+                    background: white;
+                    border-radius: 12px;
+                    padding: 30px;
+                    max-width: 350px;
+                    width: 90%;
+                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+                    text-align: center;
+                ">
+                    <div style="
+                        width: 40px;
+                        height: 40px;
+                        border: 4px solid #e5e7eb;
+                        border-left: 4px solid #3b82f6;
+                        border-radius: 50%;
+                        animation: spin 1s linear infinite;
+                        margin: 0 auto 20px auto;
+                    "></div>
+                    <h3 style="
+                        margin: 0 0 10px 0;
+                        font-size: 18px;
+                        font-weight: 600;
+                        color: #1f2937;
+                    ">${title}</h3>
+                    <p style="
+                        margin: 0;
+                        color: #6b7280;
+                        font-size: 14px;
+                        line-height: 1.5;
+                    ">${message}</p>
+                </div>
+            `;
+            
+            // Add CSS animation
+            if (!document.querySelector('#spinner-css')) {
+                const style = document.createElement('style');
+                style.id = 'spinner-css';
+                style.textContent = '@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }';
+                document.head.appendChild(style);
+            }
+            
+            document.body.appendChild(modal);
+            return modal;
+        };
+        
+        const hideProcessingModal = () => {
+            const modal = document.getElementById('processing-modal');
+            if (modal) {
+                modal.remove();
+            }
+        };
+
+        // Styled notification modal function
+        const showNotificationModal = (title, message, type = 'info') => {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            `;
+            
+            const typeStyles = {
+                error: { icon: '❌', color: '#dc2626', bgColor: '#fef2f2', borderColor: '#fecaca' },
+                warning: { icon: '⚠️', color: '#d97706', bgColor: '#fffbeb', borderColor: '#fed7aa' },
+                success: { icon: '✅', color: '#059669', bgColor: '#ecfdf5', borderColor: '#a7f3d0' },
+                info: { icon: 'ℹ️', color: '#2563eb', bgColor: '#eff6ff', borderColor: '#bfdbfe' }
+            };
+            
+            const style = typeStyles[type] || typeStyles.info;
+            
+            modal.innerHTML = `
+                <div style="
+                    background: white;
+                    border-radius: 12px;
+                    padding: 0;
+                    max-width: 400px;
+                    width: 90%;
+                    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+                    overflow: hidden;
+                ">
+                    <div style="
+                        background: ${style.bgColor};
+                        border-bottom: 1px solid ${style.borderColor};
+                        padding: 16px 20px;
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                    ">
+                        <span style="font-size: 20px;">${style.icon}</span>
+                        <h3 style="
+                            margin: 0;
+                            font-size: 16px;
+                            font-weight: 600;
+                            color: ${style.color};
+                        ">${title}</h3>
+                    </div>
+                    <div style="padding: 20px;">
+                        <p style="
+                            margin: 0 0 20px 0;
+                            color: #374151;
+                            line-height: 1.5;
+                            font-size: 14px;
+                        ">${message}</p>
+                        <button onclick="
+                            event.stopPropagation(); 
+                            event.preventDefault(); 
+                            const modal = this.closest('[style*=\"position: fixed\"]'); 
+                            if (modal) { 
+                                modal.style.display = 'none'; 
+                                modal.remove(); 
+                            }" style="
+                            background: ${style.color};
+                            color: white;
+                            border: none;
+                            padding: 12px 20px;
+                            border-radius: 6px;
+                            font-size: 14px;
+                            font-weight: 600;
+                            cursor: pointer;
+                            width: 100%;
+                            transition: all 0.2s;
+                            outline: none;
+                        " onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                            OK
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Auto-remove after 10 seconds
+            setTimeout(() => {
+                if (modal.parentNode) {
+                    modal.remove();
+                }
+            }, 10000);
+        };
+
         const ReportBuilderView = () => {
             console.log('FRONTEND: ReportBuilderView component mounted');
             const [selections, setSelections] = React.useState({});
@@ -6248,8 +6414,267 @@
             ];
 
             // Load data from backend on component mount
+            // Export handler functions for Google Docs, Sheets, and Slides
+            const handleExportToGoogleDocs = async () => {
+                // Immediate logging to verify button click
+                console.log('🚀 DOCS EXPORT BUTTON CLICKED');
+                console.log('Export to Docs initiated:', {
+                    selectedEntityType,
+                    selectedColumn,
+                    cardDataLength: cardData.length,
+                    selectionsCount: Object.keys(selections).length
+                });
+                
+                const selectedCards = Object.entries(selections)
+                    .filter(([_, sel]) => sel && (sel.chart || sel.table))
+                    .map(([id, sel]) => {
+                        const card = cardData.find(c => c.id === id);
+                        // Ensure metadata reflects current column selection
+                        return {
+                            ...card,
+                            metadata: {
+                                ...card?.metadata,
+                                columnId: selectedColumn,
+                                entityType: selectedEntityType
+                            },
+                            includeChart: sel.chart,
+                            includeTable: sel.table
+                        };
+                    });
+                
+                if (selectedCards.length === 0) {
+                    console.log('❌ No cards selected for export');
+                    return;
+                }
+                
+                // Compact payload logging
+                console.log('📦 Exporting payload:', {
+                    selectedEntityType,
+                    selectedColumn,
+                    cardCount: selectedCards.length,
+                    cards: selectedCards.map(c => ({ 
+                        id: c.id, 
+                        title: c.title, 
+                        columnId: c.metadata?.columnId 
+                    }))
+                });
+                
+                setIsExporting(true);
+                showProcessingModal('Creating Document', 'Generating your Google Doc with the selected data...');
+                try {
+                    console.log('📞 Calling google.script.run.exportToGoogleDocs...');
+                    const result = await new Promise((resolve, reject) => {
+                        google.script.run
+                            .withSuccessHandler((result) => {
+                                console.log('📋 Backend response:', result);
+                                resolve(result);
+                            })
+                            .withFailureHandler((error) => {
+                                console.error('❌ Backend error:', error);
+                                reject(error);
+                            })
+                            .exportToGoogleDocs(selectedCards);
+                    });
+                    
+                    console.log('🔍 Result object:', result);
+                    if (result && result.success && result.data && result.data.url) {
+                        console.log('✅ Google Doc created successfully:', result.data.url);
+                        // Open in new tab without affecting current page
+                        const link = document.createElement('a');
+                        link.href = result.data.url;
+                        link.target = '_blank';
+                        link.rel = 'noopener noreferrer';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        showNotificationModal('Export Success', 'Google Doc created and opened in a new tab!', 'success');
+                    } else {
+                        console.log('⚠️ Unexpected result format:', result);
+                        showNotificationModal('Export Issue', 'Export completed but no document URL was received. Please try again.', 'warning');
+                    }
+                } catch (error) {
+                    console.error('❌ Error creating Google Doc:', error);
+                    showNotificationModal('Export Failed', 'Failed to create Google Doc: ' + error.toString(), 'error');
+                } finally {
+                    hideProcessingModal();
+                    console.log('🏁 Export process complete, setting isExporting to false');
+                    setIsExporting(false);
+                }
+            };
+            
+            const handleExportToGoogleSheets = async () => {
+                const selectedCards = Object.entries(selections)
+                    .filter(([_, sel]) => sel && (sel.chart || sel.table))
+                    .map(([id, sel]) => {
+                        const card = cardData.find(c => c.id === id);
+                        // Ensure metadata reflects current column selection
+                        return {
+                            ...card,
+                            metadata: {
+                                ...card?.metadata,
+                                columnId: selectedColumn,
+                                entityType: selectedEntityType
+                            },
+                            includeChart: sel.chart,
+                            includeTable: sel.table
+                        };
+                    });
+                
+                if (selectedCards.length === 0) return;
+                
+                // Minimal logging
+                console.log('Export to Sheets initiated:', {
+                    selectedEntityType,
+                    selectedColumn,
+                    cardCount: selectedCards.length,
+                    cards: selectedCards.map(c => ({ 
+                        id: c.id, 
+                        title: c.title, 
+                        columnId: c.metadata?.columnId 
+                    }))
+                });
+                
+                setIsExporting(true);
+                showProcessingModal('Creating Spreadsheet', 'Generating your Google Sheet with the selected data...');
+                try {
+                    const result = await new Promise((resolve, reject) => {
+                        google.script.run
+                            .withSuccessHandler(resolve)
+                            .withFailureHandler(reject)
+                            .exportToGoogleSheets(selectedCards);
+                    });
+                    
+                    console.log('🔍 Sheets Result object:', result);
+                    console.log('🔍 Sheets Result structure:', {
+                        hasResult: !!result,
+                        hasSuccess: result?.success,
+                        hasData: !!result?.data,
+                        hasUrl: !!result?.data?.url,
+                        dataKeys: result?.data ? Object.keys(result.data) : 'no data'
+                    });
+                    
+                    if (result && result.success && result.data && result.data.url) {
+                        console.log('✅ Google Sheet created successfully:', result.data.url);
+                        // Open in new tab without affecting current page
+                        const link = document.createElement('a');
+                        link.href = result.data.url;
+                        link.target = '_blank';
+                        link.rel = 'noopener noreferrer';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        showNotificationModal('Export Success', 'Google Sheet created and opened in a new tab!', 'success');
+                    } else {
+                        console.log('⚠️ Sheets unexpected result format:', result);
+                        showNotificationModal('Export Issue', 'Sheet export completed but no document URL was received. Please try again.', 'warning');
+                    }
+                } catch (error) {
+                    console.error('Error creating Google Sheet:', error);
+                    showNotificationModal('Export Failed', 'Failed to create Google Sheet: ' + error.toString(), 'error');
+                } finally {
+                    hideProcessingModal();
+                    setIsExporting(false);
+                }
+            };
+            
+            const handleExportToGoogleSlides = async () => {
+                // Immediate logging to verify button click
+                console.log('🚀 SLIDES EXPORT BUTTON CLICKED');
+                console.log('Export to Slides initiated:', {
+                    selectedEntityType,
+                    selectedColumn,
+                    cardDataLength: cardData.length,
+                    selectionsCount: Object.keys(selections).length
+                });
+                
+                const selectedCards = Object.entries(selections)
+                    .filter(([_, sel]) => sel && (sel.chart || sel.table))
+                    .map(([id, sel]) => {
+                        const card = cardData.find(c => c.id === id);
+                        // Ensure metadata reflects current column selection
+                        return {
+                            ...card,
+                            metadata: {
+                                ...card?.metadata,
+                                columnId: selectedColumn,
+                                entityType: selectedEntityType
+                            },
+                            includeChart: sel.chart,
+                            includeTable: sel.table
+                        };
+                    });
+                
+                if (selectedCards.length === 0) {
+                    console.log('❌ No cards selected for export');
+                    return;
+                }
+                
+                // Compact payload logging
+                console.log('📦 Exporting payload:', {
+                    selectedEntityType,
+                    selectedColumn,
+                    cardCount: selectedCards.length,
+                    cards: selectedCards.map(c => ({ 
+                        id: c.id, 
+                        title: c.title, 
+                        columnId: c.metadata?.columnId 
+                    }))
+                });
+                
+                setIsExporting(true);
+                showProcessingModal('Creating Presentation', 'Generating your Google Slides with the selected data...');
+                try {
+                    console.log('📞 Calling google.script.run.exportToGoogleSlides...');
+                    const result = await new Promise((resolve, reject) => {
+                        google.script.run
+                            .withSuccessHandler((result) => {
+                                console.log('📋 Backend response:', result);
+                                resolve(result);
+                            })
+                            .withFailureHandler((error) => {
+                                console.error('❌ Backend error:', error);
+                                reject(error);
+                            })
+                            .exportToGoogleSlides(selectedCards);
+                    });
+                    
+                    console.log('🔍 Slides Result object:', result);
+                    console.log('🔍 Slides Result structure:', {
+                        hasResult: !!result,
+                        hasSuccess: result?.success,
+                        hasData: !!result?.data,
+                        hasUrl: !!result?.data?.url,
+                        dataKeys: result?.data ? Object.keys(result.data) : 'no data'
+                    });
+                    
+                    if (result && result.success && result.data && result.data.url) {
+                        console.log('✅ Google Slides created successfully:', result.data.url);
+                        // Open in new tab without affecting current page
+                        const link = document.createElement('a');
+                        link.href = result.data.url;
+                        link.target = '_blank';
+                        link.rel = 'noopener noreferrer';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        showNotificationModal('Export Success', 'Google Slides created and opened in a new tab!', 'success');
+                    } else {
+                        console.log('⚠️ Slides unexpected result format:', result);
+                        showNotificationModal('Export Issue', 'Slides export completed but no document URL was received. Please try again.', 'warning');
+                    }
+                } catch (error) {
+                    console.error('❌ Error creating Google Slides:', error);
+                    showNotificationModal('Export Failed', 'Failed to create Google Slides: ' + error.toString(), 'error');
+                } finally {
+                    hideProcessingModal();
+                    console.log('🏁 Export process complete, setting isExporting to false');
+                    setIsExporting(false);
+                }
+            };
+
             React.useEffect(() => {
-                console.log('FRONTEND: useEffect triggered, about to load data');
+                console.log('🔄 REPORT BUILDER MOUNTED - Initial load');
+                console.log('Initial state:', { selectedEntityType, selectedColumn });
                 loadReportData();
                 loadFilterOptions();
             }, []);
@@ -6267,6 +6692,12 @@
             
             // Reload data when selection or filters change
             React.useEffect(() => {
+                console.log('📊 DATA RELOAD TRIGGERED by dependency change:', {
+                    selectedEntityType,
+                    selectedColumn,
+                    topN,
+                    reason: 'useEffect dependency change'
+                });
                 if (selectedEntityType) {
                     if (parentDeptFilter) {
                         loadFilteredData();
@@ -6512,7 +6943,10 @@
                                 }}>
                                     <select 
                                       value={selectedColumn}
-                                      onChange={(e) => setSelectedColumn(e.target.value)}
+                                      onChange={(e) => {
+                                          console.log('🔄 Column selection changed from', selectedColumn, 'to', e.target.value);
+                                          setSelectedColumn(e.target.value);
+                                      }}
                                       style={{
                                           padding: '8px 16px',
                                           borderRadius: '6px',
@@ -6711,6 +7145,7 @@
                             <div style={{display: 'flex', gap: '10px'}}>
                                 <button 
                                     disabled={Object.values(selections).filter(s => s?.chart || s?.table).length === 0}
+                                    onClick={() => handleExportToGoogleDocs()}
                                     style={{
                                         padding: '8px 16px',
                                         borderRadius: '6px',
@@ -6725,6 +7160,7 @@
                                 >📄 Docs</button>
                                 <button 
                                     disabled={Object.values(selections).filter(s => s?.chart || s?.table).length === 0}
+                                    onClick={() => handleExportToGoogleSheets()}
                                     style={{
                                         padding: '8px 16px',
                                         borderRadius: '6px',
@@ -6739,6 +7175,7 @@
                                 >📊 Sheets</button>
                                 <button 
                                     disabled={Object.values(selections).filter(s => s?.chart || s?.table).length === 0}
+                                    onClick={() => handleExportToGoogleSlides()}
                                     style={{
                                         padding: '8px 16px',
                                         borderRadius: '6px',
@@ -6788,7 +7225,7 @@
                                 gap: '24px'
                             }}>
                                 {cardData.map((card, index) => {
-                                    console.log(`CARD ${index} FULL DATA:`, JSON.stringify(card, null, 2));
+                                    // Removed verbose card logging for performance
                                     return (
                                         <ReportBuilderCard
                                             key={card.id}
