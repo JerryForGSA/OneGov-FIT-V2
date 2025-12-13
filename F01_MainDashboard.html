@@ -4,7 +4,8 @@
     <base target="_top">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>OneGov FIT Market - Main Dashboard</title>
+    <title>OneGov FIT Market - Main Dashboard v265</title>
+    <!-- Version 265: Fixed OEM/Vendor percentage calculations and table padding -->
     
     <!-- React 18 CDN -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -484,6 +485,10 @@
                 <li><a href="#" onclick="openReportBuilder()">📊 Builder</a></li>
                 <li><a href="#">📋 Analytics</a></li>
                 <li><a href="#">⚙️ Settings</a></li>
+                <li><a href="#" onclick="testAccessLogging()" style="background: #ff6b6b;">🧪 Test Log</a></li>
+                <li><a href="#" onclick="simpleTest()" style="background: #00ff00; color: black;">✅ SIMPLE TEST</a></li>
+                <li><a href="#" onclick="testEntityLogging()" style="background: #4CAF50; color: white;">🎯 Test Entity</a></li>
+                <li><a href="#" onclick="testConnection()" style="background: #2196F3; color: white;">🔌 Test Connect</a></li>
             </ul>
         </div>
     </nav>
@@ -503,6 +508,27 @@
         const { useState, useEffect } = React;
 
         console.log('React script starting...');
+        
+        // Test if google.script.run is available
+        if (typeof google !== 'undefined' && google.script && google.script.run) {
+            console.log('✅ google.script.run is available');
+            
+            // Immediate test on page load
+            console.log('🔍 Testing direct logging call...');
+            google.script.run
+                .withSuccessHandler((result) => {
+                    console.log('✅ Direct test success:', result);
+                })
+                .withFailureHandler((error) => {
+                    console.error('❌ Direct test failed:', error);
+                    console.error('Error details:', error.message, error.stack);
+                })
+                .testEntityAccess();
+        } else {
+            console.error('❌ google.script.run is NOT available');
+            console.log('Window object:', window);
+            console.log('Google object:', typeof google !== 'undefined' ? google : 'undefined');
+        }
         window.formatCurrencyShort = function(value) {
             if (value === null || value === undefined || isNaN(value)) return '$0';
             
@@ -528,6 +554,34 @@
             console.log('🔍 DEBUG: showEntityDetail called');
             console.log('🔍 DEBUG: Entity name:', entity?.name);
             console.log('🔍 DEBUG: Full entity object:', entity);
+            
+            // First test if google.script.run is available
+            console.log('🔍 DEBUG: google.script.run available?', typeof google?.script?.run);
+            
+            // Log access based on entity type
+            if (entity && entity.type) {
+                const entityType = entity.type.toLowerCase();
+                
+                if (entityType === 'oem') {
+                    console.log('📊 Attempting to log OEM access...');
+                    google.script.run
+                        .withSuccessHandler((result) => console.log('✅ OEM access logged successfully:', result))
+                        .withFailureHandler((error) => console.error('❌ OEM access logging failed:', error))
+                        .logOEMAccess();
+                } else if (entityType === 'agency') {
+                    console.log('📊 Attempting to log Agency access...');
+                    google.script.run
+                        .withSuccessHandler((result) => console.log('✅ Agency access logged successfully:', result))
+                        .withFailureHandler((error) => console.error('❌ Agency access logging failed:', error))
+                        .logAgencyAccess();
+                } else if (entityType === 'vendor') {
+                    console.log('📊 Attempting to log Vendor access...');
+                    google.script.run
+                        .withSuccessHandler((result) => console.log('✅ Vendor access logged successfully:', result))
+                        .withFailureHandler((error) => console.error('❌ Vendor access logging failed:', error))
+                        .logVendorAccess();
+                }
+            }
             
             // Store entity data for report generation
             window.currentEntityData = entity;
@@ -1110,12 +1164,97 @@
             };
 
             const updateFilter = (key, value) => {
+                console.log(`🔄 updateFilter called: key=${key}, value=${value}`);
                 setFilters(prev => ({ ...prev, [key]: value }));
+                
+                // Log view access when entity type filter changes
+                if (key === 'type' && value) {
+                    const viewName = value.charAt(0).toUpperCase() + value.slice(1);
+                    console.log(`📊 Logging view change to: ${viewName}`);
+                    
+                    try {
+                        if (value === 'oem') {
+                            console.log('🚀 Calling logOEMAccess...');
+                            google.script.run
+                                .withSuccessHandler((result) => {
+                                    console.log('✅ OEM view logged:', result);
+                                    alert('OEM view logged successfully');
+                                })
+                                .withFailureHandler((error) => {
+                                    console.error('❌ OEM view logging failed:', error);
+                                    alert(`Failed to log OEM view: ${error}`);
+                                })
+                                .logOEMAccess();
+                        } else if (value === 'agency') {
+                            console.log('🚀 Calling logAgencyAccess...');
+                            google.script.run
+                                .withSuccessHandler((result) => {
+                                    console.log('✅ Agency view logged:', result);
+                                    alert('Agency view logged successfully');
+                                })
+                                .withFailureHandler((error) => {
+                                    console.error('❌ Agency view logging failed:', error);
+                                    alert(`Failed to log Agency view: ${error}`);
+                                })
+                                .logAgencyAccess();
+                        } else if (value === 'vendor') {
+                            console.log('🚀 Calling logVendorAccess...');
+                            google.script.run
+                                .withSuccessHandler((result) => {
+                                    console.log('✅ Vendor view logged:', result);
+                                    alert('Vendor view logged successfully');
+                                })
+                                .withFailureHandler((error) => {
+                                    console.error('❌ Vendor view logging failed:', error);
+                                    alert(`Failed to log Vendor view: ${error}`);
+                                })
+                                .logVendorAccess();
+                        }
+                    } catch (err) {
+                        console.error('❌ Exception in view logging:', err);
+                        alert(`Exception: ${err.message}`);
+                    }
+                }
             };
 
             const openEntityDetail = (entityIndex) => {
+                console.log('🎯 openEntityDetail called with index:', entityIndex);
                 const entity = filteredEntities[entityIndex];
-                if (!entity) return;
+                console.log('🎯 Entity found:', entity);
+                if (!entity) {
+                    console.error('❌ No entity found at index:', entityIndex);
+                    return;
+                }
+
+                // Log entity access
+                const entityName = entity.name || entity.contractor || 'Unknown';
+                const entityType = entity.type || filters.type || 'Unknown';
+                
+                console.log(`📊 Logging entity card click: ${entityName} (${entityType})`);
+                console.log('Entity data:', entity);
+                console.log('Current filter type:', filters.type);
+                
+                // Capitalize entity type for logging
+                const logType = entityType.charAt(0).toUpperCase() + entityType.slice(1).toLowerCase();
+                
+                // Try logging with explicit error handling
+                try {
+                    console.log('🚀 Attempting to call logEntityAccess...');
+                    google.script.run
+                        .withSuccessHandler((result) => {
+                            console.log('✅ Entity access logged:', result);
+                            alert(`SUCCESS: Logged ${entityName}`);
+                        })
+                        .withFailureHandler((error) => {
+                            console.error('❌ Entity access logging failed:', error);
+                            alert(`ERROR: Failed to log ${entityName}: ${error}`);
+                        })
+                        .logEntityAccess(entityName, logType);
+                    console.log('📤 logEntityAccess call sent');
+                } catch (err) {
+                    console.error('❌ Exception calling logEntityAccess:', err);
+                    alert(`EXCEPTION: ${err.message}`);
+                }
 
                 // Import and use the entity detail modal
                 showEntityDetail(entity, entityIndex);
@@ -1131,7 +1270,24 @@
                                 <select 
                                     className="control-input"
                                     value={filters.type}
-                                    onChange={(e) => updateFilter('type', e.target.value)}
+                                    onChange={(e) => {
+                                        const value = e.target.value;
+                                        updateFilter('type', value);
+                                        
+                                        // Log view change directly here
+                                        if (value) {
+                                            console.log('Logging view change:', value);
+                                            const viewName = value.charAt(0).toUpperCase() + value.slice(1);
+                                            google.script.run
+                                                .withSuccessHandler((result) => {
+                                                    console.log('✅ View logged:', result);
+                                                })
+                                                .withFailureHandler((error) => {
+                                                    console.error('❌ Failed to log view:', error);
+                                                })
+                                                .logUserAccess(viewName);
+                                        }
+                                    }}
                                 >
                                     <option value="">All Types</option>
                                     <option value="agency">Agency</option>
@@ -1206,7 +1362,36 @@
                                     <div 
                                         key={entity.name || index}
                                         className="entity-card"
-                                        onClick={() => openEntityDetail(index)}
+                                        onClick={() => {
+                                            const entity = filteredEntities[index];
+                                            const entityName = entity.name || entity.contractor || 'Unknown';
+                                            const entityType = entity.type || filters.type || 'Unknown';
+                                            
+                                            // Log the entity access RIGHT HERE
+                                            console.log('Logging entity access:', entityName, entityType);
+                                            
+                                            // Test if google.script.run is available at this point
+                                            if (typeof google !== 'undefined' && google.script && google.script.run) {
+                                                console.log('google.script.run is available, calling logEntityAccess...');
+                                                try {
+                                                    google.script.run
+                                                        .withSuccessHandler((result) => {
+                                                            console.log('✅ Entity logged:', result);
+                                                        })
+                                                        .withFailureHandler((error) => {
+                                                            console.error('❌ Failed to log entity:', error);
+                                                        })
+                                                        .logEntityAccess(entityName, entityType.charAt(0).toUpperCase() + entityType.slice(1).toLowerCase());
+                                                } catch (e) {
+                                                    console.error('Exception calling logEntityAccess:', e);
+                                                }
+                                            } else {
+                                                console.error('google.script.run NOT available in onClick handler!');
+                                            }
+                                            
+                                            // Then open the detail modal
+                                            openEntityDetail(index);
+                                        }}
                                     >
                                         <div className="entity-name">{entity.name || 'Unknown Entity'}</div>
                                         <div className="entity-type">
@@ -1268,26 +1453,111 @@
         };
 
         // Open report builder function
-        const openReportBuilder = () => {
-            try {
-                google.script.run
-                    .withSuccessHandler((url) => {
-                        if (url) {
-                            window.location.href = url;
-                        } else {
-                            console.error('Failed to get Report Builder URL');
-                            alert('Unable to open Report Builder. Please try again.');
-                        }
-                    })
-                    .withFailureHandler((error) => {
-                        console.error('Error opening Report Builder:', error);
-                        alert('Error opening Report Builder: ' + error.message);
-                    })
-                    .getReportBuilderUrl();
-            } catch (error) {
-                console.error('Error in openReportBuilder:', error);
-                alert('Error opening Report Builder. Please try again.');
-            }
+          const openReportBuilder = () => {
+          // 1. First, log the access
+          google.script.run
+            .withSuccessHandler(() => {
+              console.log("Log success, now getting URL...");
+              // 2. ONLY AFTER logging succeeds, ask for the URL
+              google.script.run
+                .withSuccessHandler(url => {
+                  if (url) window.location.href = url;
+                })
+                .getReportBuilderUrl();
+            })
+            .withFailureHandler(err => {
+              console.error("Log failed, but proceeding anyway...");
+              // 3. Even if log fails, still try to get the URL so user isn't stuck
+              google.script.run
+                .withSuccessHandler(url => {
+                  if (url) window.location.href = url;
+                })
+                .getReportBuilderUrl();
+            })
+            .logReportGeneratorAccess();
+        }
+
+
+        // Log dashboard access when page loads
+        if (window.google?.script?.run) {
+            google.script.run
+                .withSuccessHandler((result) => {
+                    // Silent success
+                })
+                .withFailureHandler((error) => {
+                    console.error('Dashboard access logging failed:', error);
+                })
+                .logAppAccess();
+        }
+        
+        // Add test button for debugging
+        window.testAccessLogging = function() {
+            console.log('🧪 Testing access logging...');
+            google.script.run
+                .withSuccessHandler((result) => {
+                    console.log('✅ Test result:', result);
+                    alert(`Test ${result.success ? 'succeeded' : 'failed'}: ${result.message}`);
+                })
+                .withFailureHandler((error) => {
+                    console.error('❌ Test failed:', error);
+                    alert('Test failed: ' + error.toString());
+                })
+                .testLogFromClient();
+        };
+        
+        // SIMPLE TEST - Test basic web->Apps Script communication
+        window.testEntityLogging = function() {
+            console.log('🎯 Testing entity access logging...');
+            
+            google.script.run
+                .withSuccessHandler((result) => {
+                    console.log('✅ Entity test result:', result);
+                    alert('Entity logging test: ' + result);
+                })
+                .withFailureHandler((error) => {
+                    console.error('❌ Entity test failed:', error);
+                    alert('Entity test failed: ' + error.toString());
+                })
+                .testEntityAccess();
+        };
+        
+        window.testConnection = function() {
+            console.log('🔌 Testing simple connection...');
+            
+            google.script.run
+                .withSuccessHandler((result) => {
+                    console.log('✅ Connection test result:', result);
+                    alert('Connection test: ' + result);
+                })
+                .withFailureHandler((error) => {
+                    console.error('❌ Connection test failed:', error);
+                    alert('Connection test failed: ' + error.toString());
+                })
+                .simpleConnectionTest();
+        };
+
+        window.simpleTest = function() {
+            alert('Testing web->script communication...');
+            
+            // Test 1: Basic communication
+            google.script.run
+                .withSuccessHandler((result) => {
+                    alert('SUCCESS: ' + result);
+                    
+                    // Test 2: Try to log to sheet
+                    google.script.run
+                        .withSuccessHandler((logResult) => {
+                            alert('LOG RESULT: ' + logResult);
+                        })
+                        .withFailureHandler((logError) => {
+                            alert('LOG ERROR: ' + logError.toString());
+                        })
+                        .simpleWebLogTest();
+                })
+                .withFailureHandler((error) => {
+                    alert('COMMUNICATION ERROR: ' + error.toString());
+                })
+                .alertTest();
         };
 
         // Render the app

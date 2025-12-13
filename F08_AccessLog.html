@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      /* Optional simple styling for the buttons */
+      .card {
+        padding: 20px;
+        margin: 10px;
+        background-color: #f1f1f1;
+        border: 1px solid #ccc;
+        cursor: pointer;
+        display: inline-block;
+        font-family: sans-serif;
+        border-radius: 8px;
+        transition: background 0.2s;
+      }
+      .card:hover {
+        background-color: #e0e0e0;
+      }
+    </style>
+  </head>
+  <body>
+
+    <!-- EXAMPLE 1: Using onclick with the helper function -->
+    <div class="card" onclick="handleCardClick('https://www.google.com', 'OEM')">
+      <h3>OEM View</h3>
+      <p>Clicking this logs 'OEM' access, then goes to Google.</p>
+    </div>
+
+    <!-- EXAMPLE 2: Another view type -->
+    <div class="card" onclick="handleCardClick('https://www.bing.com', 'Vendor')">
+      <h3>Vendor View</h3>
+      <p>Clicking this logs 'Vendor' access, then goes to Bing.</p>
+    </div>
+
+    <script>
+      /**
+       * Handles the click event for any card or view.
+       * 1. Calls Google Apps Script to log the access.
+       * 2. Waits for the server to say "Success".
+       * 3. Redirects the browser to the destination URL.
+       * 
+       * @param {string} url - The destination URL (e.g., 'https://google.com')
+       * @param {string} viewType - The view name to log (e.g., 'OEM', 'Vendor')
+       */
+      function handleCardClick(url, viewType) {
+        console.log("Attempting to log access for:", viewType);
+
+        google.script.run
+          .withSuccessHandler(function(response) {
+            // Server finished successfully!
+            console.log("Log success:", response);
+            // NOW we navigate
+            window.top.location.href = url;
+          })
+          .withFailureHandler(function(error) {
+            // Server failed, but we should still let the user proceed
+            console.error("Log failed:", error);
+            // Navigate anyway so the user isn't stuck
+            window.top.location.href = url;
+          })
+          .logUserAccess(viewType); // This matches the function name in your .gs file
+      }
+    </script>
+
+  </body>
+</html>

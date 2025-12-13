@@ -4,7 +4,8 @@
     <base target="_top">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>OneGov FIT Market - React with Advanced JSON Architecture</title>
+    <title>OneGov FIT Market - React with Advanced JSON Architecture v265</title>
+    <!-- Version 265: Fixed percentage calculations using total data source -->
     
     <!-- Debug: Check if google object is available -->
     <script>
@@ -373,9 +374,9 @@
             overflow: hidden;
             transition: all 0.3s ease;
             border: 1px solid rgba(0,0,0,0.05);
-            height: 480px;
-            max-height: 480px;
-            min-height: 480px;
+            height: 520px;
+            max-height: 520px;
+            min-height: 520px;
             position: relative;
             width: 100%;
             cursor: pointer;
@@ -457,7 +458,7 @@
 
         .entity-card-body {
             padding: 6px;
-            padding-bottom: 2px;
+            padding-bottom: 0px;
             flex: 1;
             overflow: hidden;
             display: flex;
@@ -2622,13 +2623,13 @@
                             display: 'grid', 
                             gridTemplateColumns: '1fr 1fr', 
                             gap: '8px', 
-                            marginTop: '8px',
+                            marginTop: '6px',
                             fontSize: '0.9rem',
-                            height: '280px',
-                            maxHeight: '280px'
+                            height: '320px',
+                            maxHeight: '320px'
                         }}>
                             {/* Top Left: SUM Tier Distribution */}
-                            <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb', height: '135px', display: 'flex', flexDirection: 'column'}}>
+                            <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb', height: '150px', display: 'flex', flexDirection: 'column'}}>
                                 <div style={{color: 'var(--blue)', fontWeight: 600, marginBottom: '3px', textAlign: 'center'}}>SUM Tier</div>
                                 <div style={{flex: 1, overflowY: 'auto'}}>
                                     <table style={{width: '100%', fontSize: '0.8rem'}}>
@@ -2678,7 +2679,7 @@
                             </div>
 
                             {/* Top Right: Contract Vehicles */}
-                            <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb', height: '135px', display: 'flex', flexDirection: 'column'}}>
+                            <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb', height: '150px', display: 'flex', flexDirection: 'column'}}>
                                 <div style={{color: 'var(--blue)', fontWeight: 600, marginBottom: '3px', textAlign: 'center'}}>Contract Vehicles</div>
                                 <div style={{flex: 1, overflowY: 'auto'}}>
                                     <table style={{width: '100%', fontSize: '0.85rem'}}>
@@ -2917,25 +2918,11 @@
                                     .sort((a, b) => b.total - a.total)
                                     .slice(0, 5);
                                 
-                                // Calculate total from the full JSON data for percentage calculation
-                                let jsonTotal = 0;
-                                if (entityType === 'Agencies') {
-                                    // Use FAS OEM data for total calculation - top_15
-                                    if (entity.fasOem?.top_15_oem_summaries) {
-                                        jsonTotal = Object.values(entity.fasOem.top_15_oem_summaries).reduce((sum, data) => 
-                                            sum + (data?.total_obligations || data?.total || 0), 0);
-                                    } else if (entity.bicOem?.top_15_manufacturers) {
-                                        // Fallback to BIC OEM
-                                        jsonTotal = entity.bicOem.top_15_manufacturers.reduce((sum, manufacturer) => 
-                                            sum + (manufacturer?.total || manufacturer?.value || manufacturer?.amount || 0), 0);
-                                    }
-                                } else if ((entityType === 'OEMs' || entityType === 'Vendors') && entity.fundingAgency?.top_10_agency_summaries) {
-                                    jsonTotal = Object.values(entity.fundingAgency.top_10_agency_summaries).reduce((sum, data) => 
-                                        sum + (typeof data === 'object' ? data.total || 0 : 0), 0);
-                                }
+                                // Calculate total from the entire data source for percentage calculation
+                                const jsonTotal = Object.values(firstTableData).reduce((sum, total) => sum + (total || 0), 0);
                                 
                                 return (
-                                    <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb', height: '135px', display: 'flex', flexDirection: 'column'}}>
+                                    <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb', height: '150px', display: 'flex', flexDirection: 'column'}}>
                                         <div style={{color: 'var(--blue)', fontWeight: 600, marginBottom: '3px', textAlign: 'center'}}>{firstTableTitle}</div>
                                         <div style={{flex: 1, overflowY: 'auto'}}>
                                             <table style={{width: '100%', fontSize: '0.85rem'}}>
@@ -2981,42 +2968,21 @@
                                     // Agency cards show Vendors table
                                     secondTableTitle = 'Vendors';
                                     
-                                    // The vendor data for agencies might be in fundingAgency column (misnamed)
-                                    // Check if fundingAgency actually contains vendor/reseller data
-                                    if (entity.fundingAgency?.top_10_vendor_summaries) {
-                                        console.log(`🏪 AGENCY->VENDOR: Found top_10_vendor_summaries in fundingAgency`);
-                                        Object.entries(entity.fundingAgency.top_10_vendor_summaries).forEach(([vendorName, data]) => {
-                                            const amount = typeof data === 'object' ? (data.total || data.amount || 0) : data || 0;
-                                            if (amount > 0) {
-                                                secondTableData[vendorName] = (secondTableData[vendorName] || 0) + amount;
-                                            }
-                                        });
-                                    } else if (entity.fundingAgency?.top_15_reseller_summaries) {
-                                        console.log(`🏪 AGENCY->VENDOR: Found top_15_reseller_summaries in fundingAgency`);
-                                        Object.entries(entity.fundingAgency.top_15_reseller_summaries).forEach(([vendorName, data]) => {
-                                            const amount = typeof data === 'object' ? (data.total || data.amount || 0) : data || 0;
-                                            if (amount > 0) {
-                                                secondTableData[vendorName] = (secondTableData[vendorName] || 0) + amount;
-                                            }
-                                        });
-                                    } else if (entity.resellers?.top_15_reseller_summaries) {
-                                        // Check for resellers (plural) that we added for agencies
-                                        console.log(`🏪 AGENCY->VENDOR: Found top_15_reseller_summaries in resellers (plural)`);
+                                    // Look for vendor data in resellers column first (correct location)
+                                    if (entity.resellers?.top_15_reseller_summaries) {
+                                        console.log(`🏪 AGENCY->VENDOR: Found top_15_reseller_summaries in resellers`);
                                         Object.entries(entity.resellers.top_15_reseller_summaries).forEach(([resellerName, data]) => {
                                             const amount = typeof data === 'object' ? (data.total || data.amount || 0) : data || 0;
                                             if (amount > 0) {
                                                 secondTableData[resellerName] = (secondTableData[resellerName] || 0) + amount;
                                             }
                                         });
-                                    } else if (entity.resellers) {
-                                        // Fallback to direct resellers object (plural)
-                                        console.log(`🏪 AGENCY->VENDOR: Trying direct resellers object (plural)`);
-                                        Object.entries(entity.resellers).forEach(([resellerName, data]) => {
-                                            if (!['summary', 'yearly_totals', 'source_file', 'topResellers'].includes(resellerName)) {
-                                                const amount = typeof data === 'object' ? (data.total || data.amount || 0) : data || 0;
-                                                if (amount > 0) {
-                                                    secondTableData[resellerName] = (secondTableData[resellerName] || 0) + amount;
-                                                }
+                                    } else if (entity.bicReseller?.top_15_resellers && Array.isArray(entity.bicReseller.top_15_resellers)) {
+                                        // Try BIC reseller data if FAS reseller not available
+                                        console.log(`🏪 AGENCY->VENDOR: Using BIC reseller data`);
+                                        entity.bicReseller.top_15_resellers.forEach((reseller) => {
+                                            if (reseller && reseller.vendor_name && reseller.total_sales) {
+                                                secondTableData[reseller.vendor_name] = (secondTableData[reseller.vendor_name] || 0) + reseller.total_sales;
                                             }
                                         });
                                     } else {
@@ -3148,39 +3114,11 @@
                                     .sort((a, b) => b.total - a.total)
                                     .slice(0, 5);
                                 
-                                // Calculate total from the full JSON data for percentage calculation
-                                let jsonTotal = 0;
-                                if (entityType === 'Agencies') {
-                                    if (entity.resellers?.top_15_reseller_summaries) {
-                                        jsonTotal = Object.values(entity.resellers.top_15_reseller_summaries).reduce((sum, data) => 
-                                            sum + (typeof data === 'object' ? (data.total || data.amount || 0) : data || 0), 0);
-                                    } else if (entity.resellers) {
-                                        jsonTotal = Object.values(entity.resellers).reduce((sum, data) => 
-                                            sum + (typeof data === 'object' ? (data.total || data.amount || 0) : data || 0), 0);
-                                    }
-                                } else if (entityType === 'OEMs') {
-                                    // OEMs use entity.resellers (plural)
-                                    if (entity.resellers?.top_15_reseller_summaries) {
-                                        jsonTotal = Object.values(entity.resellers.top_15_reseller_summaries).reduce((sum, data) => 
-                                            sum + (typeof data === 'object' ? (data.total || data.amount || 0) : data || 0), 0);
-                                    } else if (entity.resellers) {
-                                        jsonTotal = Object.values(entity.resellers).reduce((sum, data) => 
-                                            sum + (typeof data === 'object' ? (data.total || data.amount || 0) : data || 0), 0);
-                                    }
-                                } else if (entityType === 'Vendors') {
-                                    // Use FAS OEM data for Vendor OEM relationships - top_15
-                                    if (entity.fasOem?.top_15_oem_summaries) {
-                                        jsonTotal = Object.values(entity.fasOem.top_15_oem_summaries).reduce((sum, data) => 
-                                            sum + (data?.total_obligations || data?.total || 0), 0);
-                                    } else if (entity.bicOem?.top_15_manufacturers) {
-                                        // Fallback to BIC OEM
-                                        jsonTotal = entity.bicOem.top_15_manufacturers.reduce((sum, manufacturer) => 
-                                            sum + (manufacturer?.total || manufacturer?.value || manufacturer?.amount || 0), 0);
-                                    }
-                                }
+                                // Calculate total from the entire data source for percentage calculation
+                                const jsonTotal = Object.values(secondTableData).reduce((sum, total) => sum + (total || 0), 0);
                                 
                                 return (
-                                    <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb', height: '135px', display: 'flex', flexDirection: 'column'}}>
+                                    <div style={{background: '#f8f9fa', padding: '6px', borderRadius: '3px', border: '1px solid #e5e7eb', height: '150px', display: 'flex', flexDirection: 'column'}}>
                                         <div style={{color: 'var(--blue)', fontWeight: 600, marginBottom: '3px', textAlign: 'center'}}>{secondTableTitle}</div>
                                         <div style={{flex: 1, overflowY: 'auto'}}>
                                             <table style={{width: '100%', fontSize: '0.85rem'}}>
@@ -3238,6 +3176,21 @@
         
         const openEntityDetail = (entityIndex) => {
             const entity = currentEntities[entityIndex];
+            
+            // Log entity access FIRST
+            const entityName = entity?.name || entity?.contractor || 'Unknown';
+            const entityType = entity?.type || 'Unknown';
+            console.log('🚀 Logging entity access:', entityName, entityType);
+            
+            google.script.run
+                .withSuccessHandler((result) => {
+                    console.log('✅ Entity access logged:', result);
+                })
+                .withFailureHandler((error) => {
+                    console.error('❌ Entity access logging failed:', error);
+                })
+                .logEntityAccess(entityName, entityType.charAt(0).toUpperCase() + entityType.slice(1).toLowerCase());
+            
             console.log('Opening entity detail:', {
                 entityIndex,
                 entityName: entity?.name,
@@ -5090,11 +5043,8 @@
                 { key: 'sumType', title: 'SUM Type Breakdown', icon: '📊', description: 'Contract management types' },
                 { key: 'contractVehicle', title: 'Contract Vehicles', icon: '📋', description: 'Top procurement vehicles' },
                 { key: 'fundingDepartment', title: 'Funding Departments', icon: '🏛️', description: 'Department spending analysis' },
-                { key: 'discount', title: 'Discount Analysis', icon: '💸', description: 'Discount categories and usage' },
                 { key: 'topRefPiid', title: 'Top Reference PIIDs', icon: '🔗', description: 'Most used reference contracts' },
                 { key: 'topPiid', title: 'Top PIIDs', icon: '📄', description: 'Highest value contracts' },
-                { key: 'activeContracts', title: 'Active Contracts', icon: '', description: 'Contract expiration analysis' },
-                { key: 'discountOfferings', title: 'Discount Offerings', icon: '🎯', description: 'Entity-specific discount analysis' },
                 { key: 'aiProduct', title: 'Product Obligations', icon: '🤖', description: 'AI product procurement trends' },
                 { key: 'aiCategories', title: 'Category Obligations', icon: '🧠', description: 'AI category distribution' },
                 { key: 'topBicProducts', title: 'Product BIC Sales', icon: '🛍️', description: 'Best-selling BIC products' },
@@ -6519,7 +6469,21 @@
                                     {['agency', 'oem', 'vendor'].map(type => (
                                         <button 
                                             key={type}
-                                            onClick={() => setSelectedEntityType(type)}
+                                            onClick={() => {
+                                                // Log the view change
+                                                console.log('🚀 Logging view change:', type);
+                                                const viewName = type.charAt(0).toUpperCase() + type.slice(1);
+                                                google.script.run
+                                                    .withSuccessHandler((result) => {
+                                                        console.log('✅ View logged:', result);
+                                                    })
+                                                    .withFailureHandler((error) => {
+                                                        console.error('❌ View logging failed:', error);
+                                                    })
+                                                    .logUserAccess(viewName);
+                                                
+                                                setSelectedEntityType(type);
+                                            }}
                                             style={{
                                                 padding: '10px 20px',
                                                 borderRadius: '20px',
@@ -7451,11 +7415,28 @@
                     cleanOptions.plugins = {};
                 }
                 
-                // Show legend for pie/doughnut charts
+                // Show legend for pie/doughnut charts and set proper sizing
                 if (card.chartType === 'pie' || card.chartType === 'doughnut') {
                     cleanOptions.plugins.legend = {
                         display: true,
-                        position: 'right'
+                        position: 'bottom',
+                        labels: {
+                            padding: 8,
+                            usePointStyle: true,
+                            boxWidth: 12
+                        }
+                    };
+                    // Force aspect ratio for pie charts to use full width and height efficiently
+                    cleanOptions.aspectRatio = 1.2; // More compact aspect ratio
+                    cleanOptions.maintainAspectRatio = false;
+                    // Reduce layout padding to maximize chart size
+                    cleanOptions.layout = {
+                        padding: {
+                            top: 5,
+                            bottom: 5,
+                            left: 5,
+                            right: 5
+                        }
                     };
                 }
                 
@@ -7743,26 +7724,45 @@
             };
             
             const generateReportDocument = (report) => {
-                console.log('🔄 Preparing report preview for:', report.reportType);
+                console.log('🔄 Generating report document for:', report.reportType);
                 
-                // Show loading indicator while preparing preview
+                // Show loading indicator while generating document
                 const loadingModal = document.createElement('div');
                 loadingModal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10002;';
                 loadingModal.innerHTML = `
                     <div style="background: white; padding: 30px; border-radius: 12px; text-align: center;">
                         <div style="font-size: 2rem; margin-bottom: 10px;">📄</div>
-                        <div style="color: #333; font-weight: 600;">Preparing Document Preview...</div>
-                        <div style="color: #666; font-size: 0.9rem; margin-top: 5px;">Please wait</div>
+                        <div style="color: #333; font-weight: 600;">Generating Document...</div>
+                        <div style="color: #666; font-size: 0.9rem; margin-top: 5px;">Creating from template</div>
                     </div>
                 `;
                 
                 document.body.appendChild(loadingModal);
                 
-                // Generate preview HTML using report JSON data
-                setTimeout(() => {
-                    loadingModal.remove();
-                    showReportPreview(report);
-                }, 800);
+                // Call backend to generate document from template
+                google.script.run
+                    .withSuccessHandler((result) => {
+                        loadingModal.remove();
+                        
+                        if (result.success && result.documentUrl) {
+                            console.log('✅ Document generated successfully:', result.documentUrl);
+                            
+                            // Update the report object with the new URL
+                            report.driveUrl = result.documentUrl;
+                            
+                            // Show the document preview popup (like Entity Profile)
+                            showDocumentPreview(result.documentUrl, report);
+                        } else {
+                            console.error('❌ Document generation failed:', result.error);
+                            showErrorDialog('Document generation failed', result.error || 'Unknown error occurred');
+                        }
+                    })
+                    .withFailureHandler((error) => {
+                        loadingModal.remove();
+                        console.error('❌ Error calling backend:', error);
+                        showErrorDialog('Connection Failed', 'Unable to connect to server. Please try again.');
+                    })
+                    .generateReportDocument(report.rowNum);
             };
             
             // Show report preview like Entity Profile
@@ -7912,6 +7912,127 @@
                     window.currentReportPreview.remove();
                     window.currentReportPreview = null;
                 }
+            };
+            
+            // Show document preview like Entity Profile with document content and action buttons
+            const showDocumentPreview = (documentUrl, report) => {
+                console.log('📄 Showing document preview for:', report.reportType);
+                
+                const modal = document.createElement('div');
+                modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 10002; padding: 20px;';
+                
+                const container = document.createElement('div');
+                container.style.cssText = 'background: white; width: 100%; max-width: 900px; height: 90vh; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;';
+                
+                // Create header
+                const header = document.createElement('div');
+                header.style.cssText = 'background: linear-gradient(135deg, #0a2240 0%, #144673 100%); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;';
+                
+                const title = document.createElement('h3');
+                title.style.cssText = 'margin: 0; font-size: 1.1rem;';
+                title.textContent = `${report.reportType} Preview`;
+                
+                const buttonContainer = document.createElement('div');
+                buttonContainer.style.cssText = 'display: flex; gap: 10px; align-items: center;';
+                
+                // Create buttons
+                const viewBtn = document.createElement('button');
+                viewBtn.style.cssText = 'background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 0.9rem;';
+                viewBtn.textContent = '🔍 View';
+                viewBtn.onclick = () => window.open(documentUrl, '_blank');
+                
+                const downloadBtn = document.createElement('button');
+                downloadBtn.style.cssText = 'background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 0.9rem;';
+                downloadBtn.textContent = '📥 Download';
+                downloadBtn.onclick = () => downloadDocument(documentUrl);
+                
+                const emailBtn = document.createElement('button');
+                emailBtn.style.cssText = 'background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 0.9rem;';
+                emailBtn.textContent = '📧 Email';
+                emailBtn.onclick = () => emailDocument(documentUrl, report.reportType);
+                
+                const closeBtn = document.createElement('button');
+                closeBtn.style.cssText = 'background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 10px; border-radius: 4px; cursor: pointer;';
+                closeBtn.textContent = '✕ Close';
+                closeBtn.onclick = () => modal.remove();
+                
+                buttonContainer.appendChild(viewBtn);
+                buttonContainer.appendChild(downloadBtn);
+                buttonContainer.appendChild(emailBtn);
+                buttonContainer.appendChild(closeBtn);
+                
+                header.appendChild(title);
+                header.appendChild(buttonContainer);
+                
+                // Create document content area
+                const contentArea = document.createElement('div');
+                contentArea.style.cssText = 'flex: 1; overflow: auto; padding: 0;';
+                
+                // Use Google Drive embed
+                const iframe = document.createElement('iframe');
+                iframe.style.cssText = 'width: 100%; height: 100%; border: none;';
+                // Extract document ID and use proper embed URL
+                const docIdMatch = documentUrl.match(/\/document\/d\/([a-zA-Z0-9-_]+)/);
+                if (docIdMatch) {
+                    iframe.src = `https://docs.google.com/document/d/${docIdMatch[1]}/preview`;
+                } else {
+                    iframe.src = documentUrl;
+                }
+                
+                contentArea.appendChild(iframe);
+                
+                container.appendChild(header);
+                container.appendChild(contentArea);
+                modal.appendChild(container);
+                document.body.appendChild(modal);
+                
+                // Store reference for cleanup
+                window.currentDocumentPreview = modal;
+            };
+            
+            // Show error dialog
+            const showErrorDialog = (title, message) => {
+                const modal = document.createElement('div');
+                modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10003;';
+                
+                modal.innerHTML = `
+                    <div style="background: white; padding: 30px; border-radius: 12px; text-align: center; max-width: 400px;">
+                        <div style="font-size: 2rem; margin-bottom: 10px; color: #ef4444;">❌</div>
+                        <div style="color: #333; font-weight: 600; margin-bottom: 10px;">${title}</div>
+                        <div style="color: #666; font-size: 0.9rem; margin-bottom: 20px;">${message}</div>
+                        <button onclick="this.closest('div[style*=\"position: fixed\"]').remove();" 
+                            style="padding: 10px 20px; background: var(--orange); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                            Close
+                        </button>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+            };
+            
+            // Download document as PDF
+            window.downloadDocument = function(documentUrl) {
+                console.log('📥 Downloading document:', documentUrl);
+                // Extract document ID from URL and create PDF download link
+                const docIdMatch = documentUrl.match(/\/document\/d\/([a-zA-Z0-9-_]+)/);
+                if (docIdMatch) {
+                    const docId = docIdMatch[1];
+                    const pdfUrl = `https://docs.google.com/document/d/${docId}/export?format=pdf`;
+                    window.open(pdfUrl, '_blank');
+                } else {
+                    alert('Unable to download document. Please use the View Document option instead.');
+                }
+            };
+            
+            // Email document
+            window.emailDocument = function(documentUrl, reportType) {
+                console.log('📧 Emailing document:', reportType);
+                
+                const subject = encodeURIComponent(`${reportType} - OneGov FIT Market`);
+                const body = encodeURIComponent(`Please find the ${reportType} document at the following link:\n\n${documentUrl}\n\nGenerated by OneGov FIT Market`);
+                const mailtoLink = `mailto:?subject=${subject}&body=${body}`;
+                
+                window.location.href = mailtoLink;
             };
 
             const reportTypeIcons = {
@@ -8221,8 +8342,12 @@
             const entityCount = card.chartData?.labels?.length || 5;
             const dynamicHeight = isHorizontal ? (entityCount * 40 + 100) : 250;
             
+            // Reduce padding for pie charts to maximize space usage
+            const isPieChart = card.chartType === 'pie' || card.chartType === 'doughnut';
+            const containerPadding = isPieChart ? '2px' : '10px';
+            
             return (
-                <div style={{ position: 'relative', height: `${dynamicHeight}px`, padding: '10px' }}>
+                <div style={{ position: 'relative', height: `${dynamicHeight}px`, padding: containerPadding }}>
                     <canvas ref={canvasRef}></canvas>
                 </div>
             );
@@ -8528,6 +8653,59 @@
                                         key={type}
                                         className={`nav-item ${entityType === type ? 'active' : ''}`} 
                                         onClick={() => {
+                                            // Log access for all navigation buttons
+                                            if (type === 'OEMs') {
+                                                console.log('🚀 Logging OEM navigation access');
+                                                google.script.run
+                                                    .withSuccessHandler((result) => {
+                                                        console.log('✅ OEM navigation logged:', result);
+                                                    })
+                                                    .withFailureHandler((error) => {
+                                                        console.error('❌ OEM navigation logging failed:', error);
+                                                    })
+                                                    .logUserAccess('OEM');
+                                            } else if (type === 'Vendors') {
+                                                console.log('🚀 Logging Vendor navigation access');
+                                                google.script.run
+                                                    .withSuccessHandler((result) => {
+                                                        console.log('✅ Vendor navigation logged:', result);
+                                                    })
+                                                    .withFailureHandler((error) => {
+                                                        console.error('❌ Vendor navigation logging failed:', error);
+                                                    })
+                                                    .logUserAccess('Vendor');
+                                            } else if (type === 'Agencies') {
+                                                console.log('🚀 Logging Agency navigation access');
+                                                google.script.run
+                                                    .withSuccessHandler((result) => {
+                                                        console.log('✅ Agency navigation logged:', result);
+                                                    })
+                                                    .withFailureHandler((error) => {
+                                                        console.error('❌ Agency navigation logging failed:', error);
+                                                    })
+                                                    .logUserAccess('Agency');
+                                            } else if (type === 'ReportBuilder') {
+                                                console.log('🚀 Logging Report Builder access');
+                                                google.script.run
+                                                    .withSuccessHandler((result) => {
+                                                        console.log('✅ Report Builder logged:', result);
+                                                    })
+                                                    .withFailureHandler((error) => {
+                                                        console.error('❌ Report Builder logging failed:', error);
+                                                    })
+                                                    .logUserAccess('Report Generator');
+                                            } else if (type === 'Reports') {
+                                                console.log('🚀 Logging Reports access');
+                                                google.script.run
+                                                    .withSuccessHandler((result) => {
+                                                        console.log('✅ Reports logged:', result);
+                                                    })
+                                                    .withFailureHandler((error) => {
+                                                        console.error('❌ Reports logging failed:', error);
+                                                    })
+                                                    .logUserAccess('Reports');
+                                            }
+                                            
                                             if (type === 'ReportBuilder' || type === 'Reports') {
                                                 setEntityType(type);
                                                 setEntities([]);

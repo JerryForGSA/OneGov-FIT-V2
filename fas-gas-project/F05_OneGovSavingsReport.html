@@ -427,6 +427,10 @@
     
     // Initialize on load
     document.addEventListener('DOMContentLoaded', () => {
+      // Log access to Reports view
+      if (window.google?.script?.run) {
+        google.script.run.logReportsAccess();
+      }
       loadReports();
     });
     

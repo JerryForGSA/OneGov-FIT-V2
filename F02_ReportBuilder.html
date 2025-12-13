@@ -474,17 +474,173 @@
                     return;
                 }
                 
-                // Navigate to the OneGov Savings Report viewer (only if no driveUrl)
-                if (report.reportType === 'OneGov Monthly Savings') {
-                    console.log('🔍 DEBUG: Using reportType navigation path');
-                    // Use rowNum parameter to match what F05 expects
-                    const url = `?page=savingsreport&rowNum=${report.rowNum}`;
-                    console.log('🔍 DEBUG: Navigating to:', url);
-                    window.location.href = url;
+                // Generate document using Google Doc template
+                console.log('🔍 DEBUG: No document URL found, generating from JSON');
+                generateReportDocument(report);
+            };
+            
+            // Generate report document from JSON using Google Doc templates
+            const generateReportDocument = (report) => {
+                console.log('🔄 Generating report document for:', report.reportType);
+                
+                // Show loading indicator while generating document
+                const loadingModal = document.createElement('div');
+                loadingModal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10002;';
+                loadingModal.innerHTML = `
+                    <div style="background: white; padding: 30px; border-radius: 12px; text-align: center;">
+                        <div style="font-size: 2rem; margin-bottom: 10px;">📄</div>
+                        <div style="color: #333; font-weight: 600;">Generating Document...</div>
+                        <div style="color: #666; font-size: 0.9rem; margin-top: 5px;">Creating from template</div>
+                    </div>
+                `;
+                
+                document.body.appendChild(loadingModal);
+                
+                // Call backend to generate document from template
+                google.script.run
+                    .withSuccessHandler((result) => {
+                        loadingModal.remove();
+                        
+                        if (result.success && result.documentUrl) {
+                            console.log('✅ Document generated successfully:', result.documentUrl);
+                            
+                            // Update the report object with the new URL
+                            report.driveUrl = result.documentUrl;
+                            
+                            // Show the document preview popup (like Entity Profile)
+                            showDocumentPreview(result.documentUrl, report);
+                        } else {
+                            console.error('❌ Document generation failed:', result.error);
+                            showErrorDialog('Document generation failed', result.error || 'Unknown error occurred');
+                        }
+                    })
+                    .withFailureHandler((error) => {
+                        loadingModal.remove();
+                        console.error('❌ Error calling backend:', error);
+                        showErrorDialog('Connection Failed', 'Unable to connect to server. Please try again.');
+                    })
+                    .generateReportDocument(report.rowNum);
+            };
+            
+            // Show document preview like Entity Profile with document content and action buttons
+            const showDocumentPreview = (documentUrl, report) => {
+                console.log('📄 Showing document preview for:', report.reportType);
+                
+                const modal = document.createElement('div');
+                modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 10002; padding: 20px;';
+                
+                const container = document.createElement('div');
+                container.style.cssText = 'background: white; width: 100%; max-width: 900px; height: 90vh; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column;';
+                
+                // Create header
+                const header = document.createElement('div');
+                header.style.cssText = 'background: linear-gradient(135deg, #0a2240 0%, #144673 100%); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;';
+                
+                const title = document.createElement('h3');
+                title.style.cssText = 'margin: 0; font-size: 1.1rem;';
+                title.textContent = `${report.reportType} Preview`;
+                
+                const buttonContainer = document.createElement('div');
+                buttonContainer.style.cssText = 'display: flex; gap: 10px; align-items: center;';
+                
+                // Create buttons
+                const viewBtn = document.createElement('button');
+                viewBtn.style.cssText = 'background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 0.9rem;';
+                viewBtn.textContent = '🔍 View';
+                viewBtn.onclick = () => window.open(documentUrl, '_blank');
+                
+                const downloadBtn = document.createElement('button');
+                downloadBtn.style.cssText = 'background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 0.9rem;';
+                downloadBtn.textContent = '📥 Download';
+                downloadBtn.onclick = () => downloadDocument(documentUrl);
+                
+                const emailBtn = document.createElement('button');
+                emailBtn.style.cssText = 'background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 12px; border-radius: 4px; cursor: pointer; font-size: 0.9rem;';
+                emailBtn.textContent = '📧 Email';
+                emailBtn.onclick = () => emailDocument(documentUrl, report.reportType);
+                
+                const closeBtn = document.createElement('button');
+                closeBtn.style.cssText = 'background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 10px; border-radius: 4px; cursor: pointer;';
+                closeBtn.textContent = '✕ Close';
+                closeBtn.onclick = () => modal.remove();
+                
+                buttonContainer.appendChild(viewBtn);
+                buttonContainer.appendChild(downloadBtn);
+                buttonContainer.appendChild(emailBtn);
+                buttonContainer.appendChild(closeBtn);
+                
+                header.appendChild(title);
+                header.appendChild(buttonContainer);
+                
+                // Create document content area
+                const contentArea = document.createElement('div');
+                contentArea.style.cssText = 'flex: 1; overflow: auto; padding: 0;';
+                
+                // Use Google Drive embed
+                const iframe = document.createElement('iframe');
+                iframe.style.cssText = 'width: 100%; height: 100%; border: none;';
+                // Extract document ID and use proper embed URL
+                const docIdMatch = documentUrl.match(/\/document\/d\/([a-zA-Z0-9-_]+)/);
+                if (docIdMatch) {
+                    iframe.src = `https://docs.google.com/document/d/${docIdMatch[1]}/preview`;
                 } else {
-                    console.log('🔍 DEBUG: Using fallback alert');
-                    alert(`Opening ${report.reportType} report (row ${report.rowNum})`);
+                    iframe.src = documentUrl;
                 }
+                
+                contentArea.appendChild(iframe);
+                
+                container.appendChild(header);
+                container.appendChild(contentArea);
+                modal.appendChild(container);
+                document.body.appendChild(modal);
+                
+                // Store reference for cleanup
+                window.currentDocumentPreview = modal;
+            };
+            
+            // Show error dialog
+            const showErrorDialog = (title, message) => {
+                const modal = document.createElement('div');
+                modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10003;';
+                
+                modal.innerHTML = `
+                    <div style="background: white; padding: 30px; border-radius: 12px; text-align: center; max-width: 400px;">
+                        <div style="font-size: 2rem; margin-bottom: 10px; color: #ef4444;">❌</div>
+                        <div style="color: #333; font-weight: 600; margin-bottom: 10px;">${title}</div>
+                        <div style="color: #666; font-size: 0.9rem; margin-bottom: 20px;">${message}</div>
+                        <button onclick="this.closest('div[style*=\"position: fixed\"]').remove();" 
+                            style="padding: 10px 20px; background: var(--orange); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                            Close
+                        </button>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+            };
+            
+            // Download document as PDF
+            window.downloadDocument = function(documentUrl) {
+                console.log('📥 Downloading document:', documentUrl);
+                // Extract document ID from URL and create PDF download link
+                const docIdMatch = documentUrl.match(/\/document\/d\/([a-zA-Z0-9-_]+)/);
+                if (docIdMatch) {
+                    const docId = docIdMatch[1];
+                    const pdfUrl = `https://docs.google.com/document/d/${docId}/export?format=pdf`;
+                    window.open(pdfUrl, '_blank');
+                } else {
+                    alert('Unable to download document. Please use the View Document option instead.');
+                }
+            };
+            
+            // Email document
+            window.emailDocument = function(documentUrl, reportType) {
+                console.log('📧 Emailing document:', reportType);
+                
+                const subject = encodeURIComponent(`${reportType} - OneGov FIT Market`);
+                const body = encodeURIComponent(`Please find the ${reportType} document at the following link:\n\n${documentUrl}\n\nGenerated by OneGov FIT Market`);
+                const mailtoLink = `mailto:?subject=${subject}&body=${body}`;
+                
+                window.location.href = mailtoLink;
             };
             
             // Link-based Report Card (when JSON is empty but Drive URL exists)

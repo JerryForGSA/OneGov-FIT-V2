@@ -540,6 +540,15 @@ class OneGovDataManager {
   transformForReportBuilder(entities, columnId, topN = 10) {
     if (!columnId || !entities.length) return [];
     
+    // RAW ARGUMENTS LOG - Print exactly what was received
+    console.log('🔍 RAW ARGUMENTS transformForReportBuilder:');
+    console.log('  entities.length:', entities.length);
+    console.log('  columnId:', columnId);
+    console.log('  topN:', topN);
+    
+    // LOGGING POINT 2: Log columnId used by DataManager transform
+    console.log(`🔧 DataManager transformForReportBuilder: Using columnId "${columnId}" for ${entities.length} entities`);
+    
     console.log(` DataManager transformForReportBuilder: Processing ${entities.length} entities for column "${columnId}"`);
     
     const entityValues = entities
@@ -552,7 +561,15 @@ class OneGovDataManager {
         
         const value = this.extractNumericValue(jsonData, columnId);
         console.log(`📊 Entity "${entity.name}" ${columnId} value: ${value}`);
-        return { name: entity.name, value: value, jsonData: jsonData };
+        
+        // Create entity with column-specific property name for Chart Buffet
+        const transformedEntity = {
+          name: entity.name,
+          value: value,
+          [columnId]: jsonData  // Dynamic property name matching columnId
+        };
+        
+        return transformedEntity;
       })
       .filter(e => e && e.value > 0)
       .sort((a, b) => b.value - a.value)

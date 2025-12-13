@@ -1,19 +1,12 @@
 /**
- * Backend Main Entry Point - B01_main.js
+ * Backend Main Entry Point - B01_main.js - VERSION 305
  * Google Apps Script main functions for OneGov FIT Market
- * VERSION 140: Fix website/LinkedIn buttons in entity detail view
- */
-
-// Import R02 Chart Buffet Specifications
-// Note: This will be loaded at runtime when needed
-
-/**
- * Main entry point for Google Apps Script
- * This function will be called by the web app
+ * v305: Reverted to original chart logic but fixed generateColumnBreakdownCharts to use extractColumnData
+ * Updated: 2024-12-12
  */
 function doGet(e) {
   try {
-    console.log('VERSION 31 - OneGov FIT V2 - Fixed syntax error + B02 Data Manager');
+    console.log('🚀 OneGov FIT V296 - Debug Chart Issues');
     const action = e.parameter.action;
     const page = e.parameter.page;
     const rowNum = e.parameter.rowNum;
@@ -102,6 +95,24 @@ function getReportBuilderUrl() {
     console.error('Error getting Report Builder URL:', error);
     return null;
   }
+}
+
+/**
+ * Get Version Information for Version 283
+ */
+function getVersion283Info() {
+  return {
+    version: '302',
+    features: [
+      'Enhanced Chart Buffet with Top 5/10/15 selection',
+      'All Other category aggregation',
+      'Percentage calculations for all chart types',
+      'Professional styling and enhanced tooltips',
+      'Comprehensive labeling system'
+    ],
+    updated: '2024-12-12',
+    chartBuffetVersion: '1.4.0'
+  };
 }
 
 /**
@@ -1497,6 +1508,18 @@ function getEntityNames(entityType) {
  * Generate column-specific reports using Chart Buffet System
  */
 function generateColumnReports(entityType, columnId, topN = 10, selectedEntities = [], deptFilter = 'all', tierFilter = 'all') {
+  // RAW ARGUMENTS LOG - Print exactly what was received
+  console.log('🔍 RAW ARGUMENTS generateColumnReports:');
+  console.log('  entityType:', entityType);
+  console.log('  columnId:', columnId);
+  console.log('  topN:', topN);
+  console.log('  selectedEntities:', selectedEntities);
+  console.log('  deptFilter:', deptFilter);
+  console.log('  tierFilter:', tierFilter);
+  
+  // LOGGING POINT 1: Log columnId received by generateColumnReports
+  console.log(`📊 generateColumnReports called with columnId: "${columnId}" for entityType: "${entityType}"`);
+  
   // Expanded valid columns matching KPI Carousel (removed discount, discountOfferings, activeContracts)
   const validColumns = {
     agency: ['obligations', 'smallBusiness', 'sumTier', 'sumType', 'contractVehicle', 'fundingDepartment', 

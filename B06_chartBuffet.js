@@ -1,11 +1,14 @@
 /**
- * @fileoverview Chart Buffet System for OneGov FIT Market Report Builder
- * @module B16_chartBuffet
- * @version 1.3.0
+ * @fileoverview Chart Buffet System for OneGov FIT Market Report Builder - VERSION 290
+ * @module B16_chartBuffet  
+ * @version 1.5.0 - Mixed Chart Generation: Entity + Column Breakdown Charts
  * @description Comprehensive chart generation system with intelligent type selection
  *              based on data characteristics, entity type, and user preferences.
- *              Now includes 3-dimensional chart selection (entityType x columnId x entityCount)
+ *              NOW INCLUDES: Top N selection, "All Other" aggregation, percentage calculations,
+ *              professional styling, enhanced tooltips, comprehensive labeling, AND 
+ *              COLUMN-SPECIFIC BREAKDOWNS (like KPI carousel)
  * @author OneGov FIT Market Development Team
+ * @updated 2024-12-12 - Added mixed chart generation with column breakdowns
  */
 
 /**
@@ -83,6 +86,49 @@ function formatCurrencyShort(value) {
   } else {
     return '$' + value.toFixed(0);
   }
+}
+
+/**
+ * Calculate percentage with proper formatting
+ * @param {number} value - Individual value
+ * @param {number} total - Total value
+ * @returns {string} Formatted percentage string
+ */
+function formatPercentage(value, total) {
+  if (!value || !total || total === 0) return '0.0%';
+  const percentage = (value / total) * 100;
+  return percentage.toFixed(1) + '%';
+}
+
+/**
+ * Calculate percentage with proper formatting
+ * @param {number} value - Individual value
+ * @param {number} total - Total value
+ * @returns {string} Formatted percentage string
+ */
+function formatPercentage(value, total) {
+  if (!value || !total || total === 0) return '0.0%';
+  const percentage = (value / total) * 100;
+  return percentage.toFixed(1) + '%';
+}
+
+/**
+ * Create enhanced chart labels with value and percentage
+ * @param {string} name - Entity name
+ * @param {number} value - Entity value
+ * @param {number} total - Total value for percentage calculation
+ * @param {boolean} isOthers - Whether this is the "Others" category
+ * @returns {string} Enhanced label with percentage
+ */
+function createEnhancedLabel(name, value, total, isOthers = false) {
+  const percentage = formatPercentage(value, total);
+  const formattedValue = formatCurrencyShort(value);
+  
+  if (isOthers) {
+    return `All Other (${formattedValue}, ${percentage})`;
+  }
+  
+  return `${name} (${formattedValue}, ${percentage})`;
 }
 
 /**
@@ -574,6 +620,181 @@ function getChartTypesByContext(entityType, columnId, entityCount) {
         10: ['horizontalBar', 'pie'],
         15: ['horizontalBar', 'funnel']
       }
+    },
+    
+    // ─────────────────────────────────────────────────────────────────────────
+    // ADDITIONAL COLUMNS FOR COMPLETE 22-COLUMN SUPPORT
+    // ─────────────────────────────────────────────────────────────────────────
+    
+    // COLUMN D - OBLIGATIONS (Pattern A: Simple Totals)
+    totalObligations: {
+      agency: {
+        5:  ['line', 'verticalBar', 'area'],
+        10: ['line', 'stackedBar', 'area'],
+        15: ['line', 'horizontalBar', 'area']
+      },
+      oem: {
+        5:  ['line', 'verticalBar', 'area'],
+        10: ['line', 'stackedBar', 'area'],
+        15: ['line', 'horizontalBar', 'area']
+      },
+      vendor: {
+        5:  ['line', 'verticalBar', 'area'],
+        10: ['line', 'stackedBar', 'area'],
+        15: ['line', 'horizontalBar', 'area']
+      }
+    },
+    
+    // COLUMN X - ONEGOV TIER (Pattern A: Simple Totals) - Enhanced
+    oneGovTierEnhanced: {
+      agency: {
+        5:  ['doughnut', 'verticalBar', 'pie'],
+        10: ['horizontalBar', 'doughnut'],
+        15: ['horizontalBar', 'stackedBar']
+      },
+      oem: {
+        5:  ['doughnut', 'pie', 'verticalBar'],
+        10: ['horizontalBar', 'doughnut'],
+        15: ['horizontalBar']
+      },
+      vendor: {
+        5:  ['doughnut', 'pie', 'verticalBar'],
+        10: ['horizontalBar', 'doughnut'],
+        15: ['horizontalBar', 'stackedBar']
+      }
+    },
+    
+    // COLUMN H - CONTRACT VEHICLE (Pattern B: Object Map)
+    contractVehicle: {
+      agency: {
+        5:  ['pie', 'verticalBar', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'stackedBar'],
+        15: ['horizontalBar', 'funnel', 'stackedBar']
+      },
+      oem: {
+        5:  ['horizontalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'stackedBar', 'pie'],
+        15: ['horizontalBar', 'funnel']
+      },
+      vendor: {
+        5:  ['horizontalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'stackedBar', 'pie'],
+        15: ['horizontalBar', 'funnel']
+      }
+    },
+    
+    // COLUMN K - TOP REF_PIID (Pattern C: Array)
+    topRefPiid: {
+      agency: {
+        5:  ['funnel', 'verticalBar', 'horizontalBar'],
+        10: ['funnel', 'horizontalBar', 'stackedBar'],
+        15: ['funnel', 'horizontalBar']
+      },
+      oem: {
+        5:  ['funnel', 'horizontalBar', 'verticalBar'],
+        10: ['funnel', 'horizontalBar'],
+        15: ['funnel', 'horizontalBar']
+      },
+      vendor: {
+        5:  ['funnel', 'horizontalBar', 'verticalBar'],
+        10: ['funnel', 'horizontalBar'],
+        15: ['funnel', 'horizontalBar']
+      }
+    },
+    
+    // COLUMN L - TOP PIID (Pattern C: Array)
+    topPiid: {
+      agency: {
+        5:  ['funnel', 'verticalBar', 'horizontalBar'],
+        10: ['funnel', 'horizontalBar', 'stackedBar'],
+        15: ['funnel', 'horizontalBar']
+      },
+      oem: {
+        5:  ['funnel', 'horizontalBar', 'verticalBar'],
+        10: ['funnel', 'horizontalBar'],
+        15: ['funnel', 'horizontalBar']
+      },
+      vendor: {
+        5:  ['funnel', 'horizontalBar', 'verticalBar'],
+        10: ['funnel', 'horizontalBar'],
+        15: ['funnel', 'horizontalBar']
+      }
+    },
+    
+    // COLUMN M - ACTIVE CONTRACTS (Pattern D: Fiscal Year Nested)
+    activeContracts: {
+      agency: {
+        5:  ['stackedBar', 'line', 'area'],
+        10: ['stackedBar', 'line', 'horizontalBar'],
+        15: ['stackedBar', 'line', 'horizontalBar']
+      },
+      oem: {
+        5:  ['stackedBar', 'line', 'area'],
+        10: ['stackedBar', 'line', 'horizontalBar'],
+        15: ['stackedBar', 'line', 'horizontalBar']
+      },
+      vendor: {
+        5:  ['stackedBar', 'line', 'area'],
+        10: ['stackedBar', 'line', 'horizontalBar'],
+        15: ['stackedBar', 'line', 'horizontalBar']
+      }
+    },
+    
+    // COLUMN N - EXPIRING ONEGOV DISCOUNTED PRODUCTS (Pattern E: Entity Nested)
+    expiringOneGovProducts: {
+      agency: {
+        5:  ['stackedBar', 'pie', 'horizontalBar'],
+        10: ['stackedBar', 'horizontalBar', 'funnel'],
+        15: ['stackedBar', 'horizontalBar']
+      },
+      oem: {
+        5:  ['horizontalBar', 'stackedBar', 'pie'],
+        10: ['horizontalBar', 'stackedBar'],
+        15: ['horizontalBar', 'stackedBar']
+      },
+      vendor: {
+        5:  ['horizontalBar', 'stackedBar', 'pie'],
+        10: ['horizontalBar', 'stackedBar'],
+        15: ['horizontalBar', 'stackedBar']
+      }
+    },
+    
+    // COLUMN Q - TOP BIC PRODUCTS (Pattern C: Array) - Enhanced
+    topBicProductsEnhanced: {
+      agency: {
+        5:  ['horizontalBar', 'funnel', 'verticalBar'],
+        10: ['horizontalBar', 'funnel', 'stackedBar'],
+        15: ['horizontalBar', 'funnel']
+      },
+      oem: {
+        5:  ['horizontalBar', 'funnel', 'pie'],
+        10: ['horizontalBar', 'funnel', 'stackedBar'],
+        15: ['horizontalBar', 'funnel']
+      },
+      vendor: {
+        5:  ['horizontalBar', 'funnel', 'pie'],
+        10: ['horizontalBar', 'funnel'],
+        15: ['horizontalBar', 'funnel']
+      }
+    },
+    
+    // COLUMN W - BIC TOP PRODUCTS PER AGENCY (Pattern E: Entity Nested) - Enhanced
+    bicTopProductsPerAgencyEnhanced: {
+      agency: {
+        5:  ['stackedBar', 'horizontalBar', 'pie'],
+        10: ['stackedBar', 'horizontalBar', 'funnel'],
+        15: ['stackedBar', 'horizontalBar']
+      },
+      oem: {
+        5:  ['horizontalBar', 'stackedBar'],
+        10: ['horizontalBar', 'stackedBar'],
+        15: ['horizontalBar']
+      },
+      vendor: {
+        5:  ['horizontalBar', 'stackedBar'],
+        10: ['horizontalBar', 'stackedBar'],
+        15: ['horizontalBar']
+      }
     }
   };
   
@@ -595,21 +816,343 @@ function getChartTypesByContext(entityType, columnId, entityCount) {
   if (CHART_CONFIG[columnId] && 
       CHART_CONFIG[columnId][entityType] && 
       CHART_CONFIG[columnId][entityType][normalizedCount]) {
-    console.log(`📊 Chart Context: Found exact match for ${entityType}/${columnId}/${normalizedCount}`);
     return CHART_CONFIG[columnId][entityType][normalizedCount];
   }
   
   // Fallback 1: Try default entity type for this column
   if (CHART_CONFIG[columnId] && CHART_CONFIG[columnId]['agency']) {
-    console.log(`📊 Chart Context: Using agency fallback for ${entityType}/${columnId}/${normalizedCount}`);
     return CHART_CONFIG[columnId]['agency'][normalizedCount] || 
            CHART_CONFIG[columnId]['agency'][10] || 
            ['horizontalBar', 'pie'];
   }
   
   // Fallback 2: Use legacy function for completely unknown columns
-  console.log(`📊 Chart Context: Using legacy fallback for ${entityType}/${columnId}/${normalizedCount}`);
   return getRecommendedChartTypes(entityCount, columnId);
+}
+
+/**
+ * Extract column-specific data for chart generation
+ * @param {Array} entities - Entity data from DataManager
+ * @param {string} columnId - Column identifier to extract data from
+ * @returns {Array} Array of column-specific data items with name and value
+ */
+function extractColumnData(entities, columnId) {
+  const columnData = new Map();
+
+  entities.forEach((entity) => {
+    let jsonData = entity[columnId];
+
+    // For debugging missing column data
+    if (columnId === 'sumTier' || columnId === 'topBicProducts') {
+      console.log(`extractColumnData DEBUG [${columnId}] for ${entity.name}:`, {
+        hasColumn: Object.prototype.hasOwnProperty.call(entity, columnId),
+        type: typeof jsonData,
+        preview: typeof jsonData === 'string'
+          ? jsonData.slice(0, 100)
+          : jsonData && typeof jsonData === 'object'
+          ? Object.keys(jsonData).slice(0, 5)
+          : jsonData
+      });
+    }
+
+    // For some columns, we can still extract data even if jsonData is undefined
+    if (!jsonData && columnId !== 'obligations') return;
+
+    // PARSE JSON STRING IF NEEDED (CSV / API initially stores as string)
+    if (typeof jsonData === 'string') {
+      try {
+        jsonData = JSON.parse(jsonData);
+      } catch (e) {
+        console.warn(`Invalid JSON for ${columnId}:`, jsonData.slice(0, 120));
+        return;
+      }
+    }
+
+    switch (columnId) {
+      case 'obligations': {
+        let obligationsValue = 0;
+
+        if (jsonData && typeof jsonData === 'object') {
+          obligationsValue = jsonData.total_obligated || 0;
+        } else if (entity.obligations && typeof entity.obligations === 'object') {
+          obligationsValue = entity.obligations.total_obligated || 0;
+        } else if (typeof entity.value === 'number') {
+          obligationsValue = entity.value;
+        }
+
+        if (obligationsValue > 0) {
+          columnData.set(entity.name, obligationsValue);
+        }
+        break;
+      }
+
+      case 'reseller': {
+        const summaries = jsonData.top_15_reseller_summaries;
+        if (summaries) {
+          Object.entries(summaries).forEach(([name, data]) => {
+            const value = data.total || 0;
+            if (!value) return;
+            columnData.set(name, (columnData.get(name) || 0) + value);
+          });
+        }
+        break;
+      }
+
+      case 'bicReseller': {
+        const items = jsonData.top_15_resellers;
+        if (Array.isArray(items)) {
+          items.forEach((item) => {
+            const name = item.vendor_name;
+            const value = item.total_sales || 0;
+            if (!name || !value) return;
+            columnData.set(name, (columnData.get(name) || 0) + value);
+          });
+        }
+        break;
+      }
+
+      case 'bicOem': {
+        const items = jsonData.top_15_manufacturers;
+        if (Array.isArray(items)) {
+          items.forEach((item) => {
+            const name = item.manufacturer_name;
+            const value = item.total_sales || 0;
+            if (!name || !value) return;
+            columnData.set(name, (columnData.get(name) || 0) + value);
+          });
+        }
+        break;
+      }
+
+      case 'fasOem': {
+        const summaries = jsonData.top_10_oem_summaries;
+        if (summaries) {
+          Object.entries(summaries).forEach(([name, data]) => {
+            const value = data.total_obligations || data.total || 0;
+            if (!value) return;
+            columnData.set(name, (columnData.get(name) || 0) + value);
+          });
+        }
+        break;
+      }
+
+      case 'fundingDepartment': {
+        const summaries = jsonData.top_10_department_summaries;
+        if (summaries) {
+          Object.entries(summaries).forEach(([name, data]) => {
+            const value = data.total || 0;
+            if (!value) return;
+            columnData.set(name, (columnData.get(name) || 0) + value);
+          });
+        }
+        break;
+      }
+
+      case 'fundingAgency': {
+        const summaries = jsonData.top_10_agency_summaries;
+        if (summaries) {
+          Object.entries(summaries).forEach(([name, data]) => {
+            const value = data.total || 0;
+            if (!value) return;
+            columnData.set(name, (columnData.get(name) || 0) + value);
+          });
+        }
+        break;
+      }
+
+      case 'contractVehicle': {
+        const summaries = jsonData.top_contract_summaries;
+        if (summaries) {
+          Object.entries(summaries).forEach(([name, data]) => {
+            const value = data.total || 0;
+            if (!value) return;
+            columnData.set(name, (columnData.get(name) || 0) + value);
+          });
+        }
+        break;
+      }
+
+      case 'topBicProducts': {
+        const items = jsonData.top_25_products;
+        if (Array.isArray(items)) {
+          items.forEach((item) => {
+            const name = item.product_name;
+            const value = item.total_price || 0;
+            if (!name || !value) return;
+            columnData.set(name, (columnData.get(name) || 0) + value);
+          });
+        }
+        break;
+      }
+
+      case 'smallBusiness': {
+        const summaries = jsonData.business_size_summaries;
+        if (summaries) {
+          Object.entries(summaries).forEach(([name, data]) => {
+            const value = data.total || 0;
+            if (!value) return;
+            columnData.set(name, (columnData.get(name) || 0) + value);
+          });
+        }
+        break;
+      }
+
+      case 'sumTier': {
+        const summaries = jsonData.tier_summaries;
+        console.log('sumTier tier_summaries:', summaries);
+        if (summaries) {
+          Object.entries(summaries).forEach(([name, data]) => {
+            const value = data.total || 0;
+            console.log(`  Tier ${name}: ${value}`);
+            if (!value) return;
+            columnData.set(name, (columnData.get(name) || 0) + value);
+          });
+        }
+        break;
+      }
+
+      case 'sumType': {
+        const summaries = jsonData.sum_type_summaries;
+        if (summaries) {
+          Object.entries(summaries).forEach(([name, data]) => {
+            const value = data.total || 0;
+            if (!value) return;
+            columnData.set(name, (columnData.get(name) || 0) + value);
+          });
+        }
+        break;
+      }
+
+      case 'aiProduct':
+      case 'productObligations': {
+        const fySummaries = jsonData.fiscal_year_summaries;
+        if (fySummaries) {
+          Object.values(fySummaries).forEach((yearData) => {
+            const items = yearData.top_10_products || [];
+            items.forEach((item) => {
+              const name = item.product;
+              const value = item.obligations || 0;
+              if (!name || !value) return;
+              columnData.set(name, (columnData.get(name) || 0) + value);
+            });
+          });
+        }
+        break;
+      }
+
+      case 'aiCategory':
+      case 'aiCategories':
+      case 'categoryObligations': {
+        const fySummaries = jsonData.fiscal_year_summaries;
+        if (fySummaries) {
+          Object.values(fySummaries).forEach((yearData) => {
+            const items = yearData.top_10_categories || [];
+            items.forEach((item) => {
+              const name = item.category;
+              const value = item.obligations || 0;
+              if (!name || !value) return;
+              columnData.set(name, (columnData.get(name) || 0) + value);
+            });
+          });
+        }
+        break;
+      }
+
+      default: {
+        const defaultValue =
+          (jsonData && (jsonData.total_obligated || jsonData.total_obligations || jsonData.summary?.grand_total_obligations)) ||
+          entity.value ||
+          0;
+        if (defaultValue > 0) {
+          columnData.set(entity.name, (columnData.get(entity.name) || 0) + defaultValue);
+        }
+      }
+    }
+  });
+
+  const result = Array.from(columnData.entries())
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value);
+
+  console.log(`🔍 extractColumnData RESULT for ${columnId} (length: ${result.length}):`, result.slice(0, 10).map(item => `${item.name}: ${item.value}`));
+  
+  // Special debugging for categoryObligations
+  if (columnId === 'categoryObligations') {
+    console.log(`🔍 SPECIAL DEBUG categoryObligations entities:`, entities.length);
+    console.log(`🔍 SPECIAL DEBUG first entity structure:`, {
+      name: entities[0]?.name,
+      hasColumn: Object.prototype.hasOwnProperty.call(entities[0] || {}, columnId),
+      columnValue: entities[0]?.[columnId],
+      keys: Object.keys(entities[0] || {})
+    });
+  }
+  
+  return result;
+}
+
+
+
+
+
+/**
+ * Generate column-specific breakdown charts (KPI-style charts)
+ * Shows the actual content of columns (e.g., Tiers, Products, Contract Vehicles)
+ * instead of entity-based aggregations
+ * @param {Array} entities - Entity data from DataManager
+ * @param {string} entityType - Type of entity (agency, oem, vendor)
+ * @param {string} columnId - Column identifier
+ * @param {number} topN - Number of top items to show
+ * @returns {Array} Array of breakdown chart cards
+ */
+function generateColumnBreakdownCharts(entities, entityType, columnId, topN = 10) {
+  // Only generate breakdown charts for specific columns that have categorical data
+  const breakdownColumns = [
+    'sumTier',
+    'sumType',
+    'aiProduct',
+    'aiCategory',
+    'aiCategories',
+    'topBicProducts',
+    'contractVehicle',
+    'reseller',
+    'smallBusiness',
+    'productObligations',
+    'categoryObligations'
+  ];
+
+  if (!breakdownColumns.includes(columnId)) {
+    return []; // No breakdown charts for this column type
+  }
+
+  // Use extractColumnData to get the already-extracted breakdown data
+  const extractedData = extractColumnData(entities, columnId);
+  
+  if (!extractedData || extractedData.length === 0) {
+    return []; // No data to create breakdown charts
+  }
+  
+  // Data is already sorted from extractColumnData
+  const sortedData = extractedData.slice(0, topN);
+
+  if (sortedData.length === 0) {
+    return [];
+  }
+
+  const cards = [];
+
+  // Horizontal bar breakdown
+  const bar = generateBreakdownHorizontalBarChart(sortedData, columnId, entityType, topN);
+  if (bar) cards.push(bar);
+
+  // Pie breakdown
+  const pie = generateBreakdownPieChart(sortedData, columnId, entityType);
+  if (pie) cards.push(pie);
+
+  // Fiscal-year trend (if available)
+  const fyTrend = generateBreakdownFiscalTrend(entities, columnId, entityType);
+  if (fyTrend) cards.push(fyTrend);
+
+  return cards;
 }
 
 /**
@@ -620,99 +1163,162 @@ function getChartTypesByContext(entityType, columnId, entityCount) {
  * @param {Object} options - Chart generation options
  * @returns {Array} Array of chart cards
  */
-function generateChartBuffet(entityType, columnId, entities, options = {}) {
-  const { topN = 10, selectedEntities = [], forceChartTypes = null } = options;
-  
-  // EMERGENCY DEBUG: Check if entities data exists
-  console.log(`🚨 EMERGENCY DEBUG: Chart Buffet called with:`, {
-    entityType, 
-    columnId, 
-    entitiesLength: entities?.length || 0, 
-    topN, 
-    hasEntities: !!entities,
-    firstEntity: entities?.[0] || 'NONE'
-  });
-  
-  // Debug entity values for this column
-  if (entities && entities.length > 0) {
-    console.log(` DEBUG: First 3 entities for column "${columnId}":`, entities.slice(0, 3).map(e => ({
-      name: e.name,
-      value: e.value,
-      hasJsonData: !!e.jsonData
-    })));
+  function generateChartBuffet(entityType, columnId, entities, options = {}) {
+    // LOGGING POINT 3: Log columnId received by Chart Buffet
+    console.log(`🎨 Chart Buffet generateChartBuffet: Received columnId "${columnId}" for ${entityType} with ${entities?.length || 0} entities`);
+    
+    const { 
+      topN = 10, 
+      selectedEntities = [], 
+      forceChartTypes = null,
+      showAllOther = true,
+      percentageMode = 'total'
+    } = options;
+    
+    // If no entities, return empty array immediately
+    if (!entities || entities.length === 0) {
+      console.error(`No entities provided to generateChartBuffet for ${entityType}/${columnId}`);
+      return [];
+    }
+    
+    // DEBUG: Check what properties entities actually have
+    if (columnId === 'sumTier' || columnId === 'topBicProducts') {
+      console.log('BUFFET DEBUG first entity for', columnId, {
+        name: entities[0].name,
+        keys: Object.keys(entities[0]),
+        hasSumTier: 'sumTier' in entities[0],
+        hasTopBicProducts: 'topBicProducts' in entities[0],
+        sumTierValue: entities[0].sumTier,
+        topBicProductsValue: entities[0].topBicProducts
+      });
+    }
+    
+
+  // Extract actual column data instead of using entity data
+  console.log(`Chart generation: Starting extraction for ${entities.length} ${entityType} entities, column: ${columnId}`);
+  if (entities.length > 0) {
+    console.log(`First entity structure:`, {
+      name: entities[0].name,
+      hasObligations: !!entities[0].obligations,
+      obligationsKeys: entities[0].obligations ? Object.keys(entities[0].obligations).slice(0, 5) : 'NONE',
+      totalObligated: entities[0].obligations?.total_obligated,
+      value: entities[0].value
+    });
   }
+  const columnDataItems = extractColumnData(entities, columnId);
+  console.log(`Chart generation: Extracted ${columnDataItems.length} data items`);
   
-  // If no entities, return empty array immediately
-  if (!entities || entities.length === 0) {
-    console.error(`🚨 CRITICAL: No entities provided to generateChartBuffet for ${entityType}/${columnId}`);
-    return [];
+  let chartEntities;
+  if (columnDataItems.length === 0) {
+    // Fallback - check entity properties for direct values
+    chartEntities = [];
+    entities.forEach((entity) => {
+      const fallbackValue = entity.value || entity.obligations?.total_obligated || 0;
+      if (fallbackValue > 0) {
+        chartEntities.push({ name: entity.name, value: fallbackValue });
+      }
+    });
+  } else {
+    // Use extracted column data (this shows resellers when user clicks resellers!)
+    chartEntities = columnDataItems;
   }
-  
-  // Use topN directly (no more "All" option)
+
+  // Use topN directly
   const effectiveTopN = topN || 10;
   
-  // Calculate overall total from all entities for percentage calculations
-  const overallTotal = entities.reduce((sum, e) => sum + (e.value || 0), 0);
+  // Calculate overall total from chart entities  
+  const overallTotal = chartEntities.reduce((sum, e) => sum + (e.value || 0), 0);
   
-  // Get top N entities and calculate "Others"
-  const topEntities = entities.slice(0, effectiveTopN);
+  // Get top N entities and calculate "All Other" if enabled
+  const topEntities = chartEntities.slice(0, effectiveTopN);
   const topTotal = topEntities.reduce((sum, e) => sum + (e.value || 0), 0);
   const othersValue = overallTotal - topTotal;
   
-  // Create entities with "Others" category if there are remaining entities
+  // Create entities with "All Other" category based on user preference
   const entitiesWithOthers = [...topEntities];
-  if (othersValue > 0 && entities.length > effectiveTopN) {
+  if (showAllOther && othersValue > 0 && chartEntities.length > effectiveTopN) {
     entitiesWithOthers.push({
-      name: 'Others',
+      name: 'All Other',
       value: othersValue,
       isOthers: true
     });
   }
   
-  console.log(`📊 Chart Buffet: Top ${effectiveTopN} total: ${formatCurrencyShort(topTotal)}, Others: ${formatCurrencyShort(othersValue)}, Overall: ${formatCurrencyShort(overallTotal)}`);
+  // Determine percentage calculation base (total vs topN)
+  const percentageBase = percentageMode === 'topN' ? 
+    (showAllOther ? topTotal + othersValue : topTotal) : 
+    overallTotal;
   
-  // Get DataManager instance
-  const dataManager = getDataManager();
   const cards = [];
+
+  // 1. GENERATE BREAKDOWN CHARTS FIRST
+  // These show the actual content categories (e.g. Tiers, Products) instead of Entities
+  // Pass effectiveTopN to avoid ReferenceError
+  const breakdownCharts = generateColumnBreakdownCharts(entities, entityType, columnId, effectiveTopN);
+
+  // If breakdown charts exist, add them first (Primary View)
+  if (breakdownCharts.length > 0) {
+    cards.push(...breakdownCharts);
+  }
   
-  // Determine recommended chart types - NOW USES 3-DIMENSIONAL SELECTION
-  const chartTypes = forceChartTypes || getChartTypesByContext(entityType, columnId, effectiveTopN);
-  
-  // Generate each recommended chart type
-  chartTypes.forEach(chartType => {
-    let card = null;
+  // 2. GENERATE ENTITY CHARTS (Standard Top N Agencies/OEMs)
+  // Skip these for breakdown-heavy columns to avoid confusion, 
+  // or if breakdown charts were successfully generated.
+  const isBreakdownColumn = [
+    'sumTier', 
+    'aiProduct', 
+    'aiCategory',
+    'aiCategories', 
+    'topBicProducts', 
+    'productObligations', 
+    'categoryObligations',
+    'contractVehicle'
+  ].includes(columnId);
+
+  // Only generate entity rankings if it's NOT a breakdown column, 
+  // or if for some reason no breakdown charts were created (fallback)
+  if (!isBreakdownColumn || breakdownCharts.length === 0) {
     
-    switch(chartType) {
-      case 'verticalBar':
-        card = generateVerticalBarChart(entitiesWithOthers, entityType, columnId, effectiveTopN, overallTotal);
-        break;
-      case 'horizontalBar':
-        card = generateHorizontalBarChart(entitiesWithOthers, entityType, columnId, effectiveTopN, overallTotal);
-        break;
-      case 'line':
-        card = generateLineChart(entitiesWithOthers, entityType, columnId, overallTotal);
-        break;
-      case 'funnel':
-        card = generateFunnelChart(entitiesWithOthers, entityType, columnId, effectiveTopN, overallTotal);
-        break;
-      case 'pie':
-        card = generatePieChart(entitiesWithOthers, entityType, columnId, effectiveTopN, overallTotal);
-        break;
-      case 'doughnut':
-        card = generateDoughnutChart(entitiesWithOthers, entityType, columnId, effectiveTopN, overallTotal);
-        break;
-      case 'stackedBar':
-        // Year over Year chart limited to max 5 entities (even if user selects Top 15)
-        card = generateStackedBarChart(entities, entityType, columnId, Math.min(effectiveTopN, 5));
-        break;
-      case 'area':
-        card = generateAreaChart(entities, entityType, columnId);
-        break;
-    }
+    // Determine recommended chart types - NOW USES 3-DIMENSIONAL SELECTION
+    const chartTypes = forceChartTypes || getChartTypesByContext(entityType, columnId, effectiveTopN);
     
-    if (card) cards.push(card);
-  });
+    // Generate each recommended chart type
+    chartTypes.forEach(chartType => {
+      let card = null;
+      
+      switch(chartType) {
+        case 'verticalBar':
+          card = generateVerticalBarChart(entitiesWithOthers, entityType, columnId, effectiveTopN, percentageBase, percentageMode, showAllOther, overallTotal);
+          break;
+        case 'horizontalBar':
+          card = generateHorizontalBarChart(entitiesWithOthers, entityType, columnId, effectiveTopN, percentageBase, percentageMode, showAllOther, overallTotal);
+          break;
+        case 'line':
+          card = generateLineChart(entitiesWithOthers, entityType, columnId, percentageBase, percentageMode);
+          break;
+        case 'funnel':
+          card = generateFunnelChart(entitiesWithOthers, entityType, columnId, effectiveTopN, percentageBase, percentageMode, showAllOther);
+          break;
+        case 'pie':
+          card = generatePieChart(entitiesWithOthers, entityType, columnId, effectiveTopN, percentageBase, percentageMode, showAllOther, overallTotal);
+          break;
+        case 'doughnut':
+          card = generateDoughnutChart(entitiesWithOthers, entityType, columnId, effectiveTopN, percentageBase, percentageMode, showAllOther, overallTotal);
+          break;
+        case 'stackedBar':
+          // Year over Year chart limited to max 5 entities (even if user selects Top 15)
+          card = generateStackedBarChart(chartEntities, entityType, columnId, Math.min(effectiveTopN, 5));
+          break;
+        case 'area':
+          card = generateAreaChart(chartEntities, entityType, columnId);
+          break;
+      }
+      
+      if (card) cards.push(card);
+    });
+  }
   
+  // 3. ADD TREND OVER TIME
   // Add trend over time if fiscal year data exists
   const trendCard = generateTrendOverTime(entityType, columnId, selectedEntities);
   if (trendCard) cards.push(trendCard);
@@ -721,81 +1327,242 @@ function generateChartBuffet(entityType, columnId, entities, options = {}) {
 }
 
 /**
- * Generate vertical bar chart (for ≤5 entities)
+ * Aggregate column data across all entities to show category/type breakdowns
  */
-function generateVerticalBarChart(entities, entityType, columnId, topN, overallTotal) {
-  // entities already includes "Others" if applicable
-  const actualTopN = entities.filter(e => !e.isOthers).length;
-  const titleSuffix = `Top ${actualTopN}${entities.some(e => e.isOthers) ? ' + Others' : ''}`;
+function aggregateColumnData(entities, columnId) {
+  const aggregated = {};
+
+  entities.forEach(entity => {
+    let jsonData = entity[columnId];
+    if (!jsonData) return;
+
+    // PARSE JSON STRING IF NEEDED
+    if (typeof jsonData === 'string') {
+      try {
+        jsonData = JSON.parse(jsonData);
+      } catch(e) {
+        console.warn(`aggregateColumnData: Invalid JSON for ${columnId}`);
+        return;
+      }
+    }
+
+    switch(columnId) {
+      case 'sumType':
+        if (jsonData.sum_type_summaries) {
+          Object.entries(jsonData.sum_type_summaries).forEach(([type, data]) => {
+            aggregated[type] = (aggregated[type] || 0) + (data.total || 0);
+          });
+        }
+        break;
+
+      case 'sumTier':
+        if (jsonData.tier_summaries) {
+          Object.entries(jsonData.tier_summaries).forEach(([tier, data]) => {
+            aggregated[tier] = (aggregated[tier] || 0) + (data.total || 0);
+          });
+        }
+        break;
+
+      case 'smallBusiness':
+        if (jsonData.business_size_summaries) {
+          Object.entries(jsonData.business_size_summaries).forEach(([size, data]) => {
+            aggregated[size] = (aggregated[size] || 0) + (data.total || 0);
+          });
+        }
+        break;
+
+      case 'contractVehicle':
+        if (jsonData.top_contract_summaries) {
+          Object.entries(jsonData.top_contract_summaries).forEach(([vehicle, data]) => {
+            aggregated[vehicle] = (aggregated[vehicle] || 0) + (data.total || 0);
+          });
+        }
+        break;
+
+      case 'reseller':
+        if (jsonData.top_15_reseller_summaries) {
+          Object.entries(jsonData.top_15_reseller_summaries).forEach(([reseller, data]) => {
+            aggregated[reseller] = (aggregated[reseller] || 0) + (data.total || 0);
+          });
+        }
+        break;
+
+      case 'bicReseller':
+        if (jsonData.top_15_resellers && Array.isArray(jsonData.top_15_resellers)) {
+          jsonData.top_15_resellers.forEach(item => {
+            const name = item.vendor_name;
+            const value = item.total_sales || 0;
+            if (name) aggregated[name] = (aggregated[name] || 0) + value;
+          });
+        }
+        break;
+
+      case 'topBicProducts':
+        if (jsonData.top_25_products && Array.isArray(jsonData.top_25_products)) {
+          jsonData.top_25_products.forEach(item => {
+            const name = item.product_name;
+            const value = item.total_price || 0;
+            if (name) aggregated[name] = (aggregated[name] || 0) + value;
+          });
+        }
+        break;
+
+      case 'fasOem':
+        if (jsonData.top_10_oem_summaries) {
+          Object.entries(jsonData.top_10_oem_summaries).forEach(([oem, data]) => {
+            aggregated[oem] = (aggregated[oem] || 0) + (data.total_obligations || data.total || 0);
+          });
+        }
+        break;
+
+      case 'bicOem':
+        if (jsonData.top_15_manufacturers && Array.isArray(jsonData.top_15_manufacturers)) {
+          jsonData.top_15_manufacturers.forEach(item => {
+            const name = item.manufacturer_name;
+            const value = item.total_sales || 0;
+            if (name) aggregated[name] = (aggregated[name] || 0) + value;
+          });
+        }
+        break;
+
+      case 'fundingDepartment':
+        if (jsonData.top_10_department_summaries) {
+          Object.entries(jsonData.top_10_department_summaries).forEach(([dept, data]) => {
+            aggregated[dept] = (aggregated[dept] || 0) + (data.total || 0);
+          });
+        }
+        break;
+
+      case 'fundingAgency':
+        if (jsonData.top_10_agency_summaries) {
+          Object.entries(jsonData.top_10_agency_summaries).forEach(([agency, data]) => {
+            aggregated[agency] = (aggregated[agency] || 0) + (data.total || 0);
+          });
+        }
+        break;
+
+      case 'aiProduct':
+      case 'productObligations':
+        if (jsonData.fiscal_year_summaries) {
+          Object.values(jsonData.fiscal_year_summaries).forEach(yearData => {
+            const items = yearData.top_10_products || [];
+            items.forEach(item => {
+              const name = item.product;
+              const value = item.obligations || 0;
+              if (name && value) {
+                aggregated[name] = (aggregated[name] || 0) + value;
+              }
+            });
+          });
+        }
+        break;
+
+      case 'aiCategory':
+      case 'aiCategories':
+      case 'categoryObligations':
+        if (jsonData.fiscal_year_summaries) {
+          Object.values(jsonData.fiscal_year_summaries).forEach(yearData => {
+            const items = yearData.top_10_categories || [];
+            items.forEach(item => {
+              const name = item.category;
+              const value = item.obligations || 0;
+              if (name && value) {
+                aggregated[name] = (aggregated[name] || 0) + value;
+              }
+            });
+          });
+        }
+        break;
+    }
+  });
+
+  console.log(`aggregateColumnData RESULT for ${columnId}:`, aggregated);
+  return aggregated;
+}
+
+
+/**
+ * Generate breakdown pie chart showing category distribution
+ */
+function generateBreakdownPieChart(data, columnId, entityType) {
+  console.log(`🥧 generateBreakdownPieChart for ${columnId}: Received ${data.length} items`);
+  console.log(`🥧 First 5 items:`, data.slice(0, 5).map(item => `${item.name}: ${item.value}`));
+  const totalValue = data.reduce((sum, item) => sum + item.value, 0);
   
   return {
-    id: `${entityType}_${columnId}_verticalBar`,
-    title: `${getColumnDisplayName(columnId)} - ${titleSuffix}`,
+    id: `${entityType}_${columnId}_breakdown_pie`,
+    title: `${getColumnDisplayName(columnId)} - Category Breakdown`,
     cardType: 'chart',
-    chartType: 'bar',
+    chartType: 'pie',
     chartData: {
-      labels: entities.map(e => {
-        if (e.isOthers) return 'Others';
-        return entityType === 'agency' ? abbreviateAgencyName(e.name) : e.name;
-      }),
+      labels: data.map(item => item.name),
       datasets: [{
-        label: getColumnDisplayName(columnId),
-        data: entities.map(e => e.value),
-        backgroundColor: entities.map(e => e.isOthers ? '#9ca3af' : '#144673'),
-        borderColor: entities.map(e => e.isOthers ? '#6b7280' : '#0a2240'),
-        borderWidth: 1
+        data: data.map(item => item.value),
+        backgroundColor: generateColorGradient(data.length),
+        borderColor: '#ffffff',
+        borderWidth: 2
       }]
     },
     chartOptions: {
-      indexAxis: 'x', // Vertical bars
       responsive: true,
       plugins: {
-        legend: { display: false },
-        title: {
-          display: true,
-          text: `Top ${topN} by ${getColumnDisplayName(columnId)}`
+        legend: { position: 'bottom' },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const percentage = totalValue > 0 ? ((context.parsed / totalValue) * 100).toFixed(1) : '0.0';
+              return `${context.label}: ${formatCurrencyShort(context.parsed)} (${percentage}%)`;
+            }
+          }
         }
       }
     },
     tableData: {
-      headers: ['Entity', 'Value', 'Rank'],
-      rows: entities.filter(e => !e.isOthers).map((entity, index) => [
-        entity.name,
-        formatCurrency(entity.value),
-        `#${index + 1}`
-      ])
+      headers: ['Category', 'Total Value', 'Percentage'],
+      rows: data.map(item => {
+        const percentage = totalValue > 0 ? ((item.value / totalValue) * 100).toFixed(1) : '0.0';
+        return [
+          item.name,
+          formatCurrency(item.value),
+          `${percentage}%`
+        ];
+      })
+    },
+    summary: {
+      totalDisplayed: formatCurrencyShort(totalValue),
+      categoriesShown: data.length,
+      topCategory: data.length > 0 ? data[0].name : 'N/A',
+      topCategoryValue: data.length > 0 ? formatCurrencyShort(data[0].value) : 'N/A'
     }
   };
 }
 
 /**
- * Generate horizontal bar chart (better for longer names)
+ * Generate breakdown horizontal bar chart
  */
-function generateHorizontalBarChart(entities, entityType, columnId, topN, overallTotal) {
-  // entities already includes "Others" if applicable
-  const actualTopN = entities.filter(e => !e.isOthers).length;
-  const titleSuffix = `Top ${actualTopN}${entities.some(e => e.isOthers) ? ' + Others' : ''}`;
+function generateBreakdownHorizontalBarChart(data, columnId, entityType, topN) {
+  console.log(`📊 generateBreakdownHorizontalBarChart for ${columnId}: Received ${data.length} items, showing top ${topN}`);
+  console.log(`📊 First 5 items:`, data.slice(0, 5).map(item => `${item.name}: ${item.value}`));
+  const displayData = data.slice(0, topN);
+  const totalValue = data.reduce((sum, item) => sum + item.value, 0);
   
   return {
-    id: `${entityType}_${columnId}_horizontalBar`,
-    title: `${getColumnDisplayName(columnId)} - ${titleSuffix} (Horizontal)`,
+    id: `${entityType}_${columnId}_breakdown_horizontalBar`,
+    title: `${getColumnDisplayName(columnId)} - Top ${Math.min(topN, data.length)} Categories`,
     cardType: 'chart',
     chartType: 'bar',
     chartData: {
-      labels: entities.map(e => {
-        if (e.isOthers) return 'Others';
-        return entityType === 'agency' ? abbreviateAgencyName(e.name) : e.name;
-      }),
+      labels: displayData.map(item => item.name),
       datasets: [{
         label: getColumnDisplayName(columnId),
-        data: entities.map(e => e.value),
-        backgroundColor: entities.map(e => e.isOthers ? '#9ca3af' : '#144673'),
-        borderColor: entities.map(e => e.isOthers ? '#6b7280' : '#0a2240'),
+        data: displayData.map(item => item.value),
+        backgroundColor: '#144673',
+        borderColor: '#0a2240',
         borderWidth: 1
       }]
     },
     chartOptions: {
-      indexAxis: 'y', // Horizontal bars
+      indexAxis: 'y',
       responsive: true,
       plugins: {
         legend: { display: false }
@@ -812,17 +1579,295 @@ function generateHorizontalBarChart(entities, entityType, columnId, topN, overal
       }
     },
     tableData: {
-      headers: ['Rank', 'Entity', 'Value', 'Percentage'],
-      rows: entities.filter(e => !e.isOthers).map((entity, index) => {
-        const totalValue = overallTotal; // Use the overall total passed to the function
-        const percentage = totalValue > 0 ? ((entity.value / totalValue) * 100).toFixed(1) : '0.0';
+      headers: ['Rank', 'Category', 'Value', 'Percentage'],
+      rows: displayData.map((item, index) => {
+        const percentage = totalValue > 0 ? ((item.value / totalValue) * 100).toFixed(1) : '0.0';
         return [
           `#${index + 1}`,
-          entity.name,
-          formatCurrency(entity.value),
+          item.name,
+          formatCurrency(item.value),
           `${percentage}%`
         ];
       })
+    },
+    summary: {
+      totalDisplayed: formatCurrencyShort(displayData.reduce((sum, item) => sum + item.value, 0)),
+      percentageOfTotal: totalValue > 0 ? formatPercentage(displayData.reduce((sum, item) => sum + item.value, 0), totalValue) : '0.0%',
+      topPerformer: displayData.length > 0 ? displayData[0].name : 'N/A',
+      topPerformerValue: displayData.length > 0 ? formatCurrencyShort(displayData[0].value) : 'N/A'
+    }
+  };
+}
+
+/**
+ * Generate fiscal year trend for column breakdown
+ */
+function generateBreakdownFiscalTrend(entities, columnId, entityType) {
+  const fiscalData = {};
+  
+  // Aggregate fiscal year data for this column
+  entities.forEach(entity => {
+    const jsonData = entity[columnId];
+    if (!jsonData) return;
+    
+    // Extract fiscal year data based on column structure
+    let yearlyData = null;
+    
+    if (jsonData.fiscal_year_obligations) {
+      yearlyData = jsonData.fiscal_year_obligations;
+    } else if (columnId === 'sumType' && jsonData.sum_type_summaries) {
+      // Aggregate fiscal years across sum types
+      Object.values(jsonData.sum_type_summaries).forEach(typeData => {
+        if (typeData.fiscal_years) {
+          Object.entries(typeData.fiscal_years).forEach(([year, value]) => {
+            fiscalData[year] = (fiscalData[year] || 0) + value;
+          });
+        }
+      });
+      return; // Already processed
+    } else if (columnId === 'sumTier' && jsonData.tier_summaries) {
+      // Aggregate fiscal years across tiers
+      Object.values(jsonData.tier_summaries).forEach(tierData => {
+        if (tierData.fiscal_years) {
+          Object.entries(tierData.fiscal_years).forEach(([year, value]) => {
+            fiscalData[year] = (fiscalData[year] || 0) + value;
+          });
+        }
+      });
+      return; // Already processed
+    }
+    
+    // Generic fiscal year extraction
+    if (yearlyData && typeof yearlyData === 'object') {
+      Object.entries(yearlyData).forEach(([year, value]) => {
+        fiscalData[year] = (fiscalData[year] || 0) + (parseFloat(value) || 0);
+      });
+    }
+  });
+  
+  const years = Object.keys(fiscalData).sort();
+  if (years.length < 2) return null; // Need at least 2 years for a trend
+  
+  const values = years.map(year => fiscalData[year]);
+  const totalValue = values.reduce((sum, val) => sum + val, 0);
+  
+  return {
+    id: `${entityType}_${columnId}_breakdown_fiscalTrend`,
+    title: `${getColumnDisplayName(columnId)} - Historical Trend`,
+    cardType: 'chart',
+    chartType: 'line',
+    chartData: {
+      labels: years.map(year => `FY${year}`),
+      datasets: [{
+        label: getColumnDisplayName(columnId),
+        data: values,
+        borderColor: '#144673',
+        backgroundColor: 'rgba(20, 70, 115, 0.1)',
+        tension: 0.3,
+        fill: true
+      }]
+    },
+    chartOptions: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'top' }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return formatCurrencyShort(value);
+            }
+          }
+        }
+      }
+    },
+    tableData: {
+      headers: ['Fiscal Year', 'Total Value', 'YoY Growth %'],
+      rows: years.map((year, index) => {
+        const value = values[index];
+        const growth = index > 0 ? 
+          (((value - values[index - 1]) / values[index - 1]) * 100).toFixed(1) + '%' : 
+          'N/A';
+        return [
+          `FY${year}`,
+          formatCurrency(value),
+          growth
+        ];
+      })
+    },
+    summary: {
+      totalValue: formatCurrencyShort(totalValue),
+      totalGrowth: values.length > 1 ? 
+        (((values[values.length - 1] - values[0]) / values[0]) * 100).toFixed(1) + '%' : 
+        'N/A',
+      yearsTracked: years.length
+    }
+  };
+}
+
+/**
+ * Generate vertical bar chart (for ≤5 entities)
+ */
+function generateVerticalBarChart(entities, entityType, columnId, topN, percentageBase, percentageMode, showAllOther, overallTotal) {
+  // entities already includes "Others" if applicable
+  const actualTopN = entities.filter(e => !e.isOthers).length;
+  const titleSuffix = `Top ${actualTopN}${entities.some(e => e.isOthers) ? ' + All Other' : ''}`;
+  const totalDisplayed = entities.reduce((sum, e) => sum + (e.value || 0), 0);
+  const percentageModeLabel = percentageMode === 'topN' ? '% of displayed' : '% of total';
+  
+  return {
+    id: `${entityType}_${columnId}_verticalBar`,
+    title: `${getColumnDisplayName(columnId)} - ${titleSuffix} (${formatCurrencyShort(totalDisplayed)}, ${percentageModeLabel})`,
+    cardType: 'chart',
+    chartType: 'bar',
+    chartData: {
+      labels: entities.map(e => {
+        const name = e.isOthers ? 'All Other' : (entityType === 'agency' ? abbreviateAgencyName(e.name) : e.name);
+        return name.length > 15 ? name.substring(0, 12) + '...' : name;
+      }),
+      datasets: [{
+        label: `${getColumnDisplayName(columnId)} (with percentages)`,
+        data: entities.map(e => e.value),
+        backgroundColor: entities.map(e => e.isOthers ? '#94a3b8' : '#144673'),
+        borderColor: entities.map(e => e.isOthers ? '#64748b' : '#0a2240'),
+        borderWidth: 1
+      }]
+    },
+    chartOptions: {
+      indexAxis: 'x', // Vertical bars
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        title: {
+          display: true,
+          text: `${getColumnDisplayName(columnId)} - Top ${actualTopN}${entities.some(e => e.isOthers) ? ' + All Other' : ''}`
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const entity = entities[context.dataIndex];
+              const percentage = formatPercentage(entity.value, percentageBase);
+              return `${formatCurrencyShort(entity.value)} (${percentage})`;
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Value ($)'
+          }
+        }
+      }
+    },
+    tableData: {
+      headers: ['Rank', 'Entity', 'Value', 'Percentage'],
+      rows: entities.map((entity, index) => {
+        const percentage = formatPercentage(entity.value, percentageBase);
+        return [
+          entity.isOthers ? 'N/A' : `#${index + 1}`,
+          entity.isOthers ? 'All Other Combined' : entity.name,
+          formatCurrencyShort(entity.value),
+          percentage
+        ];
+      })
+    },
+    summary: {
+      totalDisplayed: formatCurrencyShort(totalDisplayed),
+      percentageOfTotal: formatPercentage(totalDisplayed, overallTotal),
+      topPerformer: entities.length > 0 ? entities[0].name : 'N/A',
+      topPerformerValue: entities.length > 0 ? formatCurrencyShort(entities[0].value) : 'N/A',
+      entitiesShown: entities.length,
+      hasAllOther: entities.some(e => e.isOthers)
+    }
+  };
+}
+
+/**
+ * Generate horizontal bar chart (better for longer names)
+ */
+function generateHorizontalBarChart(entities, entityType, columnId, topN, percentageBase, percentageMode, showAllOther, overallTotal) {
+  // entities already includes "Others" if applicable
+  const actualTopN = entities.filter(e => !e.isOthers).length;
+  const titleSuffix = `Top ${actualTopN}${entities.some(e => e.isOthers) ? ' + All Other' : ''}`;
+  const totalDisplayed = entities.reduce((sum, e) => sum + (e.value || 0), 0);
+  
+  return {
+    id: `${entityType}_${columnId}_horizontalBar`,
+    title: `${getColumnDisplayName(columnId)} - ${titleSuffix} (${formatCurrencyShort(totalDisplayed)} total)`,
+    cardType: 'chart',
+    chartType: 'bar',
+    chartData: {
+      labels: entities.map(e => {
+        const name = e.isOthers ? 'All Other' : (entityType === 'agency' ? abbreviateAgencyName(e.name) : e.name);
+        return name.length > 20 ? name.substring(0, 17) + '...' : name;
+      }),
+      datasets: [{
+        label: `${getColumnDisplayName(columnId)} (with percentages)`,
+        data: entities.map(e => e.value),
+        backgroundColor: entities.map(e => e.isOthers ? '#94a3b8' : '#144673'),
+        borderColor: entities.map(e => e.isOthers ? '#64748b' : '#0a2240'),
+        borderWidth: 1
+      }]
+    },
+    chartOptions: {
+      indexAxis: 'y', // Horizontal bars
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        title: {
+          display: true,
+          text: `${getColumnDisplayName(columnId)} - Top ${actualTopN}${entities.some(e => e.isOthers) ? ' + All Other' : ''}`
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const entity = entities[context.dataIndex];
+              const percentage = formatPercentage(entity.value, percentageBase);
+              return `${formatCurrencyShort(entity.value)} (${percentage})`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: 'Value ($)'
+          },
+          ticks: {
+            callback: function(value) {
+              return formatCurrencyShort(value);
+            }
+          }
+        }
+      }
+    },
+    tableData: {
+      headers: ['Rank', 'Entity', 'Value', 'Percentage'],
+      rows: entities.map((entity, index) => {
+        const percentage = formatPercentage(entity.value, percentageBase);
+        return [
+          entity.isOthers ? 'N/A' : `#${index + 1}`,
+          entity.isOthers ? 'All Other Combined' : entity.name,
+          formatCurrencyShort(entity.value),
+          percentage
+        ];
+      })
+    },
+    summary: {
+      totalDisplayed: formatCurrencyShort(totalDisplayed),
+      percentageOfTotal: formatPercentage(totalDisplayed, overallTotal),
+      topPerformer: entities.length > 0 ? entities[0].name : 'N/A',
+      topPerformerValue: entities.length > 0 ? formatCurrencyShort(entities[0].value) : 'N/A',
+      entitiesShown: entities.length,
+      hasAllOther: entities.some(e => e.isOthers),
+      chartType: 'Horizontal Bar Chart - Best for longer entity names'
     }
   };
 }
@@ -830,7 +1875,7 @@ function generateHorizontalBarChart(entities, entityType, columnId, topN, overal
 /**
  * Generate line chart (for trends and 5-15 entities)
  */
-function generateLineChart(entities, entityType, columnId) {
+function generateLineChart(entities, entityType, columnId, percentageBase, percentageMode) {
   return {
     id: `${entityType}_${columnId}_line`,
     title: `${getColumnDisplayName(columnId)} - Trend Analysis`,
@@ -877,7 +1922,7 @@ function generateLineChart(entities, entityType, columnId) {
 /**
  * Generate funnel chart (for PIID and conversion data)
  */
-function generateFunnelChart(entities, entityType, columnId, topN) {
+function generateFunnelChart(entities, entityType, columnId, topN, percentageBase, percentageMode, showAllOther) {
   const topEntities = entities.slice(0, topN);
   const titleSuffix = topN >= entities.length ? `All ${entities.length}` : `Top ${topN}`;
   
@@ -926,17 +1971,91 @@ function generateFunnelChart(entities, entityType, columnId, topN) {
 }
 
 /**
- * Generate fiscal year breakdown pie chart
+ * Generate enhanced pie chart with percentages and "All Other" support
  */
-function generatePieChart(entities, entityType, columnId, topN) {
-  // Get DataManager for fiscal year aggregation
-  const dataManager = getDataManager();
+function generatePieChart(entities, entityType, columnId, topN, percentageBase, percentageMode, showAllOther, overallTotal) {
+  // entities already includes "Others" if applicable
+  const actualTopN = entities.filter(e => !e.isOthers).length;
+  const totalDisplayed = entities.reduce((sum, e) => sum + (e.value || 0), 0);
   
-  // Get all entities for this type to aggregate fiscal years
-  const allEntities = dataManager.getEntities(entityType);
+  // Generate color gradient for the pie slices
+  const colors = [
+    '#144673', '#3a6ea5', '#f47920', '#ff6b35', '#22c55e',
+    '#ef4444', '#8b5cf6', '#06b6d4', '#f59e0b', '#94a3b8'
+  ];
   
-  // Aggregate fiscal year data across all entities
-  const fiscalYearTotals = {};
+  return {
+    id: `${entityType}_${columnId}_pie`,
+    title: `${getColumnDisplayName(columnId)} - Top ${actualTopN}${entities.some(e => e.isOthers) ? ' + All Other' : ''} (${formatCurrencyShort(totalDisplayed)} total)`,
+    cardType: 'chart',
+    chartType: 'pie',
+    chartData: {
+      labels: entities.map(e => {
+        const name = e.isOthers ? 'All Other' : (entityType === 'agency' ? abbreviateAgencyName(e.name) : e.name);
+        const percentage = formatPercentage(e.value, overallTotal);
+        return `${name} (${percentage})`;
+      }),
+      datasets: [{
+        data: entities.map(e => e.value),
+        backgroundColor: entities.map((e, index) => {
+          if (e.isOthers) return '#94a3b8';
+          return colors[index % colors.length];
+        }),
+        borderColor: '#ffffff',
+        borderWidth: 2
+      }]
+    },
+    chartOptions: {
+      responsive: true,
+      plugins: {
+        legend: { 
+          position: 'bottom',
+          labels: {
+            usePointStyle: true,
+            padding: 8,
+            boxWidth: 15
+          }
+        },
+        title: {
+          display: true,
+          text: `${getColumnDisplayName(columnId)} Distribution`,
+          font: { size: 14, weight: 'bold' }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const entity = entities[context.dataIndex];
+              const percentage = formatPercentage(entity.value, percentageBase);
+              const value = formatCurrencyShort(entity.value);
+              return `${entity.isOthers ? 'All Other' : entity.name}: ${value} (${percentage})`;
+            }
+          }
+        }
+      }
+    },
+    tableData: {
+      headers: ['Rank', 'Entity', 'Value', 'Percentage'],
+      rows: entities.map((entity, index) => {
+        const percentage = formatPercentage(entity.value, percentageBase);
+        return [
+          entity.isOthers ? 'N/A' : `#${index + 1}`,
+          entity.isOthers ? 'All Other Combined' : entity.name,
+          formatCurrencyShort(entity.value),
+          percentage
+        ];
+      })
+    },
+    summary: {
+      totalDisplayed: formatCurrencyShort(totalDisplayed),
+      percentageOfTotal: formatPercentage(totalDisplayed, overallTotal),
+      topPerformer: entities.length > 0 ? entities[0].name : 'N/A',
+      topPerformerValue: entities.length > 0 ? formatCurrencyShort(entities[0].value) : 'N/A',
+      topPerformerPercentage: entities.length > 0 ? formatPercentage(entities[0].value, overallTotal) : 'N/A',
+      entitiesShown: entities.length,
+      hasAllOther: entities.some(e => e.isOthers),
+      chartType: 'Pie Chart - Best for showing proportional relationships'
+    }
+  };
   
   allEntities.forEach(entity => {
     const jsonData = entity[columnId];
@@ -1035,7 +2154,7 @@ function generatePieChart(entities, entityType, columnId, topN) {
       chartOptions: {
         responsive: true,
         plugins: {
-          legend: { position: 'right' }
+          legend: { position: 'bottom' }
         }
       },
       tableData: {
@@ -1070,7 +2189,7 @@ function generatePieChart(entities, entityType, columnId, topN) {
       responsive: true,
       plugins: {
         legend: { 
-          position: 'right',
+          position: 'bottom',
           labels: {
             usePointStyle: true,
             padding: 10
@@ -1108,8 +2227,8 @@ function generatePieChart(entities, entityType, columnId, topN) {
 /**
  * Generate doughnut chart
  */
-function generateDoughnutChart(entities, entityType, columnId, topN) {
-  const pieChart = generatePieChart(entities, entityType, columnId, topN);
+function generateDoughnutChart(entities, entityType, columnId, topN, percentageBase, percentageMode, showAllOther, overallTotal) {
+  const pieChart = generatePieChart(entities, entityType, columnId, topN, percentageBase, percentageMode, showAllOther, overallTotal);
   return {
     ...pieChart,
     id: `${entityType}_${columnId}_doughnut`,
@@ -1391,8 +2510,16 @@ function getColumnDisplayName(columnId) {
  * Main entry point to replace existing generateColumnReports
  */
 function generateColumnReportsBuffet(entityType, columnId, topN = 10, selectedEntities = [], deptFilter = 'all', tierFilter = 'all') {
-  console.log('🍽️ Chart Buffet: Generating visualization suite for', entityType, columnId);
-  console.log('🍽️ Chart Buffet: Filters - deptFilter:', deptFilter, 'tierFilter:', tierFilter);
+  // RAW ARGUMENTS LOG - Print exactly what was received  
+  console.log('🔍 RAW ARGUMENTS generateColumnReportsBuffet:');
+  console.log('  entityType:', entityType);
+  console.log('  columnId:', columnId);
+  console.log('  topN:', topN);
+  console.log('  selectedEntities:', selectedEntities);
+  console.log('  deptFilter:', deptFilter);
+  console.log('  tierFilter:', tierFilter);
+  
+  console.log('Chart Buffet: Generating visualization suite for', entityType, columnId);
   
   try {
     // Get DataManager instance
@@ -1408,31 +2535,29 @@ function generateColumnReportsBuffet(entityType, columnId, topN = 10, selectedEn
       tierFilter: tierFilter
     };
     
-    // Load entities for report building - EMERGENCY FIX
-    console.log('🚨 EMERGENCY: Attempting to load entities via DataManager');
+    // Load entities for report building
     let reportEntities = [];
     
     try {
-      // Try multiple methods to get entities
-      if (dataManager.getEntitiesForView) {
-        reportEntities = dataManager.getEntitiesForView('reportBuilder', options);
-        console.log(' getEntitiesForView worked, got:', reportEntities.length, 'entities');
-      } else if (dataManager.getAgencies && entityType === 'agency') {
-        reportEntities = dataManager.getAgencies();
-        console.log(' getAgencies fallback worked, got:', reportEntities.length, 'entities');
-      } else if (dataManager.getOEMs && entityType === 'oem') {
-        reportEntities = dataManager.getOEMs();
-        console.log(' getOEMs fallback worked, got:', reportEntities.length, 'entities');
-      } else if (dataManager.getVendors && entityType === 'vendor') {
-        reportEntities = dataManager.getVendors();
-        console.log(' getVendors fallback worked, got:', reportEntities.length, 'entities');
+      // Primary method: Try getEntitiesForView first
+      reportEntities = dataManager.getEntitiesForView('reportBuilder', options);
+      
+      // Fallback method: Direct entity type loading if primary failed
+      if (reportEntities.length === 0) {
+        if (entityType === 'agency') {
+          reportEntities = dataManager.getAgencies();
+        } else if (entityType === 'oem') {
+          reportEntities = dataManager.getOEMs();
+        } else if (entityType === 'vendor') {
+          reportEntities = dataManager.getVendors();
+        }
       }
     } catch (error) {
-      console.error('🚨 DataManager entity loading failed:', error);
+      console.error('DataManager entity loading failed:', error);
     }
     
     if (reportEntities.length === 0) {
-      console.error('🚨 CRITICAL: No entities found after all attempts');
+      console.error('No entities found after all loading attempts');
       return [];
     }
     
@@ -1449,7 +2574,6 @@ function generateColumnReportsBuffet(entityType, columnId, topN = 10, selectedEn
         const isDOD = DOD_AGENCIES.some(dod => name.includes(dod));
         return deptFilter === 'dod' ? isDOD : !isDOD;
       });
-      console.log('🍽️ After dept filter:', reportEntities.length, 'entities');
     }
     
     // Apply OneGov Tier filter if specified (uses oneGovTier.mode_tier field)
@@ -1459,7 +2583,6 @@ function generateColumnReportsBuffet(entityType, columnId, topN = 10, selectedEn
         const entityTier = entity.oneGovTier?.mode_tier || '';
         return entityTier.toUpperCase() === tierFilter.toUpperCase();
       });
-      console.log('🍽️ After OneGov Tier filter:', reportEntities.length, 'entities');
     }
     
     // Generate the complete chart buffet
@@ -1469,8 +2592,6 @@ function generateColumnReportsBuffet(entityType, columnId, topN = 10, selectedEn
       deptFilter: deptFilter,
       tierFilter: tierFilter
     });
-    
-    console.log(`🍽️ Chart Buffet: Generated ${cards.length} visualizations`);
     
     // Add metadata to each card
     cards.forEach(card => {

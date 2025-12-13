@@ -1,484 +1,634 @@
-/**
- * OneGov FIT Market - Data Processing Functions
- * Functions for processing and transforming entity data
- */
-
-/**
- * Process entity JSON data for charts and display
- */
-function processEntityData(entity) {
-    if (!entity) return null;
-    
-    const processed = {
-        fiscalYearData: {},
-        tierData: {},
-        resellerData: {},
-        contractData: {},
-        agencyData: {},
-        aiData: {},
-        totalObligations: entity.totalObligations || 0
-    };
-    
-    // Process fiscal year obligations
-    if (entity.fiscalYearObligations) {
-        processed.fiscalYearData = entity.fiscalYearObligations;
-    } else if (entity.obligations && entity.obligations.fiscal_year_obligations) {
-        processed.fiscalYearData = entity.obligations.fiscal_year_obligations;
-    }
-    
-    // Process tier data
-    if (entity.sumTier && entity.sumTier.tier_summaries) {
-        processed.tierData = entity.sumTier.tier_summaries;
-    } else if (entity.oneGovTier && entity.oneGovTier.tier_breakdown) {
-        processed.tierData = entity.oneGovTier.tier_breakdown;
-    }
-    
-    // Process reseller data
-    if (entity.resellers) {
-        processed.resellerData = entity.resellers;
-    }
-    
-    // Process funding agencies as "customers"
-    if (entity.fundingAgency && entity.fundingAgency.top_10_agency_summaries) {
-        processed.agencyData = entity.fundingAgency.top_10_agency_summaries;
-    }
-    
-    // Process contract vehicles
-    if (entity.contractVehicle) {
-        processed.contractData = entity.contractVehicle;
-    }
-    
-    return processed;
-}
-
-/**
- * Dynamically detect available fiscal years from any JSON structure
- */
-function detectFiscalYears(jsonData) {
-    const years = new Set();
-    
-    // Check top-level fiscal year fields
-    const fiscalData = jsonData?.fiscal_year_obligations || jsonData?.fiscal_years || 
-                      jsonData?.yearly_totals || jsonData?.fiscal_year_summaries;
-    
-    if (fiscalData && typeof fiscalData === 'object') {
-        Object.keys(fiscalData).forEach(year => {
-            if (/^\d{4}$/.test(year)) { // Check if it's a 4-digit year
-                years.add(year);
-            }
-        });
-    }
-    
-    // Check nested structures like summaries
-    if (jsonData) {
-        Object.values(jsonData).forEach(value => {
-            if (typeof value === 'object' && value?.fiscal_years) {
-                Object.keys(value.fiscal_years).forEach(year => {
-                    if (/^\d{4}$/.test(year)) {
-                        years.add(year);
-                    }
-                });
-            }
-        });
-    }
-    
-    // Return sorted array of years, fallback to default if none found
-    return years.size > 0 ? Array.from(years).sort() : ['2022', '2023', '2024', '2025'];
-}
-
-/**
- * Extract fiscal year data from various JSON structures
- */
-function extractFiscalYearData(jsonData) {
-    if (!jsonData) return null;
-    if (jsonData.fiscal_year_obligations) return jsonData.fiscal_year_obligations;
-    if (jsonData.fiscal_years) return jsonData.fiscal_years;
-    if (jsonData.yearly_totals) return jsonData.yearly_totals;
-    
-    // Look in nested objects
-    for (const key in jsonData) {
-        if (typeof jsonData[key] === 'object' && jsonData[key]?.fiscal_years) {
-            return jsonData[key].fiscal_years;
-        }
-    }
-    return null;
-}
-
-/**
- * Process and aggregate data for summary calculations
- */
-function aggregateEntityData(entities) {
-    if (!entities || !Array.isArray(entities)) return null;
-    
-    const summary = {
-        totalEntities: entities.length,
-        totalObligations: 0,
-        totalContracts: 0,
-        fiscalYears: new Set(),
-        businessSizes: {},
-        entityTypes: {}
-    };
-    
-    entities.forEach(entity => {
-        // Sum total obligations
-        if (entity.totalObligations) {
-            summary.totalObligations += entity.totalObligations;
-        }
-        
-        // Count contracts
-        if (entity.contractCount) {
-            summary.totalContracts += entity.contractCount;
-        }
-        
-        // Collect fiscal years
-        const fiscalYears = detectFiscalYears(entity);
-        fiscalYears.forEach(year => summary.fiscalYears.add(year));
-        
-        // Categorize business sizes
-        if (entity.businessSize) {
-            const category = getBusinessSizeCategory(entity.businessSize);
-            summary.businessSizes[category] = (summary.businessSizes[category] || 0) + 1;
-        }
-        
-        // Categorize entity types
-        if (entity.type) {
-            summary.entityTypes[entity.type] = (summary.entityTypes[entity.type] || 0) + 1;
-        }
-    });
-    
-    summary.fiscalYears = Array.from(summary.fiscalYears).sort();
-    
-    return summary;
-}
-
-/**
- * Transform data for chart consumption
- */
-function transformDataForChart(data, chartType = 'bar') {
-    if (!data || typeof data !== 'object') return null;
-    
-    const transformed = {
-        labels: [],
-        values: [],
-        colors: []
-    };
-    
-    Object.entries(data).forEach(([key, value], index) => {
-        if (typeof value === 'number') {
-            transformed.labels.push(cleanLabel(key));
-            transformed.values.push(value);
-            transformed.colors.push(getChartColor(index));
-        } else if (typeof value === 'object' && value !== null) {
-            // Handle nested objects
-            const total = Object.values(value).reduce((sum, val) => {
-                return sum + (typeof val === 'number' ? val : 0);
-            }, 0);
-            if (total > 0) {
-                transformed.labels.push(cleanLabel(key));
-                transformed.values.push(total);
-                transformed.colors.push(getChartColor(index));
-            }
-        }
-    });
-    
-    return transformed.labels.length > 0 ? transformed : null;
-}
-
-/**
- * Process USAi profile data for entity details
- */
-function processUSAiProfile(entity) {
-    if (!entity || !entity.usaiProfile) return null;
-    
-    console.log(`📝 USAI PROFILE DEBUG: Processing "${entity.name}" profile:`, {
-        hasProfile: !!entity.usaiProfile,
-        profileKeys: entity.usaiProfile ? Object.keys(entity.usaiProfile) : 'N/A',
-        hasOverview: !!entity.usaiProfile?.overview,
-        overviewLength: entity.usaiProfile?.overview?.length || 0,
-        hasWebsite: !!entity.usaiProfile?.website,
-        hasLinkedIn: !!entity.usaiProfile?.linkedin
-    });
-    
-    return {
-        overview: entity.usaiProfile.overview || 'No overview available',
-        website: entity.usaiProfile.website || '',
-        linkedin: entity.usaiProfile.linkedin || '',
-        employees: entity.usaiProfile.employees || 'N/A',
-        founded: entity.usaiProfile.founded || 'N/A',
-        headquarters: entity.usaiProfile.headquarters || 'N/A'
-    };
-}
-
 // ============================================================================
-// R02 INTEGRATION - ENHANCED DATA PROCESSING
+// DATA PROCESSORS - B03_dataProcessors_v4.gs (BOUND SCRIPT)
+// ============================================================================
+// Processes raw OneGov savings data into aggregated structures for reporting.
+// This file should be in a SEPARATE bound script file from B13.
+//
+// VERSION: 4.0.0 - Full column capture, expanded aggregations
+//
+// RAW DATA COLUMNS SUPPORTED:
+//   - Also in BIC
+//   - Cost Savings Validated
+//   - Previously Reported Savings
+//   - Data Source
+//   - Contract #
+//   - OEM
+//   - Vendor
+//   - Funding Dept
+//   - Order Date
+//   - Reporting Period
+//   - Manufacturer Part Number
+//   - Description of Deliverable
+//   - Description of Deliverable (BIC)
+//   - QTY Sold
+//   - CPL Price (unit)
+//   - Total CPL Price
+//   - OneGov Price
+//   - Price Paid Per Unit
+//   - Total Price Paid
+//   - OneGov Discount Rate
+//   - Actual Discount Rate
+//   - $ Saved
 // ============================================================================
 
 /**
- * Process entity data according to R02 column specifications
+ * Process raw OneGov savings data into aggregated structure
+ * v4.0 - Full column capture, expanded aggregations, cell-size optimized
+ * 
+ * @param {Array<Object>} rawData - Array of row objects from data source
+ * @returns {Object} Aggregated data structure for JSON building
  */
-function processEntityDataForR02(entity, columnSpec) {
-    if (!entity || !columnSpec) return null;
+function processOneGovSavingsData(rawData) {
+  // Filter to only validated savings rows
+  const validRows = rawData.filter(row => {
+    const validated = row['Cost Savings Validated'];
+    return validated === 'Y' || validated === 'Yes' || validated === true;
+  });
+  
+  Logger.log(`Found ${validRows.length} validated rows out of ${rawData.length} total`);
+  
+  // ========================================
+  // Initialize aggregation structures
+  // ========================================
+  const byOEM = {};
+  const byMonth = {};
+  const byOEMbyMonth = {};
+  const byVendor = {};
+  const byContract = {};
+  const byFundingDept = {};
+  const byDataSource = {};        // NEW: Aggregate by Data Source (TDR, BIC, etc.)
+  const byBICStatus = {};         // NEW: Aggregate by "Also in BIC" status
+  const byReportingStatus = {};   // NEW: Aggregate by Previously Reported status
+  const oemsByMonth = {};         // Track which OEMs appear in each month
+  const vendorsByOEM = {};        // NEW: Track which vendors sell each OEM
+  const oemsByVendor = {};        // NEW: Track which OEMs each vendor sells
+  const transactions = [];
+  
+  // Totals
+  let totalSavings = 0;
+  let totalCPL = 0;
+  let totalPaid = 0;
+  let totalQuantity = 0;
+  let transactionCount = 0;
+  
+  // Track new vs previously reported
+  let newSavings = 0;
+  let previouslyReportedSavings = 0;
+  
+  // ========================================
+  // Process each row
+  // ========================================
+  for (const row of validRows) {
+    // Core financial values
+    const saved = parseNumericValue(row['$ Saved'] || row['$_Saved'] || row['Savings'] || 0);
+    const cplTotal = parseNumericValue(row['Total CPL Price'] || row['CPL Price'] || 0);
+    const paidTotal = parseNumericValue(row['Total Price Paid'] || row['Price Paid'] || 0);
+    const qty = parseNumericValue(row['QTY Sold'] || row['Quantity'] || 1);
     
-    const columnId = columnSpec.columnInfo.column;
-    const processed = {};
+    // Unit prices (NEW)
+    const cplUnit = parseNumericValue(row['CPL Price'] || 0);
+    const oneGovPrice = parseNumericValue(row['OneGov Price'] || 0);
+    const paidUnit = parseNumericValue(row['Price Paid Per Unit'] || 0);
     
-    switch (columnId) {
-        case 'D': // Obligations
-            processed.fiscal_year_obligations = extractFiscalYearData(entity);
-            processed.quarterly_breakdown = generateQuarterlyBreakdown(entity);
-            break;
-            
-        case 'E': // Small Business
-            processed.small_business_breakdown = extractSmallBusinessData(entity);
-            break;
-            
-        case 'F': // SUM Tier
-            processed.tier_summaries = extractTierData(entity);
-            break;
-            
-        case 'G': // Sum Type
-            processed.type_summaries = extractTypeData(entity);
-            break;
-            
-        case 'H': // Contract Vehicle
-            processed.contract_vehicle_breakdown = extractContractVehicleData(entity);
-            break;
-            
-        case 'I': // Funding Department
-            processed.funding_department_breakdown = extractFundingDepartmentData(entity);
-            break;
-            
-        default:
-            // Generic processing for other columns
-            processed.generic_data = processGenericEntityData(entity);
+    // Skip rows with no savings
+    if (saved === 0) continue;
+    
+    // Entity identifiers
+    const oem = cleanString(row['OEM'] || 'Unknown');
+    const vendor = cleanString(row['Vendor'] || 'Unknown');
+    const contract = cleanString(row['Contract #'] || row['Contract'] || 'Unknown');
+    const fundingDept = cleanString(row['Funding Dept'] || row['Funding Department'] || 'Gov Wide');
+    
+    // Time fields
+    const reportingPeriod = row['Reporting Period'] || row['Order Date'] || 'Unknown';
+    const orderDate = row['Order Date'] || '';
+    const monthKey = normalizeMonth(reportingPeriod);
+    
+    // Product details
+    const partNumber = cleanString(row['Manufacturer Part Number'] || row['Part Number'] || 'Unknown');
+    const description = cleanString(row['Description of Deliverable'] || row['Description'] || '');
+    const descriptionBIC = cleanString(row['Description of Deliverable (BIC)'] || '');
+    
+    // Discount rates
+    const oneGovDiscountRate = cleanString(row['OneGov Discount Rate'] || '');
+    const actualDiscountRate = cleanString(row['Actual Discount Rate'] || '');
+    
+    // Status flags (NEW)
+    const dataSource = cleanString(row['Data Source'] || 'Unknown');
+    const alsoInBIC = cleanString(row['Also in BIC'] || 'N');
+    const previouslyReported = cleanString(row['Previously Reported Savings'] || 'N');
+    
+    // ========================================
+    // Track new vs previously reported savings
+    // ========================================
+    if (previouslyReported === 'Y' || previouslyReported === 'Yes') {
+      previouslyReportedSavings += saved;
+    } else {
+      newSavings += saved;
     }
     
-    return processed;
-}
-
-/**
- * Extract small business data from entity
- */
-function extractSmallBusinessData(entity) {
-    if (entity.smallBusiness || entity.small_business) {
-        const sbData = entity.smallBusiness || entity.small_business;
-        return {
-            'Small Business': sbData.total || sbData.small_business_total || 0,
-            'Other': sbData.other || sbData.non_small_business_total || 0
-        };
+    // ========================================
+    // Aggregate by OEM
+    // ========================================
+    if (!byOEM[oem]) {
+      byOEM[oem] = { 
+        savings: 0, 
+        transactions: 0, 
+        cpl: 0, 
+        paid: 0, 
+        quantity: 0,
+        newSavings: 0,
+        previouslyReported: 0,
+        contracts: new Set(),
+        vendors: new Set(),
+        fundingDepts: new Set()
+      };
+    }
+    byOEM[oem].savings += saved;
+    byOEM[oem].transactions += 1;
+    byOEM[oem].cpl += cplTotal;
+    byOEM[oem].paid += paidTotal;
+    byOEM[oem].quantity += qty;
+    byOEM[oem].contracts.add(contract);
+    byOEM[oem].vendors.add(vendor);
+    byOEM[oem].fundingDepts.add(fundingDept);
+    if (previouslyReported === 'Y' || previouslyReported === 'Yes') {
+      byOEM[oem].previouslyReported += saved;
+    } else {
+      byOEM[oem].newSavings += saved;
     }
     
-    // Fallback: calculate from total obligations
-    const total = entity.totalObligations || 0;
-    const smallBusinessPercent = 0.67; // Default 67% small business ratio
-    return {
-        'Small Business': Math.round(total * smallBusinessPercent),
-        'Other': Math.round(total * (1 - smallBusinessPercent))
-    };
-}
-
-/**
- * Extract tier data from entity
- */
-function extractTierData(entity) {
-    if (entity.sumTier?.tier_summaries) {
-        return entity.sumTier.tier_summaries;
+    // ========================================
+    // Aggregate by Month
+    // ========================================
+    if (!byMonth[monthKey]) {
+      byMonth[monthKey] = { 
+        savings: 0, 
+        transactions: 0, 
+        cpl: 0, 
+        paid: 0,
+        quantity: 0,
+        newSavings: 0,
+        previouslyReported: 0,
+        oems: new Set(),
+        vendors: new Set()
+      };
+    }
+    byMonth[monthKey].savings += saved;
+    byMonth[monthKey].transactions += 1;
+    byMonth[monthKey].cpl += cplTotal;
+    byMonth[monthKey].paid += paidTotal;
+    byMonth[monthKey].quantity += qty;
+    byMonth[monthKey].oems.add(oem);
+    byMonth[monthKey].vendors.add(vendor);
+    if (previouslyReported === 'Y' || previouslyReported === 'Yes') {
+      byMonth[monthKey].previouslyReported += saved;
+    } else {
+      byMonth[monthKey].newSavings += saved;
     }
     
-    if (entity.oneGovTier?.tier_breakdown) {
-        return entity.oneGovTier.tier_breakdown;
+    // Track OEMs by month (for detecting new OEMs)
+    if (!oemsByMonth[monthKey]) {
+      oemsByMonth[monthKey] = new Set();
     }
+    oemsByMonth[monthKey].add(oem);
     
-    // Generate synthetic tier data if none exists
-    const total = entity.totalObligations || 0;
-    return {
-        'BIC': Math.round(total * 0.55),
-        'Tier 2': Math.round(total * 0.35),
-        'Tier 1': Math.round(total * 0.06),
-        'Tier 0': Math.round(total * 0.04)
-    };
-}
-
-/**
- * Generate quarterly breakdown from fiscal year data
- */
-function generateQuarterlyBreakdown(entity) {
-    const fiscalData = extractFiscalYearData(entity);
-    if (!fiscalData) return [];
-    
-    // Use current year (2025) or most recent year
-    const currentYear = '2025';
-    const yearTotal = fiscalData[currentYear] || Object.values(fiscalData)[Object.values(fiscalData).length - 1] || 0;
-    
-    // Distribute across quarters with some variation
-    const baseQuarter = yearTotal / 4;
-    return [
-        { quarter: 'Q1', amount: Math.round(baseQuarter * 1.15) },
-        { quarter: 'Q2', amount: Math.round(baseQuarter * 0.95) },
-        { quarter: 'Q3', amount: Math.round(baseQuarter * 1.25) },
-        { quarter: 'Q4', amount: Math.round(baseQuarter * 0.65) }
-    ];
-}
-
-/**
- * Extract contract vehicle data
- */
-function extractContractVehicleData(entity) {
-    if (entity.contractVehicle) {
-        return entity.contractVehicle;
+    // ========================================
+    // Cross-tabulation OEM x Month
+    // ========================================
+    if (!byOEMbyMonth[oem]) {
+      byOEMbyMonth[oem] = {};
     }
-    
-    // Generate synthetic data based on common contract vehicles
-    const total = entity.totalObligations || 0;
-    return {
-        'BIC': Math.round(total * 0.60),
-        'SEWP': Math.round(total * 0.25),
-        'CIO-SP3': Math.round(total * 0.10),
-        'Other': Math.round(total * 0.05)
-    };
-}
-
-/**
- * Extract funding department data
- */
-function extractFundingDepartmentData(entity) {
-    if (entity.fundingAgency?.top_10_agency_summaries) {
-        return entity.fundingAgency.top_10_agency_summaries;
+    if (!byOEMbyMonth[oem][monthKey]) {
+      byOEMbyMonth[oem][monthKey] = 0;
     }
+    byOEMbyMonth[oem][monthKey] += saved;
     
-    if (entity.fundingDepartment) {
-        return entity.fundingDepartment;
+    // ========================================
+    // Aggregate by Vendor
+    // ========================================
+    if (!byVendor[vendor]) {
+      byVendor[vendor] = { 
+        savings: 0, 
+        transactions: 0, 
+        cpl: 0, 
+        paid: 0,
+        quantity: 0,
+        contracts: new Set(),
+        oems: new Set(),
+        fundingDepts: new Set()
+      };
     }
+    byVendor[vendor].savings += saved;
+    byVendor[vendor].transactions += 1;
+    byVendor[vendor].cpl += cplTotal;
+    byVendor[vendor].paid += paidTotal;
+    byVendor[vendor].quantity += qty;
+    byVendor[vendor].contracts.add(contract);
+    byVendor[vendor].oems.add(oem);
+    byVendor[vendor].fundingDepts.add(fundingDept);
     
-    // Generate synthetic department data
-    const total = entity.totalObligations || 0;
-    return {
-        'Department of Defense': Math.round(total * 0.35),
-        'Department of Veterans Affairs': Math.round(total * 0.20),
-        'Department of Homeland Security': Math.round(total * 0.15),
-        'Department of Health and Human Services': Math.round(total * 0.12),
-        'Other Departments': Math.round(total * 0.18)
-    };
-}
-
-/**
- * Extract type data (procurement type, etc.)
- */
-function extractTypeData(entity) {
-    if (entity.sumType?.type_summaries) {
-        return entity.sumType.type_summaries;
+    // ========================================
+    // Aggregate by Contract
+    // ========================================
+    if (!byContract[contract]) {
+      byContract[contract] = { 
+        savings: 0, 
+        transactions: 0, 
+        cpl: 0,
+        paid: 0,
+        vendor: vendor,
+        oems: new Set(),
+        fundingDepts: new Set()
+      };
     }
+    byContract[contract].savings += saved;
+    byContract[contract].transactions += 1;
+    byContract[contract].cpl += cplTotal;
+    byContract[contract].paid += paidTotal;
+    byContract[contract].oems.add(oem);
+    byContract[contract].fundingDepts.add(fundingDept);
     
-    // Generate synthetic type data
-    const total = entity.totalObligations || 0;
-    return {
-        'Professional Services': Math.round(total * 0.40),
-        'IT Services': Math.round(total * 0.35),
-        'Equipment': Math.round(total * 0.15),
-        'Other': Math.round(total * 0.10)
-    };
-}
-
-/**
- * Process generic entity data for unknown columns
- */
-function processGenericEntityData(entity) {
-    return {
-        totalObligations: entity.totalObligations || 0,
-        entityName: entity.name || 'Unknown',
-        entityType: entity.type || 'Unknown'
-    };
-}
-
-/**
- * Transform R02 data for report builder cards
- */
-function transformR02DataForCards(entityData, columnSpecs) {
-    const transformedCards = [];
+    // ========================================
+    // Aggregate by Funding Department
+    // ========================================
+    if (!byFundingDept[fundingDept]) {
+      byFundingDept[fundingDept] = { 
+        savings: 0, 
+        transactions: 0, 
+        cpl: 0, 
+        paid: 0,
+        quantity: 0,
+        oems: new Set(),
+        vendors: new Set(),
+        contracts: new Set()
+      };
+    }
+    byFundingDept[fundingDept].savings += saved;
+    byFundingDept[fundingDept].transactions += 1;
+    byFundingDept[fundingDept].cpl += cplTotal;
+    byFundingDept[fundingDept].paid += paidTotal;
+    byFundingDept[fundingDept].quantity += qty;
+    byFundingDept[fundingDept].oems.add(oem);
+    byFundingDept[fundingDept].vendors.add(vendor);
+    byFundingDept[fundingDept].contracts.add(contract);
     
-    Object.entries(columnSpecs).forEach(([columnKey, columnSpec]) => {
-        columnSpec.cards.forEach(cardSpec => {
-            const processedData = processEntityDataForR02(entityData, columnSpec);
-            if (processedData) {
-                const card = {
-                    id: cardSpec.cardId,
-                    title: cardSpec.cardTitle,
-                    description: cardSpec.cardDescription,
-                    columnId: columnSpec.columnInfo.column,
-                    rawData: processedData,
-                    chartData: transformForChartJs(processedData, cardSpec.chart),
-                    tableData: transformForTable(processedData, cardSpec.table || cardSpec.chart)
-                };
-                transformedCards.push(card);
-            }
-        });
+    // ========================================
+    // NEW: Aggregate by Data Source
+    // ========================================
+    if (!byDataSource[dataSource]) {
+      byDataSource[dataSource] = { 
+        savings: 0, 
+        transactions: 0, 
+        cpl: 0, 
+        paid: 0
+      };
+    }
+    byDataSource[dataSource].savings += saved;
+    byDataSource[dataSource].transactions += 1;
+    byDataSource[dataSource].cpl += cplTotal;
+    byDataSource[dataSource].paid += paidTotal;
+    
+    // ========================================
+    // NEW: Aggregate by BIC Status
+    // ========================================
+    const bicKey = (alsoInBIC === 'Y' || alsoInBIC === 'Yes') ? 'In BIC' : 'TDR Only';
+    if (!byBICStatus[bicKey]) {
+      byBICStatus[bicKey] = { savings: 0, transactions: 0, cpl: 0, paid: 0 };
+    }
+    byBICStatus[bicKey].savings += saved;
+    byBICStatus[bicKey].transactions += 1;
+    byBICStatus[bicKey].cpl += cplTotal;
+    byBICStatus[bicKey].paid += paidTotal;
+    
+    // ========================================
+    // NEW: Aggregate by Reporting Status
+    // ========================================
+    const reportKey = (previouslyReported === 'Y' || previouslyReported === 'Yes') ? 'Previously Reported' : 'New This Period';
+    if (!byReportingStatus[reportKey]) {
+      byReportingStatus[reportKey] = { savings: 0, transactions: 0, cpl: 0, paid: 0 };
+    }
+    byReportingStatus[reportKey].savings += saved;
+    byReportingStatus[reportKey].transactions += 1;
+    byReportingStatus[reportKey].cpl += cplTotal;
+    byReportingStatus[reportKey].paid += paidTotal;
+    
+    // ========================================
+    // Track vendor-OEM relationships
+    // ========================================
+    if (!vendorsByOEM[oem]) {
+      vendorsByOEM[oem] = new Set();
+    }
+    vendorsByOEM[oem].add(vendor);
+    
+    if (!oemsByVendor[vendor]) {
+      oemsByVendor[vendor] = new Set();
+    }
+    oemsByVendor[vendor].add(oem);
+    
+    // ========================================
+    // Track individual transactions (LEAN for cell size)
+    // ========================================
+    transactions.push({
+      oem: oem,
+      vendor: vendor,
+      contract: contract,
+      partNumber: partNumber,
+      // Truncate description to save space
+      description: description.length > 80 ? description.substring(0, 80) + '...' : description,
+      quantity: qty,
+      cplTotal: cplTotal,
+      cplUnit: cplUnit,
+      oneGovPrice: oneGovPrice,
+      paidTotal: paidTotal,
+      paidUnit: paidUnit,
+      savings: saved,
+      oneGovDiscountRate: oneGovDiscountRate,
+      actualDiscountRate: actualDiscountRate,
+      fundingDept: fundingDept,
+      dataSource: dataSource,
+      alsoInBIC: alsoInBIC,
+      previouslyReported: previouslyReported,
+      reportingPeriod: monthKey,
+      orderDate: orderDate ? normalizeMonth(orderDate) : monthKey
     });
     
-    return transformedCards;
-}
-
-/**
- * Transform data specifically for Chart.js format
- */
-function transformForChartJs(data, chartSpec) {
-    const mapping = chartSpec.dataMapping;
-    const source = data[mapping.source];
-    
-    if (!source) return null;
-    
-    if (Array.isArray(source)) {
-        return {
-            labels: source.map(item => item[mapping.xAxis.field]),
-            datasets: [{
-                label: mapping.yAxis.label,
-                data: source.map(item => item[mapping.yAxis.field]),
-                backgroundColor: getDefaultChartColors(source.length)
-            }]
-        };
-    } else if (typeof source === 'object') {
-        return {
-            labels: Object.keys(source),
-            datasets: [{
-                label: mapping.yAxis.label,
-                data: Object.values(source),
-                backgroundColor: getDefaultChartColors(Object.keys(source).length)
-            }]
-        };
-    }
-    
-    return null;
-}
-
-/**
- * Transform data for table format
- */
-function transformForTable(data, tableSpec) {
-    // This would be more sophisticated in production
-    const headers = ['Category', 'Value', 'Percentage'];
-    const rows = [];
-    
-    Object.entries(data).forEach(([key, value]) => {
-        if (typeof value === 'object' && value !== null) {
-            const total = Object.values(value).reduce((sum, val) => sum + (typeof val === 'number' ? val : 0), 0);
-            Object.entries(value).forEach(([subKey, subValue]) => {
-                if (typeof subValue === 'number') {
-                    const percentage = total > 0 ? ((subValue / total) * 100).toFixed(1) + '%' : '0%';
-                    rows.push([subKey, formatCurrency(subValue), percentage]);
-                }
-            });
+    // Update totals
+    totalSavings += saved;
+    totalCPL += cplTotal;
+    totalPaid += paidTotal;
+    totalQuantity += qty;
+    transactionCount += 1;
+  }
+  
+  // ========================================
+  // Calculate derived metrics
+  // ========================================
+  const overallDiscountRate = totalCPL > 0 ? ((totalCPL - totalPaid) / totalCPL * 100).toFixed(2) : 0;
+  const avgSavingsPerTransaction = transactionCount > 0 ? (totalSavings / transactionCount).toFixed(2) : 0;
+  const avgDiscountPerUnit = totalQuantity > 0 ? (totalSavings / totalQuantity).toFixed(2) : 0;
+  
+  // ========================================
+  // Convert Sets to Arrays for JSON serialization
+  // ========================================
+  const convertSetsToArrays = (obj) => {
+    const result = {};
+    for (const [key, value] of Object.entries(obj)) {
+      result[key] = { ...value };
+      for (const [field, fieldValue] of Object.entries(value)) {
+        if (fieldValue instanceof Set) {
+          result[key][field] = Array.from(fieldValue);
+          result[key][field + 'Count'] = fieldValue.size;
         }
-    });
-    
-    return { headers, rows };
+      }
+    }
+    return result;
+  };
+  
+  // Convert oemsByMonth Sets to Arrays
+  const oemsByMonthArrays = {};
+  for (const [month, oemSet] of Object.entries(oemsByMonth)) {
+    oemsByMonthArrays[month] = Array.from(oemSet);
+  }
+  
+  // Convert vendor/OEM relationship Sets
+  const vendorsByOEMArrays = {};
+  for (const [oem, vendors] of Object.entries(vendorsByOEM)) {
+    vendorsByOEMArrays[oem] = Array.from(vendors);
+  }
+  
+  const oemsByVendorArrays = {};
+  for (const [vendor, oems] of Object.entries(oemsByVendor)) {
+    oemsByVendorArrays[vendor] = Array.from(oems);
+  }
+  
+  // ========================================
+  // Return comprehensive structure
+  // ========================================
+  return {
+    summary: {
+      totalSavings: totalSavings,
+      totalCPL: totalCPL,
+      totalPaid: totalPaid,
+      totalQuantity: totalQuantity,
+      transactionCount: transactionCount,
+      overallDiscountRate: overallDiscountRate,
+      avgSavingsPerTransaction: parseFloat(avgSavingsPerTransaction),
+      avgDiscountPerUnit: parseFloat(avgDiscountPerUnit),
+      // Counts
+      oemCount: Object.keys(byOEM).length,
+      vendorCount: Object.keys(byVendor).length,
+      contractCount: Object.keys(byContract).length,
+      fundingDeptCount: Object.keys(byFundingDept).length,
+      monthCount: Object.keys(byMonth).length,
+      dataSourceCount: Object.keys(byDataSource).length,
+      // New vs Previously Reported
+      newSavings: newSavings,
+      previouslyReportedSavings: previouslyReportedSavings,
+      newSavingsPercent: totalSavings > 0 ? (newSavings / totalSavings * 100).toFixed(2) : 0,
+      previouslyReportedPercent: totalSavings > 0 ? (previouslyReportedSavings / totalSavings * 100).toFixed(2) : 0
+    },
+    byOEM: convertSetsToArrays(byOEM),
+    byMonth: convertSetsToArrays(byMonth),
+    byOEMbyMonth: byOEMbyMonth,
+    byVendor: convertSetsToArrays(byVendor),
+    byContract: convertSetsToArrays(byContract),
+    byFundingDept: convertSetsToArrays(byFundingDept),
+    byDataSource: byDataSource,
+    byBICStatus: byBICStatus,
+    byReportingStatus: byReportingStatus,
+    oemsByMonth: oemsByMonthArrays,
+    vendorsByOEM: vendorsByOEMArrays,
+    oemsByVendor: oemsByVendorArrays,
+    transactions: transactions,
+    rawRowCount: rawData.length,
+    validRowCount: validRows.length
+  };
+}
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+/**
+ * Parse a numeric value from various formats
+ * Handles currency strings, percentages, and plain numbers
+ */
+function parseNumericValue(value) {
+  if (value === null || value === undefined || value === '') return 0;
+  
+  if (typeof value === 'number') return value;
+  
+  // Remove currency symbols, commas, spaces, and percentage signs
+  const str = String(value).replace(/[$,\s%]/g, '').trim();
+  
+  if (str === '' || str === '-') return 0;
+  
+  const num = parseFloat(str);
+  return isNaN(num) ? 0 : num;
 }
 
 /**
- * Get default chart colors
+ * Normalize month format to "Mon YYYY" (e.g., "Jun 2025" or "25-Jun" -> "Jun 2025")
  */
-function getDefaultChartColors(count) {
-    const colors = [
-        '#0a2240', '#144673', '#3a6ea5', '#f47920', '#ff6b35',
-        '#22c55e', '#ef4444', '#8b5cf6', '#06b6d4', '#84cc16'
-    ];
-    return colors.slice(0, count);
+function normalizeMonth(dateValue) {
+  if (!dateValue) return 'Unknown';
+  
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  
+  // If it's already a Date object
+  if (dateValue instanceof Date) {
+    return monthNames[dateValue.getMonth()] + ' ' + dateValue.getFullYear();
+  }
+  
+  const str = String(dateValue).trim();
+  
+  // Handle "Mon YYYY" format (already normalized)
+  if (/^[A-Za-z]{3}\s+\d{4}$/.test(str)) {
+    return str;
+  }
+  
+  // Handle "YY-Mon" format (e.g., "25-Jun")
+  const yyMonMatch = str.match(/^(\d{2})-([A-Za-z]{3})$/);
+  if (yyMonMatch) {
+    const year = parseInt(yyMonMatch[1]) + 2000; // Assumes 20xx
+    const month = yyMonMatch[2];
+    return month.charAt(0).toUpperCase() + month.slice(1).toLowerCase() + ' ' + year;
+  }
+  
+  // Handle "Mon-YY" format (e.g., "Jun-25")
+  const monYYMatch = str.match(/^([A-Za-z]{3})-(\d{2})$/);
+  if (monYYMatch) {
+    const month = monYYMatch[1];
+    const year = parseInt(monYYMatch[2]) + 2000;
+    return month.charAt(0).toUpperCase() + month.slice(1).toLowerCase() + ' ' + year;
+  }
+  
+  // Try parsing as a date
+  const date = new Date(str);
+  if (!isNaN(date.getTime())) {
+    return monthNames[date.getMonth()] + ' ' + date.getFullYear();
+  }
+  
+  // Return as-is if can't parse
+  return str;
+}
+
+/**
+ * Clean and trim string values
+ */
+function cleanString(value) {
+  if (value === null || value === undefined) return '';
+  return String(value).trim();
+}
+
+/**
+ * Format currency in compact form ($1.2M, $500K, etc.)
+ */
+function formatCurrencyCompact(value) {
+  if (value === null || value === undefined || isNaN(value)) return '$0';
+  
+  const absValue = Math.abs(value);
+  const sign = value < 0 ? '-' : '';
+  
+  if (absValue >= 1000000000) {
+    return sign + '$' + (absValue / 1000000000).toFixed(1) + 'B';
+  } else if (absValue >= 1000000) {
+    return sign + '$' + (absValue / 1000000).toFixed(1) + 'M';
+  } else if (absValue >= 1000) {
+    return sign + '$' + (absValue / 1000).toFixed(1) + 'K';
+  } else {
+    return sign + '$' + absValue.toFixed(0);
+  }
+}
+
+/**
+ * Format an array as a natural language list with "and"
+ * Examples: ["A"] -> "A", ["A","B"] -> "A and B", ["A","B","C"] -> "A, B, and C"
+ */
+function formatListWithAnd(items) {
+  if (!items || items.length === 0) return 'None';
+  if (items.length === 1) return items[0];
+  if (items.length === 2) return items.join(' and ');
+  return items.slice(0, -1).join(', ') + ', and ' + items[items.length - 1];
+}
+
+// ============================================================================
+// TEST FUNCTION
+// ============================================================================
+
+/**
+ * Test the data processor with sample data
+ */
+function testProcessOneGovSavingsData() {
+  // Sample test data matching your column structure
+  const testData = [
+    {
+      'Also in BIC': 'Y',
+      'Cost Savings Validated': 'Y',
+      'Previously Reported Savings': 'Y',
+      'Data Source': 'TDR/BIC',
+      'Contract #': '47QSWA18D008F',
+      'OEM': 'Elastic',
+      'Vendor': 'Carahsoft Technology Corp',
+      'Funding Dept': 'DHS',
+      'Order Date': '7/30/2025',
+      'Reporting Period': '25-Jun',
+      'Manufacturer Part Number': 'SBF-ENT-ADV',
+      'Description of Deliverable': 'Federal Enterprise Resource Unit - 64 GB',
+      'QTY Sold': 1299,
+      'CPL Price': '$13,400.00',
+      'Total CPL Price': '$17,406,600.00',
+      'OneGov Price': '$9,715.00',
+      'Price Paid Per Unit': '$5,608.73',
+      'Total Price Paid': '$7,285,740.27',
+      'OneGov Discount Rate': '27.5% - 60.0%',
+      'Actual Discount Rate': '58.14%',
+      '$ Saved': '$10,120,859.73'
+    },
+    {
+      'Also in BIC': 'Y',
+      'Cost Savings Validated': 'Y',
+      'Previously Reported Savings': 'N',
+      'Data Source': 'TDR/BIC',
+      'Contract #': '47QSWA18D008F',
+      'OEM': 'Salesforce',
+      'Vendor': 'Carahsoft Technology Corp',
+      'Funding Dept': 'Gov Wide',
+      'Order Date': '9/1/2025',
+      'Reporting Period': '25-Sep',
+      'Manufacturer Part Number': '200007692-Fed',
+      'Description of Deliverable': 'Slack Enterprise Grid',
+      'QTY Sold': 1500,
+      'CPL Price': '$379.16',
+      'Total CPL Price': '$568,740.00',
+      'OneGov Price': '$42.00',
+      'Price Paid Per Unit': '$42.00',
+      'Total Price Paid': '$63,000.00',
+      'OneGov Discount Rate': '88.92%',
+      'Actual Discount Rate': '88.92%',
+      '$ Saved': '$505,740.00'
+    }
+  ];
+  
+  const result = processOneGovSavingsData(testData);
+  
+  Logger.log('=== TEST RESULTS ===');
+  Logger.log('Summary:');
+  Logger.log(JSON.stringify(result.summary, null, 2));
+  Logger.log('\nbyOEM:');
+  Logger.log(JSON.stringify(result.byOEM, null, 2));
+  Logger.log('\nbyFundingDept:');
+  Logger.log(JSON.stringify(result.byFundingDept, null, 2));
+  Logger.log('\nbyReportingStatus:');
+  Logger.log(JSON.stringify(result.byReportingStatus, null, 2));
+  Logger.log('\nTransaction count: ' + result.transactions.length);
+  
+  // Test JSON size
+  const jsonString = JSON.stringify(result);
+  Logger.log('\nJSON size: ' + jsonString.length + ' characters');
+  Logger.log('Fits in cell (50K limit): ' + (jsonString.length < 50000 ? 'YES' : 'NO'));
+  
+  return result;
 }
