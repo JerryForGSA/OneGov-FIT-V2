@@ -1,12 +1,20 @@
 /**
- * Backend Main Entry Point - B01_main.js - VERSION 305
+ * Backend Main Entry Point - B01_main.js
  * Google Apps Script main functions for OneGov FIT Market
- * v305: Reverted to original chart logic but fixed generateColumnBreakdownCharts to use extractColumnData
- * Updated: 2024-12-12
+ * VERSION 343: Dynamic fiscal year options and enhanced debugging
+ * Updated: 2024-12-14
+ */
+
+// Import R02 Chart Buffet Specifications
+// Note: This will be loaded at runtime when needed
+
+/**
+ * Main entry point for Google Apps Script
+ * This function will be called by the web app
  */
 function doGet(e) {
   try {
-    console.log('🚀 OneGov FIT V296 - Debug Chart Issues');
+    console.log('VERSION 343 - OneGov FIT V2 - Dynamic fiscal year options and enhanced debugging');
     const action = e.parameter.action;
     const page = e.parameter.page;
     const rowNum = e.parameter.rowNum;
@@ -95,24 +103,6 @@ function getReportBuilderUrl() {
     console.error('Error getting Report Builder URL:', error);
     return null;
   }
-}
-
-/**
- * Get Version Information for Version 283
- */
-function getVersion283Info() {
-  return {
-    version: '320',
-    features: [
-      'Enhanced Chart Buffet with Top 5/10/15 selection',
-      'All Other category aggregation',
-      'Percentage calculations for all chart types',
-      'Professional styling and enhanced tooltips',
-      'Comprehensive labeling system'
-    ],
-    updated: '2024-12-12',
-    chartBuffetVersion: '1.4.0'
-  };
 }
 
 /**
@@ -966,103 +956,32 @@ function exportReport(reportData) {
  * Export to Google Docs
  */
 function exportToGoogleDocs(cards) {
-  console.log('📄 exportToGoogleDocs function called');
-  console.log('📄 Cards parameter type:', typeof cards);
-  console.log('📄 Cards length:', cards?.length || 'undefined');
-  
-  if (!cards || !Array.isArray(cards) || cards.length === 0) {
-    console.error('📄 Invalid cards parameter:', cards);
-    return createResponse(false, null, 'Invalid or empty cards array');
-  }
-  
   try {
-    console.log('📄 Cards data preview:', cards.map(c => ({ 
-      title: c.title, 
-      includeChart: c.includeChart, 
-      includeTable: c.includeTable,
-      hasChartData: !!c.chartData,
-      hasTableData: !!c.tableData,
-      chartType: c.chartType
-    })));
-    
-    console.log('📄 Getting user email...');
-    const userEmail = Session.getActiveUser().getEmail();
-    console.log('📄 User email retrieved:', userEmail);
-    
-    const timestamp = new Date();
-    const dateStr = Utilities.formatDate(timestamp, Session.getScriptTimeZone(), 'MM/dd/yyyy');
-    
-    const doc = DocumentApp.create(`OneGov FIT Market Report - ${dateStr} - ${userEmail}`);
+    const doc = DocumentApp.create('OneGov FIT Market Report - ' + new Date().toLocaleDateString());
     const body = doc.getBody();
     
     body.appendParagraph('OneGov FIT Market Analytics Report')
       .setHeading(DocumentApp.ParagraphHeading.TITLE);
     
-    body.appendParagraph(`Generated on: ${timestamp.toLocaleString()} by ${userEmail}`)
+    body.appendParagraph('Generated on: ' + new Date().toLocaleString())
       .setHeading(DocumentApp.ParagraphHeading.SUBTITLE);
-    
-    // Extract metadata for logging
-    const entityType = cards[0]?.metadata?.entityType || 'unknown';
-    const columnId = cards[0]?.metadata?.columnId || 'unknown';
     
     cards.forEach((card, index) => {
       body.appendParagraph(`${index + 1}. ${card.title}`)
         .setHeading(DocumentApp.ParagraphHeading.HEADING1);
       
-      if (card.includeChart) {
-        body.appendParagraph(`Chart Type: ${card.chartType || 'Unknown'}`);
-        if (card.chartData?.labels) {
-          body.appendParagraph(`Data Labels: ${card.chartData.labels.join(', ')}`);
-          
-          // Add chart data from datasets
-          if (card.chartData?.datasets && card.chartData.datasets.length > 0) {
-            card.chartData.datasets.forEach((dataset, dsIndex) => {
-              body.appendParagraph(`Dataset ${dsIndex + 1}: ${dataset.label || 'Unnamed'}`);
-              if (dataset.data && Array.isArray(dataset.data)) {
-                body.appendParagraph(`Values: ${dataset.data.join(', ')}`);
-              }
-            });
-          }
-        }
+      if (card.selected === 'chart' || card.selected === 'both') {
+        body.appendParagraph(`Chart: ${card.chart.title}`);
       }
       
-      if (card.includeTable && card.tableData) {
-        body.appendParagraph('Table Data:');
-        
-        // Create actual table in Google Doc
-        if (card.tableData.headers && card.tableData.rows) {
-          const table = body.appendTable();
-          
-          // Add header row
-          const headerRow = table.appendTableRow();
-          card.tableData.headers.forEach(header => {
-            const cell = headerRow.appendTableCell(header);
-            cell.getChild(0).asText().setBold(true);
-          });
-          
-          // Add data rows (limit to 15 rows for readability)
-          card.tableData.rows.slice(0, 15).forEach(row => {
-            const dataRow = table.appendTableRow();
-            row.forEach(cellData => {
-              dataRow.appendTableCell(String(cellData || ''));
-            });
-          });
-          
-          // Style the table
-          table.setBorderWidth(1);
-        } else if (card.tableData.headers) {
-          body.appendParagraph(`Headers: ${card.tableData.headers.join(' | ')}`);
-        }
+      if (card.selected === 'table' || card.selected === 'both') {
+        body.appendParagraph(`Table: ${card.table.title}`);
+        // Add table data here
       }
-      
-      body.appendParagraph(''); // Add spacing
     });
     
     const url = doc.getUrl();
     doc.saveAndClose();
-    
-    // Log to Report Generator sheet
-    logReportGeneration('docs', entityType, columnId, 'chart', userEmail, url, timestamp);
     
     return createResponse(true, { url }, null);
   } catch (error) {
@@ -1075,107 +994,11 @@ function exportToGoogleDocs(cards) {
  * Export to Google Sheets
  */
 function exportToGoogleSheets(cards) {
-  console.log('📊 exportToGoogleSheets function called');
-  console.log('📊 Cards parameter type:', typeof cards);
-  console.log('📊 Cards length:', cards?.length || 'undefined');
-  
-  if (!cards || !Array.isArray(cards) || cards.length === 0) {
-    console.error('📊 Invalid cards parameter:', cards);
-    return createResponse(false, null, 'Invalid or empty cards array');
-  }
-  
   try {
-    console.log('📊 Getting user email...');
-    const userEmail = Session.getActiveUser().getEmail();
-    console.log('📊 User email retrieved:', userEmail);
-    
-    const timestamp = new Date();
-    const dateStr = Utilities.formatDate(timestamp, Session.getScriptTimeZone(), 'MM/dd/yyyy');
-    const title = `OneGov FIT Market Report - ${dateStr} - ${userEmail}`;
-    
-    console.log('📊 Creating spreadsheet with title:', title);
-    const spreadsheet = SpreadsheetApp.create(title);
-    console.log('📊 Spreadsheet created with ID:', spreadsheet.getId());
-    
-    // Extract metadata for logging
-    const entityType = cards[0]?.metadata?.entityType || 'unknown';
-    const columnId = cards[0]?.metadata?.columnId || 'unknown';
-    
-    cards.forEach((card, index) => {
-      const sheetName = `${card.title}`.substring(0, 30); // Limit sheet name length
-      let sheet;
-      
-      if (index === 0) {
-        sheet = spreadsheet.getActiveSheet();
-        sheet.setName(sheetName);
-      } else {
-        sheet = spreadsheet.insertSheet(sheetName);
-      }
-      
-      // Add header info
-      sheet.getRange(1, 1).setValue('OneGov FIT Market Analytics Report');
-      sheet.getRange(2, 1).setValue(`Generated: ${timestamp.toLocaleString()}`);
-      sheet.getRange(3, 1).setValue(`Created by: ${userEmail}`);
-      sheet.getRange(4, 1).setValue(`Card: ${card.title}`);
-      
-      let currentRow = 6;
-      
-      if (card.includeTable && card.tableData) {
-        // Add table headers
-        if (card.tableData.headers) {
-          const headers = card.tableData.headers;
-          for (let i = 0; i < headers.length; i++) {
-            sheet.getRange(currentRow, i + 1).setValue(headers[i]);
-          }
-          currentRow++;
-          
-          // Add table data
-          if (card.tableData.rows) {
-            card.tableData.rows.forEach(row => {
-              for (let i = 0; i < row.length && i < headers.length; i++) {
-                sheet.getRange(currentRow, i + 1).setValue(row[i]);
-              }
-              currentRow++;
-            });
-          }
-        }
-      }
-      
-      if (card.includeChart && card.chartData) {
-        currentRow += 2; // Add spacing
-        sheet.getRange(currentRow, 1).setValue('Chart Data:');
-        currentRow++;
-        
-        if (card.chartData.labels) {
-          sheet.getRange(currentRow, 1).setValue('Labels');
-          sheet.getRange(currentRow, 2).setValue(card.chartData.labels.join(', '));
-          currentRow++;
-        }
-        
-        if (card.chartData.datasets) {
-          card.chartData.datasets.forEach((dataset, dsIndex) => {
-            sheet.getRange(currentRow, 1).setValue(`Dataset ${dsIndex + 1} (${dataset.label || 'Unnamed'})`);
-            if (dataset.data) {
-              sheet.getRange(currentRow, 2).setValue(dataset.data.join(', '));
-            }
-            currentRow++;
-          });
-        }
-      }
-    });
-    
-    console.log('📊 Getting spreadsheet URL...');
-    const url = spreadsheet.getUrl();
-    console.log('📊 Spreadsheet URL:', url);
-    
-    // Log to Report Generator sheet
-    console.log('📊 Logging to Report Generator sheet...');
-    logReportGeneration('sheets', entityType, columnId, 'table', userEmail, url, timestamp);
-    
-    console.log('📊 Creating response with URL:', url);
-    const response = createResponse(true, { url }, null);
-    console.log('📊 Response created:', response);
-    return response;
+    // Implementation for Google Sheets export
+    const sheet = SpreadsheetApp.create('OneGov FIT Market Report - ' + new Date().toLocaleDateString());
+    const url = sheet.getUrl();
+    return createResponse(true, { url }, null);
   } catch (error) {
     console.error('Error exporting to Google Sheets:', error);
     return createResponse(false, null, error.toString());
@@ -1186,151 +1009,14 @@ function exportToGoogleSheets(cards) {
  * Export to Google Slides
  */
 function exportToGoogleSlides(cards) {
-  console.log('🎬 exportToGoogleSlides function called');
-  console.log('🎬 Cards parameter type:', typeof cards);
-  console.log('🎬 Cards length:', cards?.length || 'undefined');
-  
-  if (!cards || !Array.isArray(cards) || cards.length === 0) {
-    console.error('🎬 Invalid cards parameter:', cards);
-    return createResponse(false, null, 'Invalid or empty cards array');
-  }
-  
   try {
-    console.log('🎬 Getting user email...');
-    const userEmail = Session.getActiveUser().getEmail();
-    console.log('🎬 User email retrieved:', userEmail);
-    
-    const timestamp = new Date();
-    const dateStr = Utilities.formatDate(timestamp, Session.getScriptTimeZone(), 'MM/dd/yyyy');
-    const title = `OneGov FIT Market Report - ${dateStr} - ${userEmail}`;
-    
-    console.log('🎬 Creating presentation with title:', title);
-    const presentation = SlidesApp.create(title);
-    console.log('🎬 Presentation created with ID:', presentation.getId());
-    
-    // Extract metadata for logging
-    const entityType = cards[0]?.metadata?.entityType || 'unknown';
-    const columnId = cards[0]?.metadata?.columnId || 'unknown';
-    
-    // Get the default slide and update it as title slide
-    const slides = presentation.getSlides();
-    const titleSlide = slides[0];
-    
-    // Add title slide content
-    const titleLayout = SlidesApp.PredefinedLayout.TITLE_AND_BODY;
-    titleSlide.getShapes().forEach(shape => shape.remove()); // Clear existing content
-    
-    const titleShape = titleSlide.insertTextBox('OneGov FIT Market Analytics Report');
-    titleShape.getText().getTextStyle().setFontSize(24).setBold(true);
-    titleShape.setTop(100).setLeft(50).setWidth(600).setHeight(100);
-    
-    const subtitleShape = titleSlide.insertTextBox(`Generated: ${timestamp.toLocaleString()}\nCreated by: ${userEmail}\nEntity Type: ${entityType}\nColumn: ${columnId}`);
-    subtitleShape.getText().getTextStyle().setFontSize(14);
-    subtitleShape.setTop(200).setLeft(50).setWidth(600).setHeight(150);
-    
-    // Add slides for each card
-    cards.forEach((card, index) => {
-      const slide = presentation.appendSlide(SlidesApp.PredefinedLayout.TITLE_AND_BODY);
-      
-      // Add title
-      const titleBox = slide.insertTextBox(card.title);
-      titleBox.getText().getTextStyle().setFontSize(18).setBold(true);
-      titleBox.setTop(50).setLeft(50).setWidth(600).setHeight(80);
-      
-      let content = '';
-      
-      if (card.includeChart) {
-        content += `Chart Type: ${card.chartType || 'Unknown'}\n`;
-        if (card.chartData?.labels) {
-          content += `Data Points: ${card.chartData.labels.length}\n`;
-          content += `Labels: ${card.chartData.labels.slice(0, 5).join(', ')}${card.chartData.labels.length > 5 ? '...' : ''}\n`;
-          
-          // Add dataset information
-          if (card.chartData?.datasets && card.chartData.datasets.length > 0) {
-            card.chartData.datasets.forEach((dataset, dsIndex) => {
-              content += `Dataset ${dsIndex + 1}: ${dataset.label || 'Unnamed'}\n`;
-              if (dataset.data && Array.isArray(dataset.data)) {
-                content += `Values: ${dataset.data.slice(0, 5).join(', ')}${dataset.data.length > 5 ? '...' : ''}\n`;
-              }
-            });
-          }
-        }
-      }
-      
-      if (card.includeTable && card.tableData) {
-        content += `\nTable Data:\n`;
-        if (card.tableData.headers) {
-          content += `Columns: ${card.tableData.headers.join(' | ')}\n`;
-        }
-        if (card.tableData.rows) {
-          content += `Rows: ${card.tableData.rows.length}\n`;
-        }
-      }
-      
-      if (!content) {
-        content = 'No chart or table data available for this card.';
-      }
-      
-      const contentBox = slide.insertTextBox(content);
-      contentBox.getText().getTextStyle().setFontSize(12);
-      contentBox.setTop(150).setLeft(50).setWidth(600).setHeight(350);
-    });
-    
-    console.log('🎬 Getting presentation URL...');
+    // Implementation for Google Slides export
+    const presentation = SlidesApp.create('OneGov FIT Market Report - ' + new Date().toLocaleDateString());
     const url = presentation.getUrl();
-    console.log('🎬 Presentation URL:', url);
-    
-    // Log to Report Generator sheet
-    console.log('🎬 Logging to Report Generator sheet...');
-    logReportGeneration('slides', entityType, columnId, 'chart', userEmail, url, timestamp);
-    
-    console.log('🎬 Creating response with URL:', url);
-    const response = createResponse(true, { url }, null);
-    console.log('🎬 Response created:', response);
-    return response;
+    return createResponse(true, { url }, null);
   } catch (error) {
     console.error('Error exporting to Google Slides:', error);
     return createResponse(false, null, error.toString());
-  }
-}
-
-/**
- * Log report generation to the Report Generator sheet
- * Key    Type    column    chart    Created By    url    Generation Timestamp
- */
-function logReportGeneration(type, entityType, columnId, chart, createdBy, url, timestamp) {
-  try {
-    const ss = SpreadsheetApp.openById('1sE1N0nnqFh_EWN4konURXLP2bEj0rqF3JIyOnpPmWJU');
-    const reportSheet = ss.getSheetByName('Report Generator');
-    
-    if (!reportSheet) {
-      console.error('Report Generator sheet not found');
-      return;
-    }
-    
-    // Generate key: type_column_MM/DD/YY_email
-    const dateKey = Utilities.formatDate(timestamp, Session.getScriptTimeZone(), 'MM/dd/yy');
-    const emailPrefix = createdBy.split('@')[0]; // Get part before @
-    const key = `${type}_${columnId}_${dateKey}_${emailPrefix}`;
-    
-    // Prepare row data: Key, Type, column, chart, Created By, url, Generation Timestamp
-    const rowData = [
-      key,
-      type,
-      columnId,
-      chart,
-      createdBy,
-      url,
-      timestamp.toLocaleString()
-    ];
-    
-    // Add to next available row
-    reportSheet.appendRow(rowData);
-    
-    console.log(`📊 Logged report generation: ${key} for ${createdBy}`);
-    
-  } catch (error) {
-    console.error('Error logging report generation:', error);
   }
 }
 
@@ -1654,6 +1340,43 @@ function getReportBuilderData() {
         } catch (error) {
           console.error(`REPORT BUILDER: Error generating trend card for ${entityType} ${columnInfo.column}:`, error);
         }
+        
+        // ═══════════════════════════════════════════════════════════════
+        // NEW V306: Generate Chart Buffet cards (includes fiscal year charts)
+        // ═══════════════════════════════════════════════════════════════
+        try {
+          console.log(`REPORT BUILDER V306: Generating Chart Buffet cards for ${entityType} ${columnInfo.id}`);
+          
+          // Call the Chart Buffet system with proper parameters
+          const buffetCards = generateColumnReportsBuffet(
+            entityType,      // 'agency', 'oem', or 'vendor'
+            columnInfo.id,   // Column identifier (e.g., 'contractVehicle', 'sumTier')
+            10,              // topN - default to Top 10
+            [],              // selectedEntities - empty for all
+            'all',           // deptFilter - 'all', 'dod', or 'civilian'
+            'all'            // tierFilter - 'all' or specific tier
+          );
+          
+          if (buffetCards && buffetCards.length > 0) {
+            console.log(`REPORT BUILDER V306: Chart Buffet generated ${buffetCards.length} cards for ${entityType} ${columnInfo.id}`);
+            
+            // Add all buffet cards to the main cards array
+            buffetCards.forEach(buffetCard => {
+              // Add category and metadata for filtering
+              buffetCard.category = entityType;
+              buffetCard.columnId = columnInfo.id;
+              buffetCard.columnName = columnInfo.name;
+              cards.push(buffetCard);
+            });
+          } else {
+            console.log(`REPORT BUILDER V306: Chart Buffet returned no cards for ${entityType} ${columnInfo.id}`);
+          }
+        } catch (error) {
+          console.error(`REPORT BUILDER V306: Error generating Chart Buffet cards for ${entityType} ${columnInfo.id}:`, error);
+        }
+        // ═══════════════════════════════════════════════════════════════
+        // END OF NEW CHART BUFFET SECTION
+        // ═══════════════════════════════════════════════════════════════
       }
     }
     
@@ -1811,19 +1534,7 @@ function getEntityNames(entityType) {
 /**
  * Generate column-specific reports using Chart Buffet System
  */
-function generateColumnReports(entityType, columnId, topN = 10, selectedEntities = [], deptFilter = 'all', tierFilter = 'all') {
-  // RAW ARGUMENTS LOG - Print exactly what was received
-  console.log('🔍 RAW ARGUMENTS generateColumnReports:');
-  console.log('  entityType:', entityType);
-  console.log('  columnId:', columnId);
-  console.log('  topN:', topN);
-  console.log('  selectedEntities:', selectedEntities);
-  console.log('  deptFilter:', deptFilter);
-  console.log('  tierFilter:', tierFilter);
-  
-  // LOGGING POINT 1: Log columnId received by generateColumnReports
-  console.log(`📊 generateColumnReports called with columnId: "${columnId}" for entityType: "${entityType}"`);
-  
+function generateColumnReports(entityType, columnId, topN = 10, selectedEntities = [], deptFilter = 'all', tierFilter = 'all', fiscalYearFilter = 'all') {
   // Expanded valid columns matching KPI Carousel (removed discount, discountOfferings, activeContracts)
   const validColumns = {
     agency: ['obligations', 'smallBusiness', 'sumTier', 'sumType', 'contractVehicle', 'fundingDepartment', 
@@ -1843,7 +1554,7 @@ function generateColumnReports(entityType, columnId, topN = 10, selectedEntities
   }
   
   // Use the new Chart Buffet system with filters
-  return generateColumnReportsBuffet(entityType, columnId, topN, selectedEntities, deptFilter, tierFilter);
+  return generateColumnReportsBuffet(entityType, columnId, topN, selectedEntities, deptFilter, tierFilter, fiscalYearFilter);
 }
 
 /**
@@ -2195,15 +1906,13 @@ function generateKPICard(spreadsheet, entityType, columnInfo, selectedEntities =
 }
 
 /**
- * Generate trend card for a JSON column
+ * Generate trend card for a JSON column - MULTI-ENTITY VERSION
+ * Shows fiscal years on X-axis with one line per entity (top 10)
  */
 function generateTrendCard(spreadsheet, entityType, columnInfo, selectedEntities = []) {
-  console.log('🚨 BACKEND TREND: === FUNCTION START - ENTRY POINT HIT ===');
-  console.log('🚨 BACKEND TREND: Function called successfully!');
-  console.log('🚨 BACKEND TREND: Called with entityType:', entityType);
-  console.log('🚨 BACKEND TREND: Called with columnInfo:', columnInfo);
-  console.log('🚨 BACKEND TREND: Called with selectedEntities:', selectedEntities);
-  console.log('🚨 BACKEND TREND: spreadsheet object exists:', !!spreadsheet);
+  console.log('🚨 BACKEND TREND V2: Multi-entity line chart generator');
+  console.log('🚨 BACKEND TREND V2: Called with entityType:', entityType);
+  console.log('🚨 BACKEND TREND V2: Called with columnInfo:', columnInfo);
   
   try {
     // Convert entity type to proper sheet name
@@ -2213,13 +1922,10 @@ function generateTrendCard(spreadsheet, entityType, columnInfo, selectedEntities
       'vendor': 'Vendor'
     };
     const sheetName = entityTypeMap[entityType.toLowerCase()] || entityType.charAt(0).toUpperCase() + entityType.slice(1);
-    console.log('BACKEND TREND: Attempting to access sheet:', sheetName);
     
     const sheet = spreadsheet.getSheetByName(sheetName);
-    console.log('BACKEND TREND: Sheet found?', !!sheet);
-    
     if (!sheet) {
-      console.log('BACKEND TREND: ERROR - Sheet not found, returning null');
+      console.log('BACKEND TREND V2: ERROR - Sheet not found, returning null');
       return null;
     }
     
@@ -2227,20 +1933,11 @@ function generateTrendCard(spreadsheet, entityType, columnInfo, selectedEntities
     const values = range.getValues();
     const columnIndex = getColumnIndexFromLetter(columnInfo.column);
     
-    // Aggregate fiscal year data
-    const fiscalYearData = {};
+    // Store each entity's fiscal year data separately
+    const entityData = {}; // { entityName: { fy: value, ... }, ... }
+    const allFiscalYears = new Set();
     
-    console.log('BACKEND TREND: Column ID:', columnInfo.id);
-    console.log('BACKEND TREND: Column letter:', columnInfo.column);
-    console.log('BACKEND TREND: Column index:', columnIndex);
-    console.log('BACKEND TREND: Total rows:', values.length);
-    console.log('BACKEND TREND: First 3 rows sample:', values.slice(0, 3));
-    console.log('BACKEND: Generating trend card for entities:', selectedEntities.length > 0 ? selectedEntities : 'ALL ENTITIES');
-    
-    let totalRowsProcessed = 0;
-    let filteredRows = 0;
-    let jsonParseSuccesses = 0;
-    let fiscalYearFoundCount = 0;
+    console.log('BACKEND TREND V2: Processing entities for multi-line chart');
     
     // Process data starting from row 2 (skip header)
     for (let i = 1; i < values.length; i++) {
@@ -2248,48 +1945,96 @@ function generateTrendCard(spreadsheet, entityType, columnInfo, selectedEntities
       const entityName = row[1]; // Column B is entity name
       if (!entityName) continue;
       
-      totalRowsProcessed++;
-      
       // Apply entity filter if specified
       if (selectedEntities.length > 0 && !selectedEntities.includes(entityName)) {
         continue;
       }
       
-      filteredRows++;
-      
-      // Debug the raw column data
-      if (filteredRows <= 3) {
-        console.log(`BACKEND TREND: Row ${i} entity "${entityName}" raw column data:`, row[columnIndex]);
-      }
-      
       // Parse JSON column data
       const jsonData = parseJSONColumn(row[columnIndex]);
       
-      if (jsonData) {
-        jsonParseSuccesses++;
-        if (filteredRows <= 3) {
-          console.log(`BACKEND TREND: Row ${i} parsed JSON:`, jsonData);
-          console.log(`BACKEND TREND: Row ${i} JSON keys:`, Object.keys(jsonData));
-          console.log(`BACKEND TREND: Row ${i} has fiscal_year_breakdown?`, !!jsonData.fiscal_year_breakdown);
-        }
-      }
       if (jsonData && (jsonData.fiscal_year_obligations || jsonData.fiscal_year_breakdown || jsonData.fiscal_years || jsonData.yearly_totals)) {
         const fyData = jsonData.fiscal_year_obligations || jsonData.fiscal_year_breakdown || jsonData.fiscal_years || jsonData.yearly_totals;
-        fiscalYearFoundCount++;
-        if (fiscalYearFoundCount <= 3) {
-          console.log(`BACKEND TREND: Row ${i} fiscal year data:`, fyData);
-        }
+        
+        // Store this entity's fiscal year data
+        entityData[entityName] = {};
+        
         for (const [fy, value] of Object.entries(fyData)) {
-          if (!fiscalYearData[fy]) fiscalYearData[fy] = 0;
-          fiscalYearData[fy] += parseFloat(value) || 0;
+          const numValue = parseFloat(value) || 0;
+          entityData[entityName][fy] = numValue;
+          allFiscalYears.add(fy);
         }
       }
     }
     
-    // Sort fiscal years and prepare chart data
-    const sortedFYs = Object.keys(fiscalYearData).sort();
-    const chartLabels = sortedFYs;
-    const chartValues = sortedFYs.map(fy => fiscalYearData[fy]);
+    // Sort fiscal years
+    const sortedFYs = Array.from(allFiscalYears).sort();
+    
+    if (sortedFYs.length === 0) {
+      console.log('BACKEND TREND V2: No fiscal year data found');
+      return null;
+    }
+    
+    // Calculate total obligations per entity (for sorting to get top 10)
+    const entityTotals = [];
+    for (const [entityName, fyData] of Object.entries(entityData)) {
+      const total = Object.values(fyData).reduce((sum, val) => sum + val, 0);
+      entityTotals.push({ name: entityName, total: total, fyData: fyData });
+    }
+    
+    // Sort by total and take top 10
+    entityTotals.sort((a, b) => b.total - a.total);
+    const topEntities = entityTotals.slice(0, 10);
+    
+    console.log(`BACKEND TREND V2: Creating ${topEntities.length} entity lines across ${sortedFYs.length} fiscal years`);
+    
+    // Define color palette for entities
+    const colors = [
+      '#144673', // Dark blue
+      '#f47920', // Orange
+      '#22c55e', // Green
+      '#ef4444', // Red
+      '#8b5cf6', // Purple
+      '#06b6d4', // Cyan
+      '#f59e0b', // Amber
+      '#ec4899', // Pink
+      '#10b981', // Emerald
+      '#6366f1'  // Indigo
+    ];
+    
+    // Create datasets - one per entity
+    const datasets = topEntities.map((entity, index) => {
+      // Build data array aligned with sortedFYs
+      const data = sortedFYs.map(fy => entity.fyData[fy] || 0);
+      
+      return {
+        label: entity.name,
+        data: data,
+        borderColor: colors[index % colors.length],
+        backgroundColor: 'transparent',
+        tension: 0.4,
+        borderWidth: 2,
+        pointRadius: 4,
+        pointHoverRadius: 6
+      };
+    });
+    
+    // Build table data showing each entity's trend
+    const tableHeaders = ['Entity', ...sortedFYs.map(fy => `FY${fy}`), 'Total'];
+    const tableRows = topEntities.map(entity => {
+      const row = [entity.name];
+      
+      // Add value for each fiscal year
+      sortedFYs.forEach(fy => {
+        const value = entity.fyData[fy] || 0;
+        row.push(formatCurrency(value));
+      });
+      
+      // Add total
+      row.push(formatCurrency(entity.total));
+      
+      return row;
+    });
     
     const cardId = `${entityType}_${columnInfo.id}_trend`;
     
@@ -2301,46 +2046,59 @@ function generateTrendCard(spreadsheet, entityType, columnInfo, selectedEntities
       columnId: columnInfo.id,
       chartType: 'line',
       chartData: {
-        labels: chartLabels,
-        datasets: [{
-          label: columnInfo.name,
-          data: chartValues,
-          borderColor: '#144673',
-          backgroundColor: 'rgba(20, 70, 115, 0.1)',
-          tension: 0.4
-        }]
+        labels: sortedFYs.map(fy => `FY${fy}`), // Format as FY2022, FY2023, etc.
+        datasets: datasets
+      },
+      chartOptions: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top',
+            labels: {
+              usePointStyle: true,
+              padding: 15,
+              font: {
+                size: 11
+              }
+            }
+          },
+          title: {
+            display: true,
+            text: `Top ${topEntities.length} ${entityType.charAt(0).toUpperCase() + entityType.slice(1)} - Fiscal Year Trends`
+          },
+          tooltip: {
+            mode: 'index',
+            intersect: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true
+          }
+        },
+        interaction: {
+          mode: 'nearest',
+          axis: 'x',
+          intersect: false
+        }
       },
       tableData: {
-        headers: ['Fiscal Year', 'Total Value', 'YoY Change', '% Change'],
-        rows: chartLabels.map((fy, index) => {
-          const currentValue = chartValues[index];
-          const previousValue = index > 0 ? chartValues[index - 1] : null;
-          const change = previousValue ? currentValue - previousValue : null;
-          const percentChange = previousValue ? ((change / previousValue) * 100).toFixed(1) + '%' : '--';
-          
-          return [
-            fy,
-            formatCurrency(currentValue),
-            change ? (change >= 0 ? '+' : '') + formatCurrency(change) : '--',
-            percentChange
-          ];
-        })
+        headers: tableHeaders,
+        rows: tableRows
       }
     };
     
-    console.log(`BACKEND TREND: Rows processed: ${totalRowsProcessed}, Filtered rows: ${filteredRows}`);
-    console.log(`BACKEND TREND: JSON parse successes: ${jsonParseSuccesses}, Fiscal year found: ${fiscalYearFoundCount}`);
-    console.log('BACKEND TREND: Final fiscalYearData:', fiscalYearData);
-    console.log('BACKEND: Final tableData rows:', result.tableData.rows.length);
-    console.log('BACKEND: Final chartData labels:', result.chartData.labels);
-    console.log('BACKEND: Final chartData values:', result.chartData.datasets[0].data);
+    console.log(`BACKEND TREND V2: Successfully created multi-entity trend card`);
+    console.log(`BACKEND TREND V2: ${topEntities.length} entities × ${sortedFYs.length} fiscal years`);
     
     return result;
     
   } catch (error) {
-    console.error('BACKEND TREND: === ERROR CAUGHT ===');
-    console.error(`BACKEND TREND: Error generating trend card for ${entityType} ${columnInfo.name}:`, error);
-    console.error('BACKEND TREND: Error stack:', error.stack);
+    console.error('BACKEND TREND V2: === ERROR CAUGHT ===');
+    console.error(`BACKEND TREND V2: Error generating trend card for ${entityType} ${columnInfo.name}:`, error);
+    console.error('BACKEND TREND V2: Error stack:', error.stack);
     return null;
   }
 }
@@ -3913,7 +3671,7 @@ function getSimpleReports() {
       var description = row[1];    // B: Report Description
       var dataLink = row[2];       // C: Report Data Link
       var jsonStr = row[3];        // D: Report JSON
-      var driveUrl = row[4] || '';       // E: Report Drive URL (no fallback to CSV data link)
+      var driveUrl = row[4] || row[2];  // E: Report Drive URL (fallback to C: Data Link)
       var creator = row[5];        // F: Report Creator
       var timestamp = row[6];      // G: Report Timestamp
       
@@ -3955,9 +3713,8 @@ function getSimpleReports() {
         }
       }
       
-      // Check if this is a link-based report (no valid JSON but has drive URL - NOT dataLink)
-      // dataLink (column C) is for CSV source data, not for opening reports
-      if (!parsedJson && driveUrl) {
+      // Check if this is a link-based report (no valid JSON but has drive URL or data link)
+      if (!parsedJson && (driveUrl || dataLink)) {
         isLinkReport = true;
       }
       
@@ -3972,13 +3729,12 @@ function getSimpleReports() {
         reportType: reportType || 'Document',
         description: safeDescription,
         dataLink: dataLink || '',
-        driveUrl: driveUrl || '',  // Do NOT use dataLink as fallback - column E only
+        driveUrl: driveUrl || dataLink || '',  // Use dataLink as fallback for driveUrl
         creator: safeCreator,
         timestamp: safeTimestamp,
-        canView: !!(parsedJson || driveUrl),  // Remove dataLink from canView logic
+        canView: !!(parsedJson || driveUrl || dataLink),
         isLinkReport: isLinkReport,
-        reportData: reportData,
-        hasJson: !!parsedJson  // Add flag to indicate if JSON data exists
+        reportData: reportData
       };
       
       Logger.log('getSimpleReports: Built report #' + rowNum + ': type=' + report.reportType + ', hasData=' + (Object.keys(reportData).length > 0));
@@ -4237,37 +3993,6 @@ function generateAndEmailEntityReport(entityData, reportType, letterhead, format
     
   } catch (error) {
     console.error('Error emailing entity report:', error);
-    return { success: false, error: error.toString() };
-  }
-}
-
-/**
- * Update Report Document URL in Reports Sheet Column E
- * Called after generating a document to save the URL
- * @param {number} rowNum - Row number in Reports sheet
- * @param {string} docUrl - Google Drive URL of generated document
- * @returns {Object} Success status
- */
-function updateReportDocumentUrl(rowNum, docUrl) {
-  try {
-    console.log(`📝 Updating report document URL for row ${rowNum}: ${docUrl}`);
-    
-    const ss = SpreadsheetApp.openById('18h0TYPAPiWCKPB09v7kChoICQOELJSLBfwaZwpYheXE');
-    const reportsSheet = ss.getSheetByName('Reports');
-    
-    if (!reportsSheet) {
-      return { success: false, error: 'Reports sheet not found' };
-    }
-    
-    // Column E (index 5 in 1-based) for Drive URL
-    reportsSheet.getRange(rowNum, 5).setValue(docUrl);
-    SpreadsheetApp.flush();
-    
-    console.log(`✅ Report URL updated successfully in row ${rowNum}, column E`);
-    return { success: true, docUrl: docUrl };
-    
-  } catch (error) {
-    console.error('Error updating report document URL:', error);
     return { success: false, error: error.toString() };
   }
 }

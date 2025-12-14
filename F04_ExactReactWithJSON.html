@@ -4,8 +4,8 @@
     <base target="_top">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>OneGov FIT Market - React with Advanced JSON Architecture v265</title>
-    <!-- Version 265: Fixed percentage calculations using total data source -->
+    <title>OneGov FIT Market - React with Advanced JSON Architecture v343</title>
+    <!-- Version 343: Dynamic fiscal year options and enhanced debugging -->
     
     <!-- Debug: Check if google object is available -->
     <script>
@@ -2562,11 +2562,23 @@
         };
 
         const EntityCard = ({ entity, entityType, index }) => {
-            const hasOneGov = entity.isOneGov === true;
+            // Debug logging for first few entities
+            if (index < 3) {
+                console.log(`EntityCard Debug: ${entity.name} - entityType prop: "${entityType}", entity.isOneGov: "${entity.isOneGov}", entity.cfoActAgency: "${entity.cfoActAgency}"`);
+            }
+            
+            // Check for special status based on entity type (case-insensitive to handle both "Yes" and "yes")
+            const hasCfoAct = entityType === 'Agencies' && entity.cfoActAgency && entity.cfoActAgency.toLowerCase() === 'yes';
+            const hasOneGov = (entityType === 'OEMs' || entityType === 'Vendors') && entity.isOneGov && entity.isOneGov.toLowerCase() === 'yes';
             const isBoxEntity = entity.name === "Box";
             
-            // Inline style for OneGov orange glow OR hardcoded Box entity
-            const orangeStyle = (hasOneGov || isBoxEntity) ? {
+            // Log orange box logic for debugging
+            if (index < 3 && (entity.isOneGov === 'Yes' || entity.cfoActAgency === 'Yes')) {
+                console.log(`Orange Box Debug: ${entity.name} - hasCfoAct: ${hasCfoAct}, hasOneGov: ${hasOneGov}, will show orange: ${hasCfoAct || hasOneGov || isBoxEntity}`);
+            }
+            
+            // Inline style for CFO Act (agencies) OR OneGov (OEMs/Vendors) OR hardcoded Box entity
+            const orangeStyle = (hasCfoAct || hasOneGov || isBoxEntity) ? {
                 border: '2px solid orange',
                 boxShadow: '0 0 15px orange'
             } : {};
@@ -6226,7 +6238,10 @@
             
             // NEW: Chart Buffet filters
             const [deptFilter, setDeptFilter] = React.useState('all'); // 'all', 'dod', 'civilian'
-            const [tierFilter, setTierFilter] = React.useState('all'); // 'all', 'Tier 1', 'Tier 2', 'Tier 3', 'Tier 4', 'Below Tier 4'
+            const [cfoActFilter, setCfoActFilter] = React.useState('all'); // 'all', 'Yes', 'No'
+            const [oneGovFilter, setOneGovFilter] = React.useState('all'); // 'all', 'OneGov', 'Non-OneGov'
+            const [fiscalYearFilter, setFiscalYearFilter] = React.useState('all'); // Single fiscal year filter
+            const [availableYears, setAvailableYears] = React.useState(['2022', '2023', '2024', '2025']); // Available fiscal years
             
             // NEW: Expanded modal state
             const [expandedCard, setExpandedCard] = React.useState(null);
@@ -6696,6 +6711,9 @@
                     selectedEntityType,
                     selectedColumn,
                     topN,
+                    fiscalYearFilter,
+                    deptFilter,
+                    cfoActFilter,
                     reason: 'useEffect dependency change'
                 });
                 if (selectedEntityType) {
@@ -6705,7 +6723,7 @@
                         loadReportData();
                     }
                 }
-            }, [selectedEntityType, selectedColumn, topN, parentDeptFilter, selectedEntities, deptFilter, tierFilter]);
+            }, [selectedEntityType, selectedColumn, topN, parentDeptFilter, selectedEntities, deptFilter, cfoActFilter, oneGovFilter, fiscalYearFilter]);
             
             const loadReportData = async () => {
                 if (!selectedEntityType) {
@@ -6719,8 +6737,27 @@
                     console.log('FRONTEND: Loading column-first data for:', selectedEntityType, selectedColumn, topN);
                     
                     google.script.run
-                        .withSuccessHandler((data) => {
-                            setCardData(data || getDefaultCardData());
+                        .withSuccessHandler((response) => {
+                            console.log('📥 Received from backend:', response);
+                            console.log('  Cards:', response.cards);
+                            console.log('  Available years:', response.availableYears);
+                            
+                            // Handle new response structure with availableYears
+                            if (response && response.cards) {
+                                setCardData(response.cards);
+                                
+                                const availableYears = (response.availableYears && response.availableYears.length > 0) 
+                                    ? response.availableYears 
+                                    : ['2022', '2023', '2024', '2025'];
+                                
+                                console.log('📅 Setting availableYears:', availableYears);
+                                setAvailableYears(availableYears);
+                                console.log('Current fiscal year filter:', response.fiscalYearFilter);
+                            } else {
+                                // Fallback for old response structure
+                                setCardData(response || getDefaultCardData());
+                                setAvailableYears(['2022', '2023', '2024', '2025']);
+                            }
                             setLoading(false);
                         })
                         .withFailureHandler((error) => {
@@ -6728,7 +6765,8 @@
                             setCardData(getDefaultCardData());
                             setLoading(false);
                         })
-                        .generateColumnReports(selectedEntityType, selectedColumn, topN, selectedEntities, deptFilter, tierFilter);
+                        .generateColumnReports(selectedEntityType, selectedColumn, topN, selectedEntities, deptFilter, 
+                            selectedEntityType === 'Agencies' ? cfoActFilter : oneGovFilter, fiscalYearFilter);
                 } catch (error) {
                     console.error('Error in loadReportData:', error);
                     setCardData(getDefaultCardData());
@@ -6975,7 +7013,8 @@
                                       <option value="oneGovTier">⭐ OneGov Tier</option>
                                   </select>
 
-                                    <div style={{display: 'flex', gap: '4px'}}>
+                                    <div style={{display: 'flex', alignItems: 'center', gap: '4px'}}>
+                                        <span style={{fontSize: '0.8rem', fontWeight: '600', color: '#6B7280', marginRight: '8px'}}>Top:</span>
                                         {[5, 10, 15].map(n => (
                                             <button 
                                                 key={n}
@@ -6994,6 +7033,21 @@
                                                 {n}
                                             </button>
                                         ))}
+                                        <button 
+                                            onClick={() => setTopN(null)}
+                                            style={{
+                                                padding: '6px 12px',
+                                                borderRadius: '4px',
+                                                border: '1px solid #d1d5db',
+                                                background: topN === null ? '#144673' : 'white',
+                                                color: topN === null ? 'white' : '#374151',
+                                                fontSize: '0.8rem',
+                                                fontWeight: '600',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            All
+                                        </button>
                                     </div>
 
                                     {/* DOD/Civilian Filter */}
@@ -7009,31 +7063,97 @@
                                             cursor: 'pointer'
                                         }}
                                     >
-                                        <option value="all">All Departments</option>
-                                        <option value="dod">🎖️ DOD Only</option>
-                                        <option value="civilian">🏛️ Civilian Only</option>
+                                        <option value="all">All Agencies</option>
+                                        <option value="dod">DOD Only</option>
+                                        <option value="civilian">Civilian Only</option>
                                     </select>
 
-                                    {/* Tier Filter */}
+                                    {/* Dynamic Filter - CFO Act for Agencies, OneGov for OEMs/Vendors */}
                                     <select 
-                                        value={tierFilter}
-                                        onChange={(e) => setTierFilter(e.target.value)}
+                                        value={selectedEntityType === 'Agencies' ? cfoActFilter : oneGovFilter}
+                                        onChange={(e) => {
+                                            if (selectedEntityType === 'Agencies') {
+                                                setCfoActFilter(e.target.value);
+                                            } else {
+                                                setOneGovFilter(e.target.value);
+                                            }
+                                        }}
                                         style={{
                                             padding: '8px 12px',
                                             borderRadius: '6px',
                                             fontSize: '0.85rem',
                                             border: '1px solid #d1d5db',
-                                            background: tierFilter !== 'all' ? '#fef3c7' : 'white',
+                                            background: ((selectedEntityType === 'Agencies' && cfoActFilter !== 'all') || 
+                                                        (selectedEntityType !== 'Agencies' && oneGovFilter !== 'all')) ? '#fef3c7' : 'white',
                                             cursor: 'pointer'
                                         }}
                                     >
-                                        <option value="all">All Tiers</option>
-                                        <option value="Tier 1">⭐ Tier 1</option>
-                                        <option value="Tier 2">Tier 2</option>
-                                        <option value="Tier 3">Tier 3</option>
-                                        <option value="Tier 4">Tier 4</option>
-                                        <option value="Below Tier 4">Below Tier 4</option>
+                                        {selectedEntityType === 'Agencies' ? (
+                                            <>
+                                                <option value="all">All Agencies</option>
+                                                <option value="Yes">CFO Act Agencies</option>
+                                                <option value="No">Non-CFO Act Agencies</option>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <option value="all">{`All ${selectedEntityType}`}</option>
+                                                <option value="OneGov">OneGov Only</option>
+                                                <option value="Non-OneGov">Non-OneGov</option>
+                                            </>
+                                        )}
                                     </select>
+
+                                    {/* Fiscal Year Filter */}
+                                    {availableYears && availableYears.length > 0 ? (
+                                        <select 
+                                            value={fiscalYearFilter || 'all'}
+                                            defaultValue="all"
+                                            onChange={(e) => {
+                                                console.log('📅 Fiscal year dropdown changed to:', e.target.value);
+                                                console.log('📅 Current state:', fiscalYearFilter);
+                                                setFiscalYearFilter(e.target.value);
+                                                console.log('📅 setFiscalYearFilter called with:', e.target.value);
+                                            }}
+                                            style={{
+                                                padding: '10px 15px',
+                                                border: '2px solid #e5e7eb',
+                                                borderRadius: '8px',
+                                                fontSize: '0.95rem',
+                                                fontWeight: '500',
+                                                cursor: 'pointer',
+                                                background: 'white',
+                                                minWidth: '150px'
+                                            }}
+                                        >
+                                            <option value="all">All Fiscal Years</option>
+                                            {availableYears.map(year => (
+                                                <option key={year} value={year}>FY{year} Only</option>
+                                            ))}
+                                            {availableYears.length >= 2 && (
+                                                <option value={availableYears[1] + '-' + availableYears[0]}>
+                                                FY{availableYears[1]}-{availableYears[0]}
+                                            </option>
+                                        )}
+                                        {availableYears.length >= 3 && (
+                                            <option value={availableYears[2] + '-' + availableYears[0]}>
+                                                FY{availableYears[2]}-{availableYears[0]}
+                                            </option>
+                                        )}
+                                    </select>
+                                    ) : (
+                                        <div style={{
+                                            padding: '10px 15px',
+                                            border: '2px solid #f3f4f6',
+                                            borderRadius: '8px',
+                                            fontSize: '0.95rem',
+                                            fontWeight: '500',
+                                            background: '#f9fafb',
+                                            color: '#6b7280',
+                                            minWidth: '150px'
+                                        }}>
+                                            No fiscal years available
+                                        </div>
+                                    )}
 
                                     <select 
                                         value={selectedEntities.length === 0 ? '' : selectedEntities[0]}
@@ -7852,29 +7972,48 @@
                     cleanOptions.plugins = {};
                 }
                 
-                // Show legend for pie/doughnut charts and set proper sizing
-                if (card.chartType === 'pie' || card.chartType === 'doughnut') {
-                    cleanOptions.plugins.legend = {
-                        display: true,
-                        position: 'bottom',
-                        labels: {
-                            padding: 8,
-                            usePointStyle: true,
-                            boxWidth: 12
-                        }
-                    };
-                    // Force aspect ratio for pie charts to use full width and height efficiently
-                    cleanOptions.aspectRatio = 1.2; // More compact aspect ratio
-                    cleanOptions.maintainAspectRatio = false;
-                    // Reduce layout padding to maximize chart size
+                // Apply the legend configuration from backend or use defaults
+                if (!cleanOptions.plugins.legend) {
+                    // Apply consistent legend configuration for all chart types
+                    const hasMultipleDatasets = card.chartData?.datasets?.length > 1;
+                    const isPieOrDoughnut = card.chartType === 'pie' || card.chartType === 'doughnut';
+                    
+                    if (hasMultipleDatasets || isPieOrDoughnut) {
+                        cleanOptions.plugins.legend = {
+                            display: true,
+                            position: 'right', // Use side position for better vertical space
+                            align: 'center',
+                            labels: {
+                                padding: 12,
+                                usePointStyle: true,
+                                boxWidth: 20,
+                                boxHeight: 12,
+                                font: {
+                                    size: 13,
+                                    weight: '500'
+                                },
+                                color: '#333333'
+                            }
+                        };
+                    }
+                }
+                
+                // Apply consistent layout padding
+                if (!cleanOptions.layout) {
                     cleanOptions.layout = {
                         padding: {
                             top: 5,
-                            bottom: 5,
-                            left: 5,
-                            right: 5
+                            right: 10,
+                            bottom: 10,
+                            left: 10
                         }
                     };
+                }
+                
+                // Force better aspect ratio for charts with side legends
+                if (card.chartType === 'pie' || card.chartType === 'doughnut') {
+                    cleanOptions.aspectRatio = 1.5; // Wider to accommodate side legend
+                    cleanOptions.maintainAspectRatio = false;
                 }
                 
                 // Remove callback strings that cause errors
@@ -8684,16 +8823,37 @@
 
                 const ctx = canvasRef.current.getContext('2d');
                 
-                // Clean up chartOptions to remove string callbacks
-                let cleanOptions = card.chartOptions || {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: card.chartType === 'pie' || card.chartType === 'doughnut'
+                // Respect chartOptions from backend (multi-entity trend charts)
+                let cleanOptions = card.chartOptions || {};
+                
+                // Set defaults only if not provided
+                if (!cleanOptions.responsive) cleanOptions.responsive = true;
+                if (!cleanOptions.maintainAspectRatio) cleanOptions.maintainAspectRatio = false;
+                
+                // Apply consistent legend configuration if not provided by backend
+                if (!cleanOptions.plugins) cleanOptions.plugins = {};
+                if (!cleanOptions.plugins.legend) {
+                    const hasMultipleDatasets = card.chartData?.datasets?.length > 1;
+                    const isPieOrDoughnut = card.chartType === 'pie' || card.chartType === 'doughnut';
+                    
+                    // Use the legend configuration from backend if available
+                    cleanOptions.plugins.legend = {
+                        display: hasMultipleDatasets || isPieOrDoughnut,
+                        position: 'right', // Changed to right for better vertical space
+                        align: 'center',
+                        labels: {
+                            usePointStyle: true,
+                            padding: 12,
+                            boxWidth: 20,
+                            boxHeight: 12,
+                            font: { 
+                                size: 13,
+                                weight: '500'
+                            },
+                            color: '#333333'
                         }
-                    }
-                };
+                    };
+                }
                 
                 // Deep clone to avoid modifying original
                 cleanOptions = JSON.parse(JSON.stringify(cleanOptions));
@@ -8713,13 +8873,8 @@
                 }
                 
                 // Add currency formatting for bar charts
-                console.log('Applying currency formatting to:', card.id || 'unknown');
                 if (card.chartType === 'bar' && cleanOptions.scales) {
                     const isHorizontal = cleanOptions.indexAxis === 'y';
-                    console.log('Chart is horizontal:', isHorizontal);
-                    
-                    // For horizontal charts, values are on X-axis
-                    // For vertical charts, values are on Y-axis
                     const valueAxis = isHorizontal ? 'x' : 'y';
                     
                     if (cleanOptions.scales[valueAxis]) {
@@ -8727,11 +8882,8 @@
                             ...cleanOptions.scales[valueAxis].ticks,
                             callback: window.formatCurrencyShort
                         };
-                        console.log('Currency callback applied to', valueAxis, 'axis');
                     }
                     
-                    // Format tooltips with currency
-                    if (!cleanOptions.plugins) cleanOptions.plugins = {};
                     if (!cleanOptions.plugins.tooltip) cleanOptions.plugins.tooltip = {};
                     cleanOptions.plugins.tooltip.callbacks = {
                         label: function(context) {
@@ -8740,7 +8892,27 @@
                             return label ? `${label}: ${value}` : value;
                         }
                     };
-                    console.log('Tooltip currency formatting applied');
+                }
+                
+                // Add formatting for line charts (especially multi-dataset)
+                if (card.chartType === 'line') {
+                    if (!cleanOptions.scales) cleanOptions.scales = {};
+                    if (!cleanOptions.scales.y) cleanOptions.scales.y = {};
+                    if (!cleanOptions.scales.y.ticks) cleanOptions.scales.y.ticks = {};
+                    
+                    cleanOptions.scales.y.ticks.callback = window.formatCurrencyShort;
+                    cleanOptions.scales.y.beginAtZero = true;
+                    
+                    if (!cleanOptions.plugins.tooltip) cleanOptions.plugins.tooltip = {};
+                    cleanOptions.plugins.tooltip.mode = 'index';
+                    cleanOptions.plugins.tooltip.intersect = false;
+                    cleanOptions.plugins.tooltip.callbacks = {
+                        label: function(context) {
+                            const label = context.dataset.label || '';
+                            const value = window.formatCurrencyShort(context.parsed.y);
+                            return `${label}: ${value}`;
+                        }
+                    };
                 }
                 
                 // Add special formatting for pie charts
@@ -8756,7 +8928,6 @@
                             return label ? `${label}: ${formatted} (${percentage}%)` : `${formatted} (${percentage}%)`;
                         }
                     };
-                    console.log('Pie chart tooltip formatting applied');
                 }
                 
                 // Create new chart
@@ -8774,14 +8945,24 @@
                 };
             }, [card.chartData, card.chartType]);
 
-            // Calculate dynamic height for horizontal bar charts
+            // Calculate dynamic height for charts with side legend consideration
             const isHorizontal = card.chartOptions?.indexAxis === 'y';
             const entityCount = card.chartData?.labels?.length || 5;
-            const dynamicHeight = isHorizontal ? (entityCount * 40 + 100) : 250;
+            const hasLegend = card.chartOptions?.plugins?.legend?.display !== false;
+            const legendPosition = card.chartOptions?.plugins?.legend?.position || 'right';
             
-            // Reduce padding for pie charts to maximize space usage
+            // Increase height to accommodate taller plotting area
+            let dynamicHeight;
+            if (isHorizontal) {
+                dynamicHeight = entityCount * 45 + 120; // More space per entity
+            } else {
+                // Taller for vertical charts now that legend is on the side
+                dynamicHeight = hasLegend && (legendPosition === 'right' || legendPosition === 'left') ? 350 : 300;
+            }
+            
+            // Minimal padding to maximize chart area
             const isPieChart = card.chartType === 'pie' || card.chartType === 'doughnut';
-            const containerPadding = isPieChart ? '2px' : '10px';
+            const containerPadding = '5px';
             
             return (
                 <div style={{ position: 'relative', height: `${dynamicHeight}px`, padding: containerPadding }}>
@@ -8798,6 +8979,7 @@
             const [selectedTier, setSelectedTier] = useState('All Tiers');
             const [columnBFilter, setColumnBFilter] = useState('All');
             const [columnCFilter, setColumnCFilter] = useState('All');
+            const [cfoActFilter, setCfoActFilter] = useState('All');
             const [oneGovFilter, setOneGovFilter] = useState('All');
 
             const loadEntities = useCallback(async (type) => {
@@ -8809,6 +8991,7 @@
                 setSelectedTier('All Tiers');
                 setColumnBFilter('All');
                 setColumnCFilter('All');
+                setCfoActFilter('All');
                 setOneGovFilter('All');
                 
                 // Use getAllEntities for all types to ensure consistent B02 data manager usage
@@ -8893,23 +9076,38 @@
                     });
                 }
                 
-                // Filter by OneGov status
-                if (oneGovFilter !== 'All') {
-                    
-                    if (oneGovFilter === 'OneGov') {
-                        filtered = filtered.filter(entity => {
-                            const hasOneGov = entity.isOneGov === true;
-                            if (hasOneGov) {
-                            }
-                            return hasOneGov;
-                        });
-                    } else if (oneGovFilter === 'Non-OneGov') {
-                        filtered = filtered.filter(entity => entity.isOneGov !== true);
+                // Filter by CFO Act Agency status (Agencies only) or OneGov status (OEMs/Vendors)
+                if (entityType === 'Agencies') {
+                    // CFO Act filtering for agencies (case-insensitive)
+                    if (cfoActFilter !== 'All') {
+                        if (cfoActFilter === 'Yes') {
+                            filtered = filtered.filter(entity => entity.cfoActAgency && entity.cfoActAgency.toLowerCase() === 'yes');
+                        } else if (cfoActFilter === 'No') {
+                            filtered = filtered.filter(entity => !entity.cfoActAgency || entity.cfoActAgency.toLowerCase() !== 'yes');
+                        }
+                    }
+                } else {
+                    // OneGov filtering for OEMs and Vendors
+                    if (oneGovFilter !== 'All') {
+                        if (oneGovFilter === 'OneGov') {
+                            console.log('DEBUG: Filtering for OneGov entities, checking isOneGov field...');
+                            const beforeCount = filtered.length;
+                            filtered = filtered.filter(entity => {
+                                const isMatch = entity.isOneGov && entity.isOneGov.toLowerCase() === 'yes';
+                                if (entity.isOneGov) { // Only log entities that have a value
+                                    console.log(`DEBUG: ${entity.name} - isOneGov: "${entity.isOneGov}" (type: ${typeof entity.isOneGov}) - Match: ${isMatch}`);
+                                }
+                                return isMatch;
+                            });
+                            console.log(`DEBUG: OneGov filter - Before: ${beforeCount}, After: ${filtered.length}`);
+                        } else if (oneGovFilter === 'Non-OneGov') {
+                            filtered = filtered.filter(entity => !entity.isOneGov || entity.isOneGov.toLowerCase() !== 'yes');
+                        }
                     }
                 }
                 
                 return filtered;
-            }, [entities, selectedTier, columnBFilter, columnCFilter, oneGovFilter, entityType]);
+            }, [entities, selectedTier, columnBFilter, columnCFilter, cfoActFilter, oneGovFilter, entityType]);
 
             // Combined Horizontal Filter Component
             const CombinedFilters = () => {
@@ -9034,14 +9232,20 @@
                         
                         <div style={{ width: '1px', height: '30px', background: 'rgba(20, 70, 115, 0.2)', margin: '0 8px' }}></div>
                         
-                        {/* OneGov Filter with inline legend */}
+                        {/* Dynamic Filter - CFO Act for Agencies, OneGov for OEMs/Vendors */}
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                             <span style={{ fontSize: '0.75rem', color: 'var(--blue)', fontWeight: '600' }}>
-                                OneGov:
+                                {entityType === 'Agencies' ? 'CFO Act:' : 'OneGov:'}
                             </span>
                             <select 
-                                value={oneGovFilter}
-                                onChange={(e) => setOneGovFilter(e.target.value)}
+                                value={entityType === 'Agencies' ? cfoActFilter : oneGovFilter}
+                                onChange={(e) => {
+                                    if (entityType === 'Agencies') {
+                                        setCfoActFilter(e.target.value);
+                                    } else {
+                                        setOneGovFilter(e.target.value);
+                                    }
+                                }}
                                 style={{
                                     background: 'rgba(255,255,255,0.9)',
                                     color: 'var(--blue)',
@@ -9055,8 +9259,17 @@
                                 }}
                             >
                                 <option value="All">All</option>
-                                <option value="OneGov">OneGov Only</option>
-                                <option value="Non-OneGov">Non-OneGov</option>
+                                {entityType === 'Agencies' ? (
+                                    <>
+                                        <option value="Yes">CFO Act</option>
+                                        <option value="No">Non-CFO Act</option>
+                                    </>
+                                ) : (
+                                    <>
+                                        <option value="OneGov">OneGov Only</option>
+                                        <option value="Non-OneGov">Non-OneGov</option>
+                                    </>
+                                )}
                             </select>
                             <div style={{
                                 width: '12px',

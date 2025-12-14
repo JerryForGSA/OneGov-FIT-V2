@@ -89,7 +89,8 @@ class OneGovDataManager {
           bicTimestamp: 28,    // AB
           usaiProfile: 29,     // AC
           website: 30,         // AD
-          linkedin: 31         // AE
+          linkedin: 31,        // AE
+          cfoActAgency: 32     // AF
         }
       },
       oem: {
@@ -125,7 +126,8 @@ class OneGovDataManager {
           bicTimestamp: 28,    // AB  
           usaiProfile: 29,     // AC
           website: 30,         // AD
-          linkedin: 31         // AE
+          linkedin: 31,        // AE
+          isOneGov: 32         // AF
         }
       },
       vendor: {
@@ -161,7 +163,8 @@ class OneGovDataManager {
           bicTimestamp: 28,    // AB
           usaiProfile: 29,     // AC  
           website: 30,         // AD
-          linkedin: 31         // AE
+          linkedin: 31,        // AE
+          isOneGov: 32         // AF
         }
       }
     };
@@ -234,11 +237,11 @@ class OneGovDataManager {
       return [];
     }
     
-    // Get data range including columns up to AE (31 columns)
+    // Get data range including columns up to AF (32 columns)
     const lastRow = sheet.getLastRow();
-    const range = sheet.getRange(1, 1, lastRow, 31); // 31 columns: A(1) to AE(31) - includes AC, AD, AE
+    const range = sheet.getRange(1, 1, lastRow, 32); // 32 columns: A(1) to AF(32) - includes AC, AD, AE, AF
     const values = range.getValues();
-    console.log(` DataManager ${entityType}: Reading ${lastRow} rows x 31 columns (A-AE)`);
+    console.log(` DataManager ${entityType}: Reading ${lastRow} rows x 32 columns (A-AF)`);
     const entities = [];
     
     // Process rows (skip header)
@@ -273,6 +276,12 @@ class OneGovDataManager {
           if (debugColumns.includes(key)) {
             console.log(` B02 DEBUG OEM KPIs: "${name}" - ${key} (col ${colIndex}):`, value ? (typeof value === 'string' ? value.substring(0, 200) : value) : 'EMPTY');
           }
+        }
+        
+        // Debug CFO Act and OneGov columns
+        if ((key === 'cfoActAgency' && entityType === 'agency') || 
+            (key === 'isOneGov' && (entityType === 'oem' || entityType === 'vendor'))) {
+          console.log(` B02 DEBUG FILTER: "${name}" (${entityType}) - ${key} (col ${colIndex}): "${value}" (type: ${typeof value}) [length: ${value ? value.toString().length : 'null'}]`);
         }
         
         // Handle JSON columns
