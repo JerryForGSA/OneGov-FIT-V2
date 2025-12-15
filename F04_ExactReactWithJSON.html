@@ -82,19 +82,6 @@
             gap: 1rem;
         }
 
-        .logo {
-            width: 50px;
-            height: 50px;
-            background: linear-gradient(135deg, var(--orange) 0%, #ff8c42 100%);
-            color: #ffffff;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.8rem;
-            font-weight: bold;
-            box-shadow: 0 4px 8px rgba(244, 121, 32, 0.3);
-        }
 
         .brand-text {
             display: flex;
@@ -6237,7 +6224,6 @@
             const [availableEntityNames, setAvailableEntityNames] = React.useState([]);
             
             // NEW: Chart Buffet filters
-            const [deptFilter, setDeptFilter] = React.useState('all'); // 'all', 'dod', 'civilian'
             const [cfoActFilter, setCfoActFilter] = React.useState('all'); // 'all', 'Yes', 'No'
             const [oneGovFilter, setOneGovFilter] = React.useState('all'); // 'all', 'OneGov', 'Non-OneGov'
             const [fiscalYearFilter, setFiscalYearFilter] = React.useState('all'); // Single fiscal year filter
@@ -6246,6 +6232,9 @@
             // NEW: Expanded modal state
             const [expandedCard, setExpandedCard] = React.useState(null);
             const [expandedChartType, setExpandedChartType] = React.useState(null);
+            
+            // Export view mode state
+            const [exportViewMode, setExportViewMode] = React.useState('expanded');
             
             // NEW: Column configuration with chart types
             const COLUMN_CONFIG = {
@@ -6488,7 +6477,11 @@
                                 console.error('❌ Backend error:', error);
                                 reject(error);
                             })
-                            .exportToGoogleDocs(selectedCards);
+                            .exportToGoogleDocs(selectedCards, {
+                                exportOptions: {
+                                    useExpanded: exportViewMode === 'expanded'
+                                }
+                            });
                     });
                     
                     console.log('🔍 Result object:', result);
@@ -6556,7 +6549,11 @@
                         google.script.run
                             .withSuccessHandler(resolve)
                             .withFailureHandler(reject)
-                            .exportToGoogleSheets(selectedCards);
+                            .exportToGoogleSheets(selectedCards, {
+                                exportOptions: {
+                                    useExpanded: exportViewMode === 'expanded'
+                                }
+                            });
                     });
                     
                     console.log('🔍 Sheets Result object:', result);
@@ -6650,7 +6647,11 @@
                                 console.error('❌ Backend error:', error);
                                 reject(error);
                             })
-                            .exportToGoogleSlides(selectedCards);
+                            .exportToGoogleSlides(selectedCards, {
+                                exportOptions: {
+                                    useExpanded: exportViewMode === 'expanded'
+                                }
+                            });
                     });
                     
                     console.log('🔍 Slides Result object:', result);
@@ -6712,7 +6713,6 @@
                     selectedColumn,
                     topN,
                     fiscalYearFilter,
-                    deptFilter,
                     cfoActFilter,
                     reason: 'useEffect dependency change'
                 });
@@ -6723,7 +6723,7 @@
                         loadReportData();
                     }
                 }
-            }, [selectedEntityType, selectedColumn, topN, parentDeptFilter, selectedEntities, deptFilter, cfoActFilter, oneGovFilter, fiscalYearFilter]);
+            }, [selectedEntityType, selectedColumn, topN, parentDeptFilter, selectedEntities, cfoActFilter, oneGovFilter, fiscalYearFilter]);
             
             const loadReportData = async () => {
                 if (!selectedEntityType) {
@@ -6744,7 +6744,20 @@
                             
                             // Handle new response structure with availableYears
                             if (response && response.cards) {
-                                setCardData(response.cards);
+                                // Process cards to add expandedOptions
+                                const processedCards = response.cards.map(card => {
+                                    if (card.chartType && !card.expandedOptions) {
+                                        card.expandedOptions = {
+                                            ...card.chartOptions,
+                                            plugins: {
+                                                legend: { display: true },
+                                                datalabels: { display: true }
+                                            }
+                                        };
+                                    }
+                                    return card;
+                                });
+                                setCardData(processedCards);
                                 
                                 const availableYears = (response.availableYears && response.availableYears.length > 0) 
                                     ? response.availableYears 
@@ -6755,21 +6768,60 @@
                                 console.log('Current fiscal year filter:', response.fiscalYearFilter);
                             } else {
                                 // Fallback for old response structure
-                                setCardData(response || getDefaultCardData());
+                                const fallbackCards = response || getDefaultCardData();
+                                const processedCards = (Array.isArray(fallbackCards) ? fallbackCards : []).map(card => {
+                                    if (card.chartType && !card.expandedOptions) {
+                                        card.expandedOptions = {
+                                            ...card.chartOptions,
+                                            plugins: {
+                                                legend: { display: true },
+                                                datalabels: { display: true }
+                                            }
+                                        };
+                                    }
+                                    return card;
+                                });
+                                setCardData(processedCards);
                                 setAvailableYears(['2022', '2023', '2024', '2025']);
                             }
                             setLoading(false);
                         })
                         .withFailureHandler((error) => {
                             console.error('FRONTEND: Error loading column report data:', error);
-                            setCardData(getDefaultCardData());
+                            const defaultCards = getDefaultCardData();
+                            const processedCards = (Array.isArray(defaultCards) ? defaultCards : []).map(card => {
+                                if (card.chartType && !card.expandedOptions) {
+                                    card.expandedOptions = {
+                                        ...card.chartOptions,
+                                        plugins: {
+                                            legend: { display: true },
+                                            datalabels: { display: true }
+                                        }
+                                    };
+                                }
+                                return card;
+                            });
+                            setCardData(processedCards);
                             setLoading(false);
                         })
-                        .generateColumnReports(selectedEntityType, selectedColumn, topN, selectedEntities, deptFilter, 
+                        .generateColumnReports(selectedEntityType, selectedColumn, topN, selectedEntities, 'all', 
                             selectedEntityType === 'Agencies' ? cfoActFilter : oneGovFilter, fiscalYearFilter);
                 } catch (error) {
                     console.error('Error in loadReportData:', error);
-                    setCardData(getDefaultCardData());
+                    const defaultCards = getDefaultCardData();
+                    const processedCards = (Array.isArray(defaultCards) ? defaultCards : []).map(card => {
+                        if (card.chartType && !card.expandedOptions) {
+                            card.expandedOptions = {
+                                ...card.chartOptions,
+                                plugins: {
+                                    legend: { display: true },
+                                    datalabels: { display: true }
+                                }
+                            };
+                        }
+                        return card;
+                    });
+                    setCardData(processedCards);
                     setLoading(false);
                 }
             };
@@ -6827,7 +6879,19 @@
                     google.script.run
                         .withSuccessHandler((data) => {
                             console.log('FRONTEND: Loaded filtered column data:', data);
-                            setCardData(data || []);
+                            const processedCards = (data || []).map(card => {
+                                if (card.chartType && !card.expandedOptions) {
+                                    card.expandedOptions = {
+                                        ...card.chartOptions,
+                                        plugins: {
+                                            legend: { display: true },
+                                            datalabels: { display: true }
+                                        }
+                                    };
+                                }
+                                return card;
+                            });
+                            setCardData(processedCards);
                             setLoading(false);
                         })
                         .withFailureHandler((error) => {
@@ -6912,19 +6976,19 @@
 
             return (
                 <div>
-                    {/* Modern Control Panel */}
+                    {/* Report Builder Control Panel */}
                     <div style={{
                         background: 'white',
                         borderBottom: '2px solid #e5e7eb',
                         boxShadow: '0 4px 6px rgba(0,0,0,0.05)',
                         position: 'sticky',
                         top: '0',
-                        zIndex: 100
+                        zIndex: 100,
+                        padding: '16px 20px'
                     }}>
                         <div style={{
                             maxWidth: '1600px',
-                            margin: '0 auto',
-                            padding: '20px 24px'
+                            margin: '0 auto'
                         }}>
                             {/* Row 1: Entity Type Buttons */}
                             <div style={{
@@ -7018,14 +7082,18 @@
                                         {[5, 10, 15].map(n => (
                                             <button 
                                                 key={n}
-                                                onClick={() => setTopN(n)}
+                                                onClick={() => {
+                                                    setTopN(n);
+                                                    loadReportData();
+                                                }}
                                                 style={{
-                                                    padding: '6px 12px',
-                                                    borderRadius: '4px',
+                                                    height: '38px',
+                                                    padding: '8px 16px',
+                                                    borderRadius: '6px',
                                                     border: '1px solid #d1d5db',
                                                     background: topN === n ? '#144673' : 'white',
                                                     color: topN === n ? 'white' : '#374151',
-                                                    fontSize: '0.8rem',
+                                                    fontSize: '14px',
                                                     fontWeight: '600',
                                                     cursor: 'pointer'
                                                 }}
@@ -7034,14 +7102,18 @@
                                             </button>
                                         ))}
                                         <button 
-                                            onClick={() => setTopN(null)}
+                                            onClick={() => {
+                                                setTopN(null);
+                                                loadReportData();
+                                            }}
                                             style={{
-                                                padding: '6px 12px',
-                                                borderRadius: '4px',
+                                                height: '38px',
+                                                padding: '8px 16px',
+                                                borderRadius: '6px',
                                                 border: '1px solid #d1d5db',
                                                 background: topN === null ? '#144673' : 'white',
                                                 color: topN === null ? 'white' : '#374151',
-                                                fontSize: '0.8rem',
+                                                fontSize: '14px',
                                                 fontWeight: '600',
                                                 cursor: 'pointer'
                                             }}
@@ -7049,24 +7121,6 @@
                                             All
                                         </button>
                                     </div>
-
-                                    {/* DOD/Civilian Filter */}
-                                    <select 
-                                        value={deptFilter}
-                                        onChange={(e) => setDeptFilter(e.target.value)}
-                                        style={{
-                                            padding: '8px 12px',
-                                            borderRadius: '6px',
-                                            fontSize: '0.85rem',
-                                            border: '1px solid #d1d5db',
-                                            background: deptFilter !== 'all' ? '#e0f2fe' : 'white',
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        <option value="all">All Agencies</option>
-                                        <option value="dod">DOD Only</option>
-                                        <option value="civilian">Civilian Only</option>
-                                    </select>
 
                                     {/* Dynamic Filter - CFO Act for Agencies, OneGov for OEMs/Vendors */}
                                     <select 
@@ -7077,26 +7131,28 @@
                                             } else {
                                                 setOneGovFilter(e.target.value);
                                             }
+                                            loadReportData();
                                         }}
                                         style={{
+                                            height: '38px',
                                             padding: '8px 12px',
                                             borderRadius: '6px',
-                                            fontSize: '0.85rem',
+                                            fontSize: '14px',
                                             border: '1px solid #d1d5db',
-                                            background: ((selectedEntityType === 'Agencies' && cfoActFilter !== 'all') || 
-                                                        (selectedEntityType !== 'Agencies' && oneGovFilter !== 'all')) ? '#fef3c7' : 'white',
-                                            cursor: 'pointer'
+                                            background: 'white',
+                                            cursor: 'pointer',
+                                            minWidth: '120px'
                                         }}
                                     >
-                                        {selectedEntityType === 'Agencies' ? (
+                                        {selectedEntityType === 'agency' ? (
                                             <>
                                                 <option value="all">All Agencies</option>
-                                                <option value="Yes">CFO Act Agencies</option>
-                                                <option value="No">Non-CFO Act Agencies</option>
+                                                <option value="Yes">CFO Act Only</option>
+                                                <option value="No">Non-CFO Act</option>
                                             </>
                                         ) : (
                                             <>
-                                                <option value="all">{`All ${selectedEntityType}`}</option>
+                                                <option value="all">All {selectedEntityType === 'oem' ? 'OEMs' : 'Vendors'}</option>
                                                 <option value="OneGov">OneGov Only</option>
                                                 <option value="Non-OneGov">Non-OneGov</option>
                                             </>
@@ -7113,16 +7169,17 @@
                                                 console.log('📅 Current state:', fiscalYearFilter);
                                                 setFiscalYearFilter(e.target.value);
                                                 console.log('📅 setFiscalYearFilter called with:', e.target.value);
+                                                loadReportData();
                                             }}
                                             style={{
-                                                padding: '10px 15px',
-                                                border: '2px solid #e5e7eb',
-                                                borderRadius: '8px',
-                                                fontSize: '0.95rem',
-                                                fontWeight: '500',
-                                                cursor: 'pointer',
+                                                height: '38px',
+                                                padding: '8px 12px',
+                                                borderRadius: '6px',
+                                                fontSize: '14px',
+                                                border: '1px solid #d1d5db',
                                                 background: 'white',
-                                                minWidth: '150px'
+                                                cursor: 'pointer',
+                                                minWidth: '120px'
                                             }}
                                         >
                                             <option value="all">All Fiscal Years</option>
@@ -7163,15 +7220,17 @@
                                             } else {
                                                 setSelectedEntities([e.target.value]);
                                             }
+                                            loadReportData();
                                         }}
                                         style={{
-                                            padding: '8px 16px',
+                                            height: '38px',
+                                            padding: '8px 12px',
                                             borderRadius: '6px',
-                                            fontSize: '0.875rem',
+                                            fontSize: '14px',
                                             border: '1px solid #d1d5db',
                                             background: 'white',
                                             cursor: 'pointer',
-                                            minWidth: '150px'
+                                            minWidth: '120px'
                                         }}
                                     >
                                         <option value="">
@@ -7188,14 +7247,19 @@
 
                                     <select 
                                         value={parentDeptFilter}
-                                        onChange={(e) => setParentDeptFilter(e.target.value)}
+                                        onChange={(e) => {
+                                            setParentDeptFilter(e.target.value);
+                                            loadReportData();
+                                        }}
                                         style={{
-                                            padding: '8px 16px',
+                                            height: '38px',
+                                            padding: '8px 12px',
                                             borderRadius: '6px',
-                                            fontSize: '0.875rem',
+                                            fontSize: '14px',
                                             border: '1px solid #d1d5db',
                                             background: 'white',
-                                            cursor: 'pointer'
+                                            cursor: 'pointer',
+                                            minWidth: '120px'
                                         }}
                                     >
                                         <option value="">{selectedEntityType === 'agency' ? 'All Departments' : 'All Parents'}</option>
@@ -7204,23 +7268,6 @@
                                         ))}
                                     </select>
 
-                                    <button 
-                                        onClick={loadReportData}
-                                        style={{
-                                            padding: '8px 16px',
-                                            borderRadius: '6px',
-                                            fontSize: '0.875rem',
-                                            background: 'linear-gradient(135deg, #f47920, #ff6b35)',
-                                            color: 'white',
-                                            border: 'none',
-                                            fontWeight: '600',
-                                            boxShadow: '0 2px 8px rgba(244, 121, 32, 0.3)',
-                                            cursor: 'pointer'
-                                        }}
-                                        disabled={loading}
-                                    >
-                                        {loading ? 'Loading...' : 'Generate'}
-                                    </button>
                                 </div>
                             )}
                         </div>
@@ -7255,16 +7302,11 @@
                         </div>
                         <div style={{display: 'flex', alignItems: 'center', gap: '16px'}}>
                             <span style={{fontWeight: '600', color: 'var(--dark-blue)', fontSize: '0.9rem'}}>
-                                {(() => {
-                                    const chartCount = Object.values(selections).filter(s => s?.chart).length;
-                                    const tableCount = Object.values(selections).filter(s => s?.table).length;
-                                    if (chartCount === 0 && tableCount === 0) return 'Nothing selected';
-                                    return `${chartCount} chart${chartCount !== 1 ? 's' : ''}, ${tableCount} table${tableCount !== 1 ? 's' : ''} selected`;
-                                })()}
+                                {getSelectionCount() === 0 ? 'Export: No items selected' : `Export: ${getSelectionCount()} items selected`}
                             </span>
-                            <div style={{display: 'flex', gap: '10px'}}>
+                            <div style={{display: 'flex', gap: '10px', alignItems: 'center'}}>
                                 <button 
-                                    disabled={Object.values(selections).filter(s => s?.chart || s?.table).length === 0}
+                                    disabled={getSelectionCount() === 0}
                                     onClick={() => handleExportToGoogleDocs()}
                                     style={{
                                         padding: '8px 16px',
@@ -7274,12 +7316,12 @@
                                         color: 'var(--blue)',
                                         border: '2px solid var(--blue)',
                                         fontWeight: '600',
-                                        cursor: Object.values(selections).filter(s => s?.chart || s?.table).length === 0 ? 'not-allowed' : 'pointer',
-                                        opacity: Object.values(selections).filter(s => s?.chart || s?.table).length === 0 ? 0.5 : 1
+                                        opacity: getSelectionCount() === 0 ? 0.5 : 1,
+                                        cursor: getSelectionCount() === 0 ? 'not-allowed' : 'pointer'
                                     }}
                                 >📄 Docs</button>
                                 <button 
-                                    disabled={Object.values(selections).filter(s => s?.chart || s?.table).length === 0}
+                                    disabled={getSelectionCount() === 0}
                                     onClick={() => handleExportToGoogleSheets()}
                                     style={{
                                         padding: '8px 16px',
@@ -7289,12 +7331,12 @@
                                         color: 'white',
                                         border: 'none',
                                         fontWeight: '600',
-                                        cursor: Object.values(selections).filter(s => s?.chart || s?.table).length === 0 ? 'not-allowed' : 'pointer',
-                                        opacity: Object.values(selections).filter(s => s?.chart || s?.table).length === 0 ? 0.5 : 1
+                                        opacity: getSelectionCount() === 0 ? 0.5 : 1,
+                                        cursor: getSelectionCount() === 0 ? 'not-allowed' : 'pointer'
                                     }}
                                 >📊 Sheets</button>
                                 <button 
-                                    disabled={Object.values(selections).filter(s => s?.chart || s?.table).length === 0}
+                                    disabled={getSelectionCount() === 0}
                                     onClick={() => handleExportToGoogleSlides()}
                                     style={{
                                         padding: '8px 16px',
@@ -7304,8 +7346,8 @@
                                         color: 'white',
                                         border: 'none',
                                         fontWeight: '600',
-                                        cursor: Object.values(selections).filter(s => s?.chart || s?.table).length === 0 ? 'not-allowed' : 'pointer',
-                                        opacity: Object.values(selections).filter(s => s?.chart || s?.table).length === 0 ? 0.5 : 1,
+                                        opacity: getSelectionCount() === 0 ? 0.5 : 1,
+                                        cursor: getSelectionCount() === 0 ? 'not-allowed' : 'pointer',
                                         boxShadow: '0 2px 8px rgba(244, 121, 32, 0.3)'
                                     }}
                                 >🖼️ Slides</button>
@@ -7538,23 +7580,104 @@
                                     ))}
                                 </div>
                             ) : card.cardType === 'funnel' ? (
-                                <div style={{display: 'flex', flexDirection: 'column', gap: '4px', paddingTop: '20px'}}>
-                                    {card.funnelData?.slice(0, 5).map((stage, idx) => (
-                                        <div key={idx} style={{
-                                            background: stage.color || '#144673',
-                                            color: 'white',
-                                            padding: '8px 12px',
-                                            borderRadius: '4px',
-                                            width: `${stage.percentage}%`,
-                                            minWidth: '60%',
-                                            fontSize: '0.8rem',
-                                            display: 'flex',
-                                            justifyContent: 'space-between'
+                                <div style={{
+                                    display: 'flex', 
+                                    flexDirection: 'column', 
+                                    alignItems: 'center',
+                                    gap: '2px', 
+                                    paddingTop: '10px',
+                                    maxHeight: '280px',
+                                    overflowY: 'auto',
+                                    overflowX: 'hidden'
+                                }}>
+                                    {card.funnelData?.map((stage, idx) => {
+                                        // Calculate proper funnel width progression
+                                        const maxValue = card.funnelData[0]?.value || 1;
+                                        const widthPercent = Math.max(20, Math.min(95, (stage.value / maxValue) * 85 + 10));
+                                        
+                                        return (
+                                            <div key={idx} style={{
+                                                background: `linear-gradient(135deg, ${stage.color || '#144673'}, ${(stage.color || '#144673')}cc)`,
+                                                color: 'white',
+                                                padding: '6px 12px',
+                                                borderRadius: '4px',
+                                                width: `${widthPercent}%`,
+                                                minWidth: '120px',
+                                                maxWidth: '95%',
+                                                fontSize: '0.75rem',
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                alignItems: 'center',
+                                                textShadow: '0 1px 2px rgba(0,0,0,0.7)',
+                                                fontWeight: '600',
+                                                marginBottom: '1px',
+                                                position: 'relative'
+                                            }} title={`${stage.label}: ${stage.displayValue} (${stage.percentage?.toFixed(1)}%)`}>
+                                                <span style={{
+                                                    textOverflow: 'ellipsis',
+                                                    overflow: 'hidden',
+                                                    whiteSpace: 'nowrap',
+                                                    maxWidth: '60%'
+                                                }}>{stage.label}</span>
+                                                <span style={{fontWeight: 'bold', fontSize: '0.7rem'}}>
+                                                    {stage.displayValue}
+                                                </span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ) : card.cardType === 'table' ? (
+                                <div style={{
+                                    padding: '8px',
+                                    fontSize: '0.8rem',
+                                    maxHeight: '280px',
+                                    overflowY: 'auto'
+                                }}>
+                                    {card.tableData && (
+                                        <table style={{
+                                            width: '100%',
+                                            borderCollapse: 'collapse',
+                                            fontSize: '0.75rem'
                                         }}>
-                                            <span>{stage.label}</span>
-                                            <span style={{fontWeight: 'bold'}}>{stage.displayValue}</span>
-                                        </div>
-                                    ))}
+                                            <thead>
+                                                <tr>
+                                                    {card.tableData.headers?.map((header, idx) => (
+                                                        <th key={idx} style={{
+                                                            backgroundColor: '#f8f9fa',
+                                                            padding: '6px',
+                                                            border: '1px solid #e5e7eb',
+                                                            color: '#144673',
+                                                            fontWeight: '600',
+                                                            fontSize: '0.7rem',
+                                                            textAlign: idx === 0 ? 'left' : 'right'
+                                                        }}>
+                                                            {header}
+                                                        </th>
+                                                    ))}
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {card.tableData.rows?.map((row, rowIdx) => (
+                                                    <tr key={rowIdx} style={{
+                                                        borderBottom: '1px solid #e5e7eb'
+                                                    }}>
+                                                        {row.map((cell, cellIdx) => (
+                                                            <td key={cellIdx} style={{
+                                                                padding: '4px 6px',
+                                                                border: '1px solid #e5e7eb',
+                                                                color: '#374151',
+                                                                fontSize: '0.7rem',
+                                                                textAlign: cellIdx === 0 ? 'left' : 'right',
+                                                                fontWeight: cellIdx === 0 ? '500' : '400'
+                                                            }}>
+                                                                {cell}
+                                                            </td>
+                                                        ))}
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    )}
                                 </div>
                             ) : card.cardType === 'chart' ? (
                                 <ChartComponent card={card} />
@@ -7904,6 +8027,110 @@
                                 }}>
                                     {card.chartData ? (
                                         <ExpandedChartComponent card={card} />
+                                    ) : card.cardType === 'table' && card.tableData ? (
+                                        <div style={{
+                                            width: '100%',
+                                            maxHeight: '500px',
+                                            overflowY: 'auto',
+                                            padding: '20px',
+                                            fontSize: '0.9rem'
+                                        }}>
+                                            <table style={{
+                                                width: '100%',
+                                                borderCollapse: 'collapse',
+                                                fontSize: '0.85rem',
+                                                backgroundColor: 'white',
+                                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                                                borderRadius: '6px',
+                                                overflow: 'hidden'
+                                            }}>
+                                                <thead>
+                                                    <tr>
+                                                        {card.tableData.headers?.map((header, idx) => (
+                                                            <th key={idx} style={{
+                                                                backgroundColor: '#144673',
+                                                                color: 'white',
+                                                                padding: '12px',
+                                                                border: 'none',
+                                                                fontWeight: '600',
+                                                                fontSize: '0.8rem',
+                                                                textAlign: idx === 0 ? 'left' : 'right'
+                                                            }}>
+                                                                {header}
+                                                            </th>
+                                                        ))}
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {card.tableData.rows?.map((row, rowIdx) => (
+                                                        <tr key={rowIdx} style={{
+                                                            backgroundColor: rowIdx % 2 === 0 ? '#f8f9fa' : 'white',
+                                                            borderBottom: rowIdx === card.tableData.rows.length - 1 ? 'none' : '1px solid #e5e7eb'
+                                                        }}>
+                                                            {row.map((cell, cellIdx) => (
+                                                                <td key={cellIdx} style={{
+                                                                    padding: '8px 12px',
+                                                                    border: 'none',
+                                                                    color: '#374151',
+                                                                    fontSize: '0.8rem',
+                                                                    textAlign: cellIdx === 0 ? 'left' : 'right',
+                                                                    fontWeight: cellIdx === 0 ? '600' : '400'
+                                                                }}>
+                                                                    {cell}
+                                                                </td>
+                                                            ))}
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    ) : card.cardType === 'funnel' && card.funnelData ? (
+                                        <div style={{
+                                            display: 'flex', 
+                                            flexDirection: 'column', 
+                                            alignItems: 'center',
+                                            gap: '3px', 
+                                            width: '100%',
+                                            maxHeight: '350px',
+                                            overflowY: 'auto',
+                                            padding: '20px 0'
+                                        }}>
+                                            {card.funnelData?.map((stage, idx) => {
+                                                // Calculate proper funnel width progression for expanded view
+                                                const maxValue = card.funnelData[0]?.value || 1;
+                                                const widthPercent = Math.max(25, Math.min(90, (stage.value / maxValue) * 80 + 10));
+                                                
+                                                return (
+                                                    <div key={idx} style={{
+                                                        background: `linear-gradient(135deg, ${stage.color || '#144673'}, ${(stage.color || '#144673')}cc)`,
+                                                        color: 'white',
+                                                        padding: '12px 20px',
+                                                        borderRadius: '6px',
+                                                        width: `${widthPercent}%`,
+                                                        minWidth: '200px',
+                                                        maxWidth: '90%',
+                                                        fontSize: '0.9rem',
+                                                        display: 'flex',
+                                                        justifyContent: 'space-between',
+                                                        alignItems: 'center',
+                                                        textShadow: '0 1px 3px rgba(0,0,0,0.7)',
+                                                        fontWeight: '600',
+                                                        marginBottom: '2px',
+                                                        position: 'relative'
+                                                    }} title={`${stage.label}: ${stage.displayValue} (${stage.percentage?.toFixed(1)}%)`}>
+                                                        <span style={{
+                                                            textOverflow: 'ellipsis',
+                                                            overflow: 'hidden',
+                                                            whiteSpace: 'nowrap',
+                                                            maxWidth: '65%'
+                                                        }}>{stage.label}</span>
+                                                        <span style={{fontWeight: 'bold'}}>
+                                                            {stage.displayValue}
+                                                        </span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
                                     ) : (
                                         <div style={{ textAlign: 'center', color: '#64748b' }}>
                                             <div style={{ fontSize: '3rem', marginBottom: '12px' }}>📊</div>
@@ -9290,7 +9517,6 @@
                     <nav className="navbar">
                         <div className="nav-container">
                             <div className="nav-brand">
-                                <div className="logo">F</div>
                                 <div className="brand-text">
                                     <span className="brand-name">OneGov FIT Market</span>
                                     <span className="brand-tagline">Built by ITVMO</span>

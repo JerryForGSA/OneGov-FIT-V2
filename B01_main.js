@@ -934,15 +934,15 @@ function extractJsonInsights(jsonObj, columnType) {
  */
 function exportReport(reportData) {
   try {
-    const { selectedCards, exportFormat } = reportData;
+    const { selectedCards, exportFormat, exportOptions = {} } = reportData;
     
     switch (exportFormat) {
       case 'docs':
-        return exportToGoogleDocs(selectedCards);
+        return exportToGoogleDocs(selectedCards, exportOptions);
       case 'sheets':
-        return exportToGoogleSheets(selectedCards);
+        return exportToGoogleSheets(selectedCards, exportOptions);
       case 'slides':
-        return exportToGoogleSlides(selectedCards);
+        return exportToGoogleSlides(selectedCards, exportOptions);
       default:
         throw new Error(`Unknown export format: ${exportFormat}`);
     }
@@ -955,8 +955,20 @@ function exportReport(reportData) {
 /**
  * Export to Google Docs
  */
-function exportToGoogleDocs(cards) {
+function exportToGoogleDocs(cards, exportOptions = {}) {
   try {
+    // Process cards based on export options
+    const processedCards = cards.map(card => {
+      // If expanded view is requested and card has expandedOptions, use them
+      if (exportOptions.useExpanded && card.expandedOptions) {
+        return {
+          ...card,
+          chartOptions: card.expandedOptions  // Use expanded chart options
+        };
+      }
+      return card;  // Use default options
+    });
+    
     const doc = DocumentApp.create('OneGov FIT Market Report - ' + new Date().toLocaleDateString());
     const body = doc.getBody();
     
@@ -966,16 +978,26 @@ function exportToGoogleDocs(cards) {
     body.appendParagraph('Generated on: ' + new Date().toLocaleString())
       .setHeading(DocumentApp.ParagraphHeading.SUBTITLE);
     
-    cards.forEach((card, index) => {
+    // Add export view mode indicator
+    if (exportOptions.useExpanded) {
+      body.appendParagraph('View Mode: Expanded (Detailed Charts)')
+        .setItalic(true);
+    } else {
+      body.appendParagraph('View Mode: Default (Clean Charts)')
+        .setItalic(true);
+    }
+    
+    processedCards.forEach((card, index) => {
       body.appendParagraph(`${index + 1}. ${card.title}`)
         .setHeading(DocumentApp.ParagraphHeading.HEADING1);
       
       if (card.selected === 'chart' || card.selected === 'both') {
-        body.appendParagraph(`Chart: ${card.chart.title}`);
+        body.appendParagraph(`Chart: ${card.chart?.title || card.title}`);
+        // Note: Charts would need to be rendered with expanded options
       }
       
       if (card.selected === 'table' || card.selected === 'both') {
-        body.appendParagraph(`Table: ${card.table.title}`);
+        body.appendParagraph(`Table: ${card.table?.title || card.title}`);
         // Add table data here
       }
     });
@@ -993,17 +1015,38 @@ function exportToGoogleDocs(cards) {
 /**
  * Export to Google Sheets
  */
-function exportToGoogleSheets(cards) {
-  try {
-    // Implementation for Google Sheets export
-    const sheet = SpreadsheetApp.create('OneGov FIT Market Report - ' + new Date().toLocaleDateString());
-    const url = sheet.getUrl();
-    return createResponse(true, { url }, null);
-  } catch (error) {
-    console.error('Error exporting to Google Sheets:', error);
-    return createResponse(false, null, error.toString());
+  function exportToGoogleSheets(cards, exportOptions = {}) {
+    try {
+      // Process cards based on export options
+      const processedCards = cards.map(card => {
+        // If expanded view is requested and card has expandedOptions, use them
+        if (exportOptions.useExpanded && card.expandedOptions) {
+          return {
+            ...card,
+            chartOptions: card.expandedOptions  // Use expanded chart options
+          };
+        }
+        return card;  // Use default options
+      });
+      
+      // Implementation for Google Sheets export
+      const sheet = SpreadsheetApp.create('OneGov FIT Market Report - ' + new Date().toLocaleDateString());
+      
+      // Add metadata sheet
+      const metaSheet = sheet.getActiveSheet();
+      metaSheet.setName('Report Metadata');
+      metaSheet.getRange(1, 1).setValue('Export View Mode:');
+      metaSheet.getRange(1, 2).setValue(exportOptions.useExpanded ? 'Expanded' : 'Default');
+      metaSheet.getRange(2, 1).setValue('Generated:');
+      metaSheet.getRange(2, 2).setValue(new Date().toLocaleString());
+      
+      const url = sheet.getUrl();
+      return createResponse(true, { url }, null);
+    } catch (error) {
+      console.error('Error exporting to Google Sheets:', error);
+      return createResponse(false, null, error.toString());
+    }
   }
-}
 
 /**
  * Export to Google Slides

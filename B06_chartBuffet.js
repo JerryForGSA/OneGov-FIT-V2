@@ -303,10 +303,8 @@ const MASTER_CHART_STYLES = {
           ticks: {
             font: { size: 10 },
             callback: function(value) {
-              if (value >= 1000000000) return '$' + (value / 1000000000).toFixed(1) + 'B';
-              if (value >= 1000000) return '$' + (value / 1000000).toFixed(1) + 'M';
-              if (value >= 1000) return '$' + (value / 1000).toFixed(0) + 'K';
-              return '$' + value.toFixed(0);
+              if (value >= 5000000000) return '$' + (value / 1000000000).toFixed(1) + 'B';
+              return '$' + (value / 1000000).toFixed(1) + 'M';
             }
           },
           grid: {
@@ -382,10 +380,12 @@ const MASTER_CHART_STYLES = {
             size: 11,
             weight: 'bold'
           },
-          formatter: function(value) {
+          formatter: function(value, context) {
             if (value < 1000000) return ''; // Hide small segments
-            if (value >= 1000000000) return '$' + (value/1000000000).toFixed(1) + 'B';
-            return '$' + (value/1000000).toFixed(0) + 'M';
+            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+            const percentage = ((value / total) * 100).toFixed(1);
+            const formatted = value >= 5000000000 ? '$' + (value/1000000000).toFixed(1) + 'B' : '$' + (value/1000000).toFixed(1) + 'M';
+            return formatted + ' (' + percentage + '%)';
           }
         },
         title: {
@@ -417,10 +417,8 @@ const MASTER_CHART_STYLES = {
           ticks: {
             font: { size: 13, weight: 'bold' },
             callback: function(value) {
-              if (value >= 1000000000) return '$' + (value / 1000000000).toFixed(2) + 'B';
-              if (value >= 1000000) return '$' + (value / 1000000).toFixed(2) + 'M';
-              if (value >= 1000) return '$' + (value / 1000).toFixed(0) + 'K';
-              return '$' + value.toFixed(0);
+              if (value >= 5000000000) return '$' + (value / 1000000000).toFixed(1) + 'B';
+              return '$' + (value / 1000000).toFixed(1) + 'M';
             }
           },
           grid: {
@@ -482,9 +480,8 @@ const COLUMN_CHART_OVERRIDES = {
           formatter: function(value, context) {
             const total = context.dataset.data.reduce((a, b) => a + b, 0);
             const percentage = ((value / total) * 100).toFixed(1);
-            const formatted = value >= 1000000000 ? '$' + (value / 1000000000).toFixed(1) + 'B' :
-                            value >= 1000000 ? '$' + (value / 1000000).toFixed(1) + 'M' :
-                            '$' + (value / 1000).toFixed(0) + 'K';
+            const formatted = value >= 5000000000 ? '$' + (value / 1000000000).toFixed(1) + 'B' :
+                            '$' + (value / 1000000).toFixed(1) + 'M';
             return formatted + '\n(' + percentage + '%)';
           }
         }
@@ -906,6 +903,7 @@ function getSharedLegendConfig(chartType, hasMultipleDatasets = false) {
   const shouldDisplay = hasMultipleDatasets || 
                        chartType === 'pie' || 
                        chartType === 'doughnut' ||
+                       chartType === 'stackedBar' ||
                        chartType === 'funnel';
   
   // Base legend configuration
@@ -1241,23 +1239,20 @@ function formatCurrencyShort(value) {
   
   const absValue = Math.abs(value);
   
-  if (absValue >= 1000000000) {
+  // Only show billions when >= $5B, otherwise always show millions
+  if (absValue >= 5000000000) {
     return '$' + (value / 1000000000).toFixed(1) + 'B';
-  } else if (absValue >= 1000000) {
-    return '$' + (value / 1000000).toFixed(1) + 'M';
-  } else if (absValue >= 1000) {
-    return '$' + (value / 1000).toFixed(1) + 'K';
   } else {
-    return '$' + value.toFixed(0);
+    // Always show in millions - never write out full values
+    return '$' + (value / 1000000).toFixed(1) + 'M';
   }
 }
 
 /**
- * Format full currency values
+ * Format currency values - now uses abbreviations everywhere
  */
 function formatCurrency(value) {
-  if (!value || isNaN(value)) return '$0';
-  return '$' + value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  return formatCurrencyShort(value);
 }
 
 /**
@@ -1267,6 +1262,28 @@ function formatPercentage(value, total) {
   if (!value || !total || total === 0) return '0.0%';
   const percentage = (value / total) * 100;
   return percentage.toFixed(1) + '%';
+}
+
+/**
+ * Format currency for table display with proper abbreviations
+ */
+function formatTableCurrency(value) {
+  if (!value || value === 0) return '$0';
+  const num = parseFloat(value);
+  if (num >= 5000000000) return '$' + (num / 1000000000).toFixed(1) + 'B';
+  if (num >= 1000000) return '$' + (num / 1000000).toFixed(1) + 'M';
+  if (num >= 1000) return '$' + (num / 1000).toFixed(0) + 'K';
+  return '$' + num.toFixed(0);
+}
+
+/**
+ * Get appropriate label for monetary values based on column type
+ * @param {string} columnId - Column identifier
+ * @returns {string} "Sales" for BIC columns, "Obligations" for others
+ */
+function getMonetaryLabel(columnId) {
+  const bicColumns = ['bicReseller', 'bicOem', 'bicTopProductsPerAgency', 'topBicProducts'];
+  return bicColumns.includes(columnId) ? 'Sales' : 'Obligations';
 }
 
 /**
@@ -1282,6 +1299,7 @@ function createEnhancedLabel(name, value, total, isOthers = false) {
   
   return `${name} (${formattedValue}, ${percentage})`;
 }
+
 
 // [CONTINUE WITH ALL THE REMAINING FUNCTIONS FROM THE ORIGINAL FILE]
 // Due to length constraints, I'll provide the file structure but you should copy
@@ -1317,6 +1335,7 @@ function getSharedLegendConfig(chartType, hasMultipleDatasets = false) {
   const shouldDisplay = hasMultipleDatasets || 
                        chartType === 'pie' || 
                        chartType === 'doughnut' ||
+                       chartType === 'stackedBar' ||
                        chartType === 'funnel';
   
   // Base legend configuration
@@ -1641,26 +1660,15 @@ function formatCurrencyShort(value) {
   
   const absValue = Math.abs(value);
   
-  if (absValue >= 1000000000) {
+  // Only show billions when >= $5B, otherwise always show millions
+  if (absValue >= 5000000000) {
     return '$' + (value / 1000000000).toFixed(1) + 'B';
-  } else if (absValue >= 1000000) {
-    return '$' + (value / 1000000).toFixed(1) + 'M';
-  } else if (absValue >= 1000) {
-    return '$' + (value / 1000).toFixed(1) + 'K';
   } else {
-    return '$' + value.toFixed(0);
+    // Always show in millions - never write out full values
+    return '$' + (value / 1000000).toFixed(1) + 'M';
   }
 }
 
-/**
- * Format full currency values
- * @param {number} value - Currency value
- * @returns {string} Formatted currency string
- */
-function formatCurrency(value) {
-  if (!value || isNaN(value)) return '$0';
-  return '$' + value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-}
 
 /**
  * Calculate percentage with proper formatting
@@ -2755,7 +2763,9 @@ function generateEntityBreakdownCharts(entities, entityType, columnId, topN = 10
         tooltip: {
           callbacks: {
             label: function(context) {
-              return `${context.dataset.label}: ${formatCurrencyShort(context.parsed.x)}`;
+              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+              const percentage = ((context.parsed.x / total) * 100).toFixed(1);
+              return `${context.dataset.label}: ${formatCurrencyShort(context.parsed.x)} (${percentage}%)`;
             }
           }
         }
@@ -2800,7 +2810,7 @@ function generateEntityStackedChart(entities, columnId, entityType, topN) {
     return null;
   }
   
-  const topEntities = entities.slice(0, topN || 10);
+  const topEntities = topN ? entities.slice(0, topN) : entities;
   
   // Extract categories from the first entity
   const categories = extractCategories(topEntities[0], columnId);
@@ -3077,14 +3087,16 @@ function generateChartBuffet(entityType, columnId, entities, options = {}) {
   
   // Get top N entities and calculate "All Other" if enabled
   console.log(`🔧 FUNNEL DEBUG: chartEntities.length=${chartEntities.length}, effectiveTopN=${effectiveTopN}`);
-  const topEntities = chartEntities.slice(0, effectiveTopN);
+  
+  // Fix: Handle "All" case where effectiveTopN is undefined
+  const topEntities = effectiveTopN ? chartEntities.slice(0, effectiveTopN) : chartEntities;
   console.log(`🔧 FUNNEL DEBUG: topEntities.length after slice=${topEntities.length}`);
   const topTotal = topEntities.reduce((sum, e) => sum + (e.value || 0), 0);
   const othersValue = overallTotal - topTotal;
   
   // Create entities with "All Other" category based on user preference
   const entitiesWithOthers = [...topEntities];
-  if (showAllOther && othersValue > 0 && chartEntities.length > effectiveTopN) {
+  if (showAllOther && othersValue > 0 && effectiveTopN && chartEntities.length > effectiveTopN) {
     entitiesWithOthers.push({
       name: 'All Other',
       value: othersValue,
@@ -3203,7 +3215,11 @@ function generateBreakdownPieChart(data, columnId, entityType) {
     cardType: 'chart',
     chartType: 'pie',
     chartData: {
-      labels: data.map(item => item.name),
+      labels: data.map(item => {
+        const formatted = formatTableCurrency(item.value);
+        const percentage = ((item.value / totalValue) * 100).toFixed(1);
+        return `${item.name} (${formatted} - ${percentage}%)`;
+      }),
       datasets: [{
         data: data.map(item => item.value),
         backgroundColor: data.map((item, idx) => getChartColor({
@@ -3232,7 +3248,7 @@ function generateBreakdownPieChart(data, columnId, entityType) {
       }
     },
     tableData: {
-      headers: ['Category', 'Total Value', 'Percentage'],
+      headers: ['Category', `Total ${getMonetaryLabel(columnId)}`, 'Percentage'],
       rows: data.map(item => {
         const percentage = totalValue > 0 ? ((item.value / totalValue) * 100).toFixed(1) : '0.0';
         return [
@@ -3297,7 +3313,7 @@ function generateBreakdownHorizontalBarChart(data, columnId, entityType, topN) {
       }
     },
     tableData: {
-      headers: ['Rank', 'Category', 'Value', 'Percentage'],
+      headers: ['Rank', 'Category', getMonetaryLabel(columnId), 'Percentage'],
       rows: displayData.map((item, index) => {
         const percentage = totalValue > 0 ? ((item.value / totalValue) * 100).toFixed(1) : '0.0';
         return [
@@ -3322,7 +3338,7 @@ function generateBreakdownHorizontalBarChart(data, columnId, entityType, topN) {
  */
 function generateBreakdownVerticalBarChart(data, columnId, entityType, topN) {
   console.log(`📊 generateBreakdownVerticalBarChart for ${columnId}: Received ${data.length} items`);
-  const displayData = data.slice(0, topN);
+  const displayData = topN ? data.slice(0, topN) : data;
   const totalValue = data.reduce((sum, item) => sum + item.value, 0);
   
   return {
@@ -3371,7 +3387,7 @@ function generateBreakdownVerticalBarChart(data, columnId, entityType, topN) {
       }
     },
     tableData: {
-      headers: ['Category', 'Total Value', 'Percentage'],
+      headers: ['Category', `Total ${getMonetaryLabel(columnId)}`, 'Percentage'],
       rows: displayData.map(item => {
         const percentage = totalValue > 0 ? ((item.value / totalValue) * 100).toFixed(1) : '0.0';
         return [item.name, formatCurrency(item.value), `${percentage}%`];
@@ -3422,7 +3438,7 @@ function generateBreakdownDoughnutChart(data, columnId, entityType) {
       }
     },
     tableData: {
-      headers: ['Category', 'Total Value', 'Percentage'],
+      headers: ['Category', `Total ${getMonetaryLabel(columnId)}`, 'Percentage'],
       rows: data.map(item => {
         const percentage = totalValue > 0 ? ((item.value / totalValue) * 100).toFixed(1) : '0.0';
         return [item.name, formatCurrency(item.value), `${percentage}%`];
@@ -3444,7 +3460,7 @@ function generateBreakdownFunnelChart(data, columnId, entityType) {
     return {
       label: item.name,
       value: item.value,
-      displayValue: formatCurrencyShort(item.value),
+      displayValue: `${formatCurrencyShort(item.value)} (${percentage.toFixed(1)}%)`,
       percentage: percentage,
       color: generateColorGradient(data.length)[idx]
     };
@@ -3456,7 +3472,7 @@ function generateBreakdownFunnelChart(data, columnId, entityType) {
     cardType: 'funnel',
     funnelData: funnelData,
     tableData: {
-      headers: ['Category', 'Total Value', 'Percentage'],
+      headers: ['Category', `Total ${getMonetaryLabel(columnId)}`, 'Percentage'],
       rows: data.map(item => {
         const percentage = totalValue > 0 ? ((item.value / totalValue) * 100).toFixed(1) : '0.0';
         return [item.name, formatCurrency(item.value), `${percentage}%`];
@@ -3515,7 +3531,7 @@ function generateBreakdownLineChart(data, columnId, entityType) {
       }
     },
     tableData: {
-      headers: ['Category', 'Total Value', 'Percentage'],
+      headers: ['Category', `Total ${getMonetaryLabel(columnId)}`, 'Percentage'],
       rows: data.map(item => {
         const percentage = totalValue > 0 ? ((item.value / totalValue) * 100).toFixed(1) : '0.0';
         return [item.name, formatCurrency(item.value), `${percentage}%`];
@@ -3574,7 +3590,7 @@ function generateBreakdownAreaChart(data, columnId, entityType) {
       }
     },
     tableData: {
-      headers: ['Category', 'Total Value', 'Percentage'],
+      headers: ['Category', `Total ${getMonetaryLabel(columnId)}`, 'Percentage'],
       rows: data.map(item => {
         const percentage = totalValue > 0 ? ((item.value / totalValue) * 100).toFixed(1) : '0.0';
         return [item.name, formatCurrency(item.value), `${percentage}%`];
@@ -3589,8 +3605,8 @@ function generateBreakdownAreaChart(data, columnId, entityType) {
 function generateBreakdownStackedBarChart(entities, columnId, entityType, topN = 5) {
   console.log(`📊 generateBreakdownStackedBarChart for ${columnId}: Received ${entities.length} entities, topN: ${topN}`);
   
-  // Limit entities to topN
-  const limitedEntities = entities.slice(0, topN);
+  // Limit entities to topN (handle null/undefined for "All")
+  const limitedEntities = topN ? entities.slice(0, topN) : entities;
   
   // For each entity, extract breakdown categories and their values
   const entityBreakdowns = [];
@@ -3696,7 +3712,7 @@ function generateBreakdownStackedBarChart(entities, columnId, entityType, topN =
   }
   
   // Convert to sorted array and limit categories
-  const sortedCategories = Array.from(allCategories).slice(0, 10); // Limit to top 10 categories
+  const sortedCategories = Array.from(allCategories); // Use all categories for breakdown chart
   const entityNames = entityBreakdowns.map(eb => eb.entityName);
   
   // Create datasets - one per category
@@ -3742,7 +3758,9 @@ function generateBreakdownStackedBarChart(entities, columnId, entityType, topN =
         tooltip: {
           callbacks: {
             label: function(context) {
-              return `${context.dataset.label}: ${formatCurrencyShort(context.parsed.x)}`;
+              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+              const percentage = ((context.parsed.x / total) * 100).toFixed(1);
+              return `${context.dataset.label}: ${formatCurrencyShort(context.parsed.x)} (${percentage}%)`;
             }
           }
         }
@@ -4036,7 +4054,7 @@ function generateBreakdownFiscalTrend(entities, columnId, entityType, options = 
       }
     },
     tableData: {
-      headers: ['Fiscal Year', 'Total Value', 'YoY Change', 'YoY Growth %'],
+      headers: ['Fiscal Year', `Total ${getMonetaryLabel(columnId)}`, 'YoY Change', 'YoY Growth %'],
       rows: years.map((year, index) => {
         const value = values[index];
         const change = index > 0 ? values[index] - values[index - 1] : 0;
@@ -4314,7 +4332,7 @@ function generateBreakdownFiscalBar(entities, columnId, entityType, topN) {
       }
     },
     tableData: {
-      headers: ['Fiscal Year', 'Total Value', 'YoY Change', 'YoY Growth %'],
+      headers: ['Fiscal Year', `Total ${getMonetaryLabel(columnId)}`, 'YoY Change', 'YoY Growth %'],
       rows: years.map((year, index) => {
         const value = values[index];
         const change = index > 0 ? values[index] - values[index - 1] : 0;
@@ -4400,13 +4418,13 @@ function generateVerticalBarChart(entities, entityType, columnId, topN, percenta
           beginAtZero: true,
           title: {
             display: true,
-            text: 'Value ($)'
+            text: `${getMonetaryLabel(columnId)} ($)`
           }
         }
       }
     },
     tableData: {
-      headers: ['Rank', 'Entity', 'Value', 'Percentage'],
+      headers: ['Rank', 'Entity', getMonetaryLabel(columnId), 'Percentage'],
       rows: entities.map((entity, index) => {
         const percentage = formatPercentage(entity.value, percentageBase);
         return [
@@ -4483,7 +4501,7 @@ function generateHorizontalBarChart(entities, entityType, columnId, topN, percen
           beginAtZero: true,
           title: {
             display: true,
-            text: 'Value ($)'
+            text: `${getMonetaryLabel(columnId)} ($)`
           },
           ticks: {
             callback: function(value) {
@@ -4494,7 +4512,7 @@ function generateHorizontalBarChart(entities, entityType, columnId, topN, percen
       }
     },
     tableData: {
-      headers: ['Rank', 'Entity', 'Value', 'Percentage'],
+      headers: ['Rank', 'Entity', getMonetaryLabel(columnId), 'Percentage'],
       rows: entities.map((entity, index) => {
         const percentage = formatPercentage(entity.value, percentageBase);
         return [
@@ -4529,7 +4547,7 @@ function generateLineChart(entities, entityType, columnId, percentageBase, perce
     const fiscalYearData = {};
     const allYears = new Set();
     
-    entities.slice(0, 10).forEach(entity => { // Limit to top 10 for readability
+    entities.forEach(entity => { // Use all entities passed to function
       const entityName = entityType === 'agency' ? abbreviateAgencyName(entity.name) : entity.name;
       let fyBreakdown = null;
       
@@ -4556,7 +4574,7 @@ function generateLineChart(entities, entityType, columnId, percentageBase, perce
     });
     
     const years = Array.from(allYears).sort();
-    const entityNames = entities.slice(0, 10).map(e => entityType === 'agency' ? abbreviateAgencyName(e.name) : e.name);
+    const entityNames = entities.map(e => entityType === 'agency' ? abbreviateAgencyName(e.name) : e.name);
     
     // Create datasets - one per fiscal year
     const datasets = years.map((year, idx) => ({
@@ -4736,8 +4754,9 @@ function generatePieChart(entities, entityType, columnId, topN, percentageBase, 
     chartData: {
       labels: entities.map(e => {
         const name = e.isOthers ? 'All Other' : (entityType === 'agency' ? abbreviateAgencyName(e.name) : e.name);
-        const percentage = formatPercentage(e.value, overallTotal);
-        return `${name} (${percentage})`;
+        const formatted = formatTableCurrency(e.value);
+        const percentage = ((e.value / overallTotal) * 100).toFixed(1);
+        return `${name} (${formatted} - ${percentage}%)`;
       }),
       datasets: [{
         data: entities.map(e => e.value),
@@ -4760,7 +4779,24 @@ function generatePieChart(entities, entityType, columnId, topN, percentageBase, 
       plugins: {
         legend: { 
           display: true,
-          position: 'bottom'
+          position: 'bottom',
+          labels: {
+            generateLabels: function(chart) {
+              const data = chart.data;
+              const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+              return data.labels.map((label, i) => {
+                const value = data.datasets[0].data[i];
+                const percent = ((value / total) * 100).toFixed(1);
+                const formatted = formatTableCurrency(value);
+                return {
+                  text: `${entities[i].name} (${formatted} - ${percent}%)`,
+                  fillStyle: data.datasets[0].backgroundColor[i],
+                  fontColor: '#333333',
+                  fontStyle: 'normal'
+                };
+              });
+            }
+          }
         },
         title: {
           display: true,
@@ -4776,17 +4812,18 @@ function generatePieChart(entities, entityType, columnId, topN, percentageBase, 
         tooltip: {
           callbacks: {
             label: function(context) {
-              const entity = entities[context.dataIndex];
-              const percentage = formatPercentage(entity.value, percentageBase);
-              const value = formatCurrencyShort(entity.value);
-              return `${entity.isOthers ? 'All Other' : entity.name}: ${value} (${percentage})`;
+              const value = context.raw;
+              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+              const percent = ((value / total) * 100).toFixed(1);
+              const formatted = formatTableCurrency(value);
+              return `${context.label}: ${formatted} (${percent}%)`;
             }
           }
         }
       }
     },
     tableData: {
-      headers: ['Rank', 'Entity', 'Value', 'Percentage'],
+      headers: ['Rank', 'Entity', getMonetaryLabel(columnId), 'Percentage'],
       rows: entities.map((entity, index) => {
         const percentage = formatPercentage(entity.value, percentageBase);
         return [
@@ -5236,9 +5273,9 @@ function generateTrendOverTime(entityType, columnId, selectedEntities = []) {
     entityTotals.push({ name: entityName, total: total, fyData: fyData });
   }
   
-  // Sort by total and take top 10
+  // Sort by total - don't artificially limit here since function gets filtered entities
   entityTotals.sort((a, b) => b.total - a.total);
-  const topEntities = entityTotals.slice(0, 10);
+  const topEntities = entityTotals;
   
   if (topEntities.length === 0) return null;
   
@@ -5390,13 +5427,14 @@ function generateMixedViewCharts(entities, columnId, entityType, topN) {
   }
   
   // 2. Entity-specific breakdown (new)
-  const entityCharts = generateEntityBreakdownCharts(entities.slice(0, topN || 10), entityType, columnId, topN);
+  const entityCharts = generateEntityBreakdownCharts(topN ? entities.slice(0, topN) : entities, entityType, columnId, topN);
   if (entityCharts.length > 0) {
     charts.push(...entityCharts);
   }
   
   // 3. Entity detail tables (new - like carousel tables)
-  const entityDetailTables = generateEntityDetailTables(entities.slice(0, Math.min(topN || 10, 5)), entityType, columnId, Math.min(topN || 10, 5));
+  const maxForTables = topN ? Math.min(topN, 5) : 5;
+  const entityDetailTables = generateEntityDetailTables(entities.slice(0, maxForTables), entityType, columnId, maxForTables);
   if (entityDetailTables.length > 0) {
     charts.push(...entityDetailTables);
   }
@@ -5753,7 +5791,7 @@ function generateEntityDetailTables(entities, entityType, columnId, topN = 10) {
   }
   
   const cards = [];
-  const topEntities = entities.slice(0, topN);
+  const topEntities = topN ? entities.slice(0, topN) : entities;
   
   topEntities.forEach((entity, index) => {
     const entityName = entity.name || entity.entityName;
