@@ -1171,9 +1171,9 @@
                     return categoryColors[categoryIndex] || categoryColors[6];
                 }
                 
-                // For Sum Type charts (containing "Open Market"), use dark navy for Open Market
+                // For Sum Type charts (containing "Open Market"), use grey for Open Market
                 if (name.includes('Open Market')) {
-                    return '#144673';  // Dark Navy Blue for Open Market
+                    return '#6b7280';  // Grey for Open Market
                 }
                 // For Sum Type data, check if we have sum type categories and use dark navy instead of light blue
                 if (name.includes('IDIQ') || name.includes('Definite') || name.includes('Indefinite')) {
@@ -5234,9 +5234,9 @@
                     } else if (column.key === 'sumType' && jsonData.sum_type_summaries) {
                         // Define specific colors using exact names from data
                         const sumTypeColors = {
-                            'Governmentwide Management': '#144673',        // Navy blue (tallest)
-                            'Agency Managed & IDIQ': '#f47920',           // Orange
-                            'Open Market': '#3a6ea5'                      // Light blue
+                            'Governmentwide Management': '#f47920',        // Orange
+                            'Agency Managed & IDIQ': '#144673',           // Navy blue
+                            'Open Market': '#6b7280'                      // Grey
                         };
                         const sortedSumTypes = Object.entries(jsonData.sum_type_summaries).sort((a, b) => (b[1].total || 0) - (a[1].total || 0));
                         
@@ -5868,9 +5868,9 @@
                                             // Get sorted order to match table colors exactly
                                             const sortedSumTypes = Object.entries(jsonData.sum_type_summaries).sort((a, b) => (b[1].total || 0) - (a[1].total || 0));
                                             const sumTypeColors = {
-                                                'Governmentwide Management': '#144673',        // Navy blue (tallest)
-                                                'Agency Managed & IDIQ': '#f47920',           // Orange
-                                                'Open Market': '#3a6ea5'                      // Light blue
+                                                'Governmentwide Management': '#f47920',        // Orange
+                                                'Agency Managed & IDIQ': '#144673',           // Navy blue
+                                                'Open Market': '#6b7280'                      // Grey
                                             };
                                             const orderedSumTypeColors = sortedSumTypes.map(([typeName]) => sumTypeColors[typeName] || '#f47920');
                                             return generateGroupedBarChart(jsonData.sum_type_summaries, '', orderedSumTypeColors, true);
@@ -6235,7 +6235,8 @@
             
             // Export view mode state
             const [exportViewMode, setExportViewMode] = React.useState('expanded');
-            
+            const [exportIncludeLegend, setExportIncludeLegend] = React.useState(true);
+
             // NEW: Column configuration with chart types
             const COLUMN_CONFIG = {
                 obligations: { 
@@ -7426,6 +7427,8 @@
         // Report Builder Card Component
         const ReportBuilderCard = ({ card, isFlipped, selection, selectionState, onFlip, onSelect, onExpand, columnConfig }) => {
             console.log("CARD DATA:", card.title, card);
+            const [showLegend, setShowLegend] = React.useState(false);
+            const [legendData, setLegendData] = React.useState([]);
             
             const getCardClass = () => {
                 switch(selectionState) {
@@ -7529,7 +7532,7 @@
             return (
                 <div style={{
                     perspective: '1000px',
-                    height: '380px'
+                    height: '420px'
                 }}>
                     <div style={{
                         position: 'relative',
@@ -7548,24 +7551,67 @@
                             borderRadius: '8px',
                             background: 'white',
                             boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                            display: 'flex',
+                            flexDirection: 'column',
                             overflow: 'hidden',
                             ...getCardClass()
                         }}>
-                            {/* Selection dropdown in top-right */}
-                            <div style={{
-                                position: 'absolute',
-                                top: '12px',
-                                right: '12px',
-                                zIndex: 10
-                            }}>
-                                <SelectionDropdown />
-                            </div>
-                            <div style={{padding: '16px', borderBottom: '1px solid #e5e7eb'}}>
-                                <div style={{fontSize: '1rem', fontWeight: '600', color: 'var(--dark-blue)'}}>
-                                    {card.title}
+                            {/* Header wrapper with flexShrink 0 */}
+                            <div style={{flexShrink: 0}}>
+                                <div style={{
+                                    position: 'relative',
+                                    zIndex: 10,
+                                    background: 'white'
+                                }}>
+                                    {/* Card Header - Row 1: Controls */}
+                                    <div style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        padding: '10px 12px',
+                                        gap: '8px'
+                                    }}>
+                                        <SelectionDropdown />
+                                        {(card.cardType === 'chart' || card.cardType === 'funnel') && (
+                                            <button 
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setShowLegend(!showLegend);
+                                                }} 
+                                                style={{
+                                                    background: showLegend ? 'var(--blue)' : 'white',
+                                                    color: showLegend ? 'white' : '#6b7280',
+                                                    border: '1px solid #d1d5db',
+                                                    borderRadius: '4px',
+                                                    padding: '4px 10px',
+                                                    fontSize: '0.7rem',
+                                                    cursor: 'pointer',
+                                                    fontWeight: '600'
+                                                }}
+                                            >
+                                                📋 Legend
+                                            </button>
+                                        )}
+                                    </div>
+                                    {/* Card Header - Row 2: Title with wrap */}
+                                    <div style={{
+                                        padding: '0 12px 10px 12px',
+                                        borderBottom: '1px solid #e5e7eb'
+                                    }}>
+                                        <div style={{
+                                            fontSize: '0.95rem',
+                                            fontWeight: '600',
+                                            color: 'var(--dark-blue)',
+                                            lineHeight: '1.3',
+                                            wordWrap: 'break-word',
+                                            overflowWrap: 'break-word'
+                                        }}>
+                                            {card.title}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div style={{padding: '16px', height: 'calc(100% - 100px)', display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
+                            <div style={{padding: '8px 12px', flex: '1 1 auto', overflow: 'hidden', minHeight: 0}}>
                             {card.cardType === 'kpi_numbers' ? (
                                 <div style={{display: 'flex', flexDirection: 'column', gap: '12px', justifyContent: 'center', height: '100%'}}>
                                     {card.kpiData && Object.entries(card.kpiData).map(([key, data]) => (
@@ -7586,7 +7632,8 @@
                                     alignItems: 'center',
                                     gap: '2px', 
                                     paddingTop: '10px',
-                                    maxHeight: '280px',
+                                    height: '100%',
+                                    maxHeight: '320px',
                                     overflowY: 'auto',
                                     overflowX: 'hidden'
                                 }}>
@@ -7680,7 +7727,27 @@
                                     )}
                                 </div>
                             ) : card.cardType === 'chart' ? (
-                                <ChartComponent card={card} />
+                                <div style={{ position: 'relative', height: '100%', width: '100%' }}>
+                                    {showLegend && (
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: '0',
+                                            right: '0',
+                                            zIndex: 10000
+                                        }}>
+                                            <LegendPopup 
+                                                legendData={legendData}
+                                                isVisible={showLegend}
+                                                onClose={() => setShowLegend(false)}
+                                                position={{
+                                                    top: '0',
+                                                    right: '0'
+                                                }}
+                                            />
+                                        </div>
+                                    )}
+                                    <ChartWithLegend key={card.id + '-' + (card.chartData?.labels?.length || 0)} card={card} setLegendData={setLegendData} />
+                                </div>
                             ) : (
                                 <div style={{textAlign: 'center', color: '#666', fontSize: '0.9rem', padding: '20px'}}>
                                     📊 Chart visualization<br/>
@@ -7692,16 +7759,12 @@
                         </div>
                             {/* Card Footer with Flip and Expand buttons */}
                             <div style={{
-                                position: 'absolute',
-                                bottom: '0',
-                                left: '0',
-                                right: '0',
+                                flexShrink: 0,
                                 padding: '8px 12px',
                                 background: '#f8f9fa',
                                 borderTop: '1px solid #e5e7eb',
                                 display: 'flex',
                                 justifyContent: 'space-between',
-                                alignItems: 'center',
                                 gap: '8px'
                             }}>
                                 <button 
@@ -7756,25 +7819,68 @@
                             borderRadius: '8px',
                             background: 'white',
                             boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                            display: 'flex',
+                            flexDirection: 'column',
                             overflow: 'hidden',
                             transform: 'rotateY(180deg)',
                             ...getCardClass()
                         }}>
-                            {/* Selection dropdown in top-right */}
-                            <div style={{
-                                position: 'absolute',
-                                top: '12px',
-                                right: '12px',
-                                zIndex: 10
-                            }}>
-                                <SelectionDropdown />
-                            </div>
-                            <div style={{padding: '16px', borderBottom: '1px solid #e5e7eb'}}>
-                                <div style={{fontSize: '1rem', fontWeight: '600', color: 'var(--dark-blue)'}}>
-                                    {card.title}
+                            {/* Header wrapper with flexShrink 0 */}
+                            <div style={{flexShrink: 0}}>
+                                <div style={{
+                                    position: 'relative',
+                                    zIndex: 10,
+                                    background: 'white'
+                                }}>
+                                    {/* Card Header - Row 1: Controls */}
+                                    <div style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        padding: '10px 12px',
+                                        gap: '8px'
+                                    }}>
+                                        <SelectionDropdown />
+                                        {(card.cardType === 'chart' || card.cardType === 'funnel') && (
+                                            <button 
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setShowLegend(!showLegend);
+                                                }} 
+                                                style={{
+                                                    background: showLegend ? 'var(--blue)' : 'white',
+                                                    color: showLegend ? 'white' : '#6b7280',
+                                                    border: '1px solid #d1d5db',
+                                                    borderRadius: '4px',
+                                                    padding: '4px 10px',
+                                                    fontSize: '0.7rem',
+                                                    cursor: 'pointer',
+                                                    fontWeight: '600'
+                                                }}
+                                            >
+                                                📋 Legend
+                                            </button>
+                                        )}
+                                    </div>
+                                    {/* Card Header - Row 2: Title with wrap */}
+                                    <div style={{
+                                        padding: '0 12px 10px 12px',
+                                        borderBottom: '1px solid #e5e7eb'
+                                    }}>
+                                        <div style={{
+                                            fontSize: '0.95rem',
+                                            fontWeight: '600',
+                                            color: 'var(--dark-blue)',
+                                            lineHeight: '1.3',
+                                            wordWrap: 'break-word',
+                                            overflowWrap: 'break-word'
+                                        }}>
+                                            {card.title}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div style={{padding: '16px', height: 'calc(100% - 100px)', display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
+                            <div style={{padding: '8px 12px', flex: '1 1 auto', overflow: 'hidden', minHeight: 0}}>
                                 <div style={{height: '100%', overflowY: 'auto'}}>
                                     <table style={{width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem'}}>
                                         <thead>
@@ -7810,16 +7916,12 @@
                             </div>
                             {/* Card Footer with Flip and Expand buttons */}
                             <div style={{
-                                position: 'absolute',
-                                bottom: '0',
-                                left: '0',
-                                right: '0',
+                                flexShrink: 0,
                                 padding: '8px 12px',
                                 background: '#f8f9fa',
                                 borderTop: '1px solid #e5e7eb',
                                 display: 'flex',
                                 justifyContent: 'space-between',
-                                alignItems: 'center',
                                 gap: '8px'
                             }}>
                                 <button 
@@ -7875,6 +7977,8 @@
             if (!card) return null;
             
             const [isFlipped, setIsFlipped] = React.useState(false);
+            const [showLegend, setShowLegend] = React.useState(false);
+            const [legendData, setLegendData] = React.useState([]);
             
             return (
                 <div style={{
@@ -7937,6 +8041,30 @@
                                 >
                                     {isFlipped ? '📊 Flip to Chart' : '📋 Flip to Table'}
                                 </button>
+                                {/* Legend button - only show for chart types */}
+                                {(card.cardType === 'chart' || card.cardType === 'funnel') && !isFlipped && (
+                                    <button 
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setShowLegend(!showLegend);
+                                        }}
+                                        style={{
+                                            background: showLegend ? 'var(--blue)' : '#f3f4f6',
+                                            color: showLegend ? 'white' : '#374151',
+                                            border: '1px solid #d1d5db',
+                                            borderRadius: '6px',
+                                            padding: '8px 16px',
+                                            fontSize: '0.85rem',
+                                            cursor: 'pointer',
+                                            fontWeight: '600',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '6px'
+                                        }}
+                                    >
+                                        📋 Legend
+                                    </button>
+                                )}
                                 <button 
                                     onClick={onClose}
                                     style={{
@@ -8023,10 +8151,29 @@
                                     maxWidth: '700px',
                                     display: 'flex',
                                     alignItems: 'center',
-                                    justifyContent: 'center'
+                                    justifyContent: 'center',
+                                    position: 'relative'
                                 }}>
+                                    {showLegend && (
+                                        <div style={{
+                                            position: 'absolute',
+                                            top: '0',
+                                            right: '0',
+                                            zIndex: 10000
+                                        }}>
+                                            <LegendPopup 
+                                                legendData={legendData}
+                                                isVisible={showLegend}
+                                                onClose={() => setShowLegend(false)}
+                                                position={{
+                                                    top: '0',
+                                                    right: '0'
+                                                }}
+                                            />
+                                        </div>
+                                    )}
                                     {card.chartData ? (
-                                        <ExpandedChartComponent card={card} />
+                                        <ExpandedChartComponent card={card} setLegendData={setLegendData} />
                                     ) : card.cardType === 'table' && card.tableData ? (
                                         <div style={{
                                             width: '100%',
@@ -8091,7 +8238,7 @@
                                             alignItems: 'center',
                                             gap: '3px', 
                                             width: '100%',
-                                            maxHeight: '350px',
+                                            height: '100%',
                                             overflowY: 'auto',
                                             padding: '20px 0'
                                         }}>
@@ -8170,12 +8317,63 @@
         };
         
         // Expanded Chart Component - renders same chart type but bigger
-        const ExpandedChartComponent = ({ card }) => {
+        const ExpandedChartComponent = ({ card, setLegendData }) => {
             const canvasRef = React.useRef(null);
             const chartInstanceRef = React.useRef(null);
 
             React.useEffect(() => {
                 if (!card.chartData || !canvasRef.current) return;
+                
+                // Build legend data similar to ChartWithLegend
+                const buildLegendData = () => {
+                    const items = [];
+                    
+                    if (card.cardType === 'funnel' && card.funnelData) {
+                        // For funnel charts, show each stage
+                        card.funnelData.forEach(stage => {
+                            items.push({
+                                label: stage.label,
+                                formattedValue: stage.displayValue,
+                                percentage: stage.percentage ? stage.percentage.toFixed(1) : '0.0',
+                                color: stage.color || '#144673'
+                            });
+                        });
+                    } else if (card.chartType === 'pie' || card.chartType === 'doughnut') {
+                        // For pie/doughnut charts
+                        const dataset = card.chartData.datasets[0];
+                        const total = dataset.data.reduce((sum, val) => sum + (val || 0), 0);
+                        
+                        card.chartData.labels.forEach((label, idx) => {
+                            const value = dataset.data[idx] || 0;
+                            items.push({
+                                label: label.split(' (')[0],
+                                formattedValue: window.formatCurrencyShort(value),
+                                percentage: total > 0 ? ((value / total) * 100).toFixed(1) : '0.0',
+                                color: Array.isArray(dataset.backgroundColor) ? dataset.backgroundColor[idx] : dataset.backgroundColor
+                            });
+                        });
+                    } else {
+                        // For bar/line charts
+                        const dataset = card.chartData.datasets[0];
+                        const total = dataset.data.reduce((sum, val) => sum + (val || 0), 0);
+                        
+                        card.chartData.labels.forEach((label, idx) => {
+                            const value = dataset.data[idx] || 0;
+                            items.push({
+                                label: label.split(' (')[0],
+                                formattedValue: window.formatCurrencyShort(value),
+                                percentage: total > 0 ? ((value / total) * 100).toFixed(1) : '0.0',
+                                color: Array.isArray(dataset.backgroundColor) ? dataset.backgroundColor[idx] : dataset.backgroundColor
+                            });
+                        });
+                    }
+                    
+                    if (setLegendData) {
+                        setLegendData(items);
+                    }
+                };
+                
+                buildLegendData();
 
                 // Destroy existing chart if it exists
                 if (chartInstanceRef.current) {
@@ -9170,7 +9368,7 @@
                         chartInstanceRef.current.destroy();
                     }
                 };
-            }, [card.chartData, card.chartType]);
+            }, [card.chartData, card.chartType, card]);
 
             // Calculate dynamic height for charts with side legend consideration
             const isHorizontal = card.chartOptions?.indexAxis === 'y';
@@ -9194,6 +9392,248 @@
             return (
                 <div style={{ position: 'relative', height: `${dynamicHeight}px`, padding: containerPadding }}>
                     <canvas ref={canvasRef}></canvas>
+                </div>
+            );
+        };
+        // Legend Popup Component
+        const LegendPopup = ({ legendData, isVisible, onClose, position }) => {
+            if (!isVisible || !legendData || legendData.length === 0) return null;
+            
+            return (
+                <div style={{
+                    position: 'fixed',
+                    top: position?.top || '40px',
+                    ...(position?.right && { right: position.right }),
+                    ...(position?.left && { left: position.left }),
+                    background: 'white',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+                    padding: '12px',
+                    zIndex: 10000,
+                    minWidth: '220px',
+                    maxWidth: '320px',
+                    maxHeight: '300px',
+                    overflowY: 'auto',
+                    border: '1px solid #e5e7eb'
+                }} onClick={(e) => e.stopPropagation()}>
+                    <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        marginBottom: '10px',
+                        paddingBottom: '8px',
+                        borderBottom: '1px solid #e5e7eb'
+                    }}>
+                        <span style={{fontWeight: '600', fontSize: '0.85rem', color: '#374151'}}>Legend</span>
+                        <button 
+                            onClick={onClose}
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                fontSize: '1.2rem',
+                                color: '#6b7280',
+                                padding: '0 4px',
+                                lineHeight: 1
+                            }}
+                        >×</button>
+                    </div>
+                    <div style={{display: 'flex', flexDirection: 'column', gap: '8px'}}>
+                        {legendData.map((item, idx) => (
+                            <div key={idx} style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '10px',
+                                fontSize: '0.8rem'
+                            }}>
+                                <div style={{
+                                    width: '14px',
+                                    height: '14px',
+                                    borderRadius: '3px',
+                                    backgroundColor: Array.isArray(item.color) ? item.color[0] : item.color,
+                                    flexShrink: 0,
+                                    border: '1px solid rgba(0,0,0,0.1)'
+                                }}></div>
+                                <div style={{flex: 1, color: '#374151', lineHeight: '1.3'}}>
+                                    <div style={{fontWeight: '500'}}>{item.label}</div>
+                                    <div style={{fontSize: '0.75rem', color: '#6b7280'}}>
+                                        {item.formattedValue}
+                                        {item.percentage && ` (${item.percentage}%)`}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        // Enhanced Chart Component with Legend Popup Button
+        const ChartWithLegend = ({ card, setLegendData }) => {
+            const canvasRef = React.useRef(null);
+            const chartInstanceRef = React.useRef(null);
+
+            React.useEffect(() => {
+                if (!card.chartData || !canvasRef.current) return;
+
+                if (chartInstanceRef.current) {
+                    chartInstanceRef.current.destroy();
+                }
+
+                const ctx = canvasRef.current.getContext('2d');
+                
+                // Build legend data from chart data
+                const buildLegendData = () => {
+                    const items = [];
+                    const chartType = card.chartType;
+                    
+                    if (chartType === 'pie' || chartType === 'doughnut') {
+                        const dataset = card.chartData.datasets[0];
+                        const total = dataset.data.reduce((sum, val) => sum + val, 0);
+                        
+                        card.chartData.labels.forEach((label, idx) => {
+                            const value = dataset.data[idx];
+                            items.push({
+                                label: label.split(' (')[0],
+                                formattedValue: window.formatCurrencyShort(value),
+                                percentage: total > 0 ? ((value / total) * 100).toFixed(1) : '0.0',
+                                color: Array.isArray(dataset.backgroundColor) ? dataset.backgroundColor[idx] : dataset.backgroundColor
+                            });
+                        });
+                    } else {
+                        // For bar/line charts, show individual labels with their values
+                        const dataset = card.chartData.datasets[0];
+                        const total = dataset.data.reduce((sum, val) => sum + (val || 0), 0);
+                        
+                        card.chartData.labels.forEach((label, idx) => {
+                            const value = dataset.data[idx] || 0;
+                            items.push({
+                                label: label.split(' (')[0],
+                                formattedValue: window.formatCurrencyShort(value),
+                                percentage: total > 0 ? ((value / total) * 100).toFixed(1) : '0.0',
+                                color: Array.isArray(dataset.backgroundColor) ? dataset.backgroundColor[idx] : dataset.backgroundColor
+                            });
+                        });
+                    }
+                    
+                    setLegendData(items);
+                };
+                
+                buildLegendData();
+                
+                // Prepare chart options - HIDE built-in legend
+                let cleanOptions = JSON.parse(JSON.stringify(card.chartOptions || {}));
+                if (!cleanOptions.plugins) cleanOptions.plugins = {};
+                cleanOptions.plugins.legend = { display: false };
+                
+                if (!cleanOptions.responsive) cleanOptions.responsive = true;
+                if (!cleanOptions.maintainAspectRatio) cleanOptions.maintainAspectRatio = false;
+                
+                // Add layout padding
+                cleanOptions.layout = { padding: { top: 10, bottom: 10, left: 10, right: 10 } };
+                
+                // Remove callback strings that cause errors
+                if (cleanOptions?.plugins?.tooltip?.callbacks) {
+                    delete cleanOptions.plugins.tooltip.callbacks;
+                }
+                if (cleanOptions?.scales?.x?.ticks?.callback) {
+                    delete cleanOptions.scales.x.ticks.callback;
+                }
+                if (cleanOptions?.scales?.y?.ticks?.callback) {
+                    delete cleanOptions.scales.y.ticks.callback;
+                }
+                
+                // Add formatting for axes
+                const isHorizontal = cleanOptions.indexAxis === 'y';
+                const valueAxis = isHorizontal ? 'x' : 'y';
+                
+                if (card.chartType === 'bar' && cleanOptions.scales && cleanOptions.scales[valueAxis]) {
+                    cleanOptions.scales[valueAxis].ticks = {
+                        ...cleanOptions.scales[valueAxis].ticks,
+                        callback: window.formatCurrencyShort
+                    };
+                }
+                
+                if (card.chartType === 'line') {
+                    if (!cleanOptions.scales) cleanOptions.scales = {};
+                    if (!cleanOptions.scales.y) cleanOptions.scales.y = {};
+                    cleanOptions.scales.y.ticks = { callback: window.formatCurrencyShort };
+                    cleanOptions.scales.y.beginAtZero = true;
+                }
+                
+                // Enhanced tooltips with full breakdown
+                cleanOptions.plugins.tooltip = {
+                    mode: 'index',
+                    intersect: false,
+                    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                    titleFont: { size: 13, weight: 'bold' },
+                    bodyFont: { size: 11 },
+                    padding: 12,
+                    cornerRadius: 8,
+                    callbacks: {
+                        title: function(context) {
+                            const label = context[0].label;
+                            const total = context.reduce((sum, item) => sum + (item.raw || 0), 0);
+                            return `${label}: ${window.formatCurrencyShort(total)}`;
+                        },
+                        label: function(context) {
+                            const value = context.raw || 0;
+                            const allItems = context.chart.tooltip.dataPoints || [context];
+                            const total = allItems.reduce((sum, item) => sum + (item.raw || 0), 0);
+                            const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0.0';
+                            const datasetLabel = context.dataset.label || context.label || '';
+                            return `${datasetLabel}: ${window.formatCurrencyShort(value)} (${pct}%)`;
+                        }
+                    }
+                };
+                
+                // Special handling for pie/doughnut
+                if (card.chartType === 'pie' || card.chartType === 'doughnut') {
+                    cleanOptions.plugins.tooltip.callbacks = {
+                        label: function(context) {
+                            const label = (context.label || '').split(' (')[0];
+                            const value = context.raw;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const pct = ((value / total) * 100).toFixed(1);
+                            return `${label}: ${window.formatCurrencyShort(value)} (${pct}%)`;
+                        }
+                    };
+                }
+                
+                chartInstanceRef.current = new Chart(ctx, {
+                    type: card.chartType || 'bar',
+                    data: card.chartData,
+                    options: cleanOptions
+                });
+                
+                // Multiple resize calls to catch different render timings
+                [50, 100, 200, 500].forEach(delay => {
+                    setTimeout(() => {
+                        if (chartInstanceRef.current) {
+                            chartInstanceRef.current.resize();
+                        }
+                    }, delay);
+                });
+                
+                // Add ResizeObserver to trigger chart resize when container size changes
+                const resizeObserver = new ResizeObserver(() => {
+                    if (chartInstanceRef.current) {
+                        chartInstanceRef.current.resize();
+                    }
+                });
+                resizeObserver.observe(canvasRef.current.parentElement);
+
+                return () => {
+                    if (chartInstanceRef.current) {
+                        chartInstanceRef.current.destroy();
+                    }
+                    resizeObserver.disconnect();
+                };
+            }, [card.chartData, card.chartType, card]);
+
+            return (
+                <div style={{ position: 'relative', height: '100%', width: '100%', paddingBottom: '5px', boxSizing: 'border-box' }}>
+                    <canvas ref={canvasRef} style={{width: '100%', height: '100%'}}></canvas>
                 </div>
             );
         };

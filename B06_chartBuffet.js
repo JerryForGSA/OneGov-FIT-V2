@@ -1324,118 +1324,70 @@ function getFiscalYearRangeText(fiscalYearFilter) {
 }
 
 /**
- * Get shared legend configuration for all charts
- * Provides consistent legend styling, positioning, and interactivity
- * @param {string} chartType - Type of chart (pie, bar, line, etc.)
- * @param {boolean} hasMultipleDatasets - Whether chart has multiple datasets
- * @returns {Object} Legend configuration object
+ * Get shared legend configuration for charts
+ * UPDATED: Legend is hidden by default - frontend shows via popup button
  */
 function getSharedLegendConfig(chartType, hasMultipleDatasets = false) {
-  // Determine if legend should be displayed
-  const shouldDisplay = hasMultipleDatasets || 
-                       chartType === 'pie' || 
-                       chartType === 'doughnut' ||
-                       chartType === 'stackedBar' ||
-                       chartType === 'funnel';
-  
-  // Base legend configuration
-  const legendConfig = {
-    display: shouldDisplay,
-    position: 'right', // Move to right side for better vertical space
+  // Legend is now HIDDEN by default - shown via popup button in frontend
+  // This gives charts maximum space
+  return {
+    display: false,  // Hide built-in legend - frontend shows via popup
+    position: 'right',
     align: 'center',
     labels: {
       usePointStyle: true,
-      padding: 12, // Increased padding for better readability
-      boxWidth: 20, // Slightly larger legend boxes
+      padding: 12,
+      boxWidth: 20,
       boxHeight: 12,
       font: {
-        size: 13, // Increased font size
+        size: 13,
         weight: '500',
         family: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif"
       },
-      color: '#333333', // High contrast text color
-      generateLabels: function(chart) {
-        // Custom label generation to handle text wrapping
-        const original = Chart.defaults.plugins.legend.labels.generateLabels;
-        const labels = original.call(this, chart);
-        
-        // Add custom properties for better interaction
-        labels.forEach((label, index) => {
-          // Truncate very long labels but keep full text in tooltip
-          if (label.text && label.text.length > 30) {
-            label.fullText = label.text;
-            label.text = label.text.substring(0, 27) + '...';
-          }
-        });
-        
-        return labels;
-      }
-    },
-    onHover: function(event, legendItem, legend) {
-      // Add hover effect to legend items
-      legend.chart.canvas.style.cursor = 'pointer';
-      
-      // Emphasize hovered dataset
-      const index = legendItem.datasetIndex !== undefined ? 
-                   legendItem.datasetIndex : legendItem.index;
-      const chart = legend.chart;
-      
-      if (chart.data.datasets.length > 1) {
-        // For multi-dataset charts
-        chart.data.datasets.forEach((dataset, i) => {
-          dataset.borderWidth = i === index ? 3 : 1;
-          dataset.opacity = i === index ? 1 : 0.5;
-        });
-      } else {
-        // For single dataset charts (pie, doughnut)
-        const dataset = chart.data.datasets[0];
-        if (dataset.hoverBackgroundColor) {
-          dataset.hoverBorderWidth = 3;
-        }
-      }
-      
-      chart.update('none'); // Update without animation for smooth interaction
-    },
-    onLeave: function(event, legendItem, legend) {
-      // Reset cursor and emphasis
-      legend.chart.canvas.style.cursor = 'default';
-      const chart = legend.chart;
-      
-      // Reset all datasets to normal state
-      chart.data.datasets.forEach((dataset) => {
-        dataset.borderWidth = dataset.originalBorderWidth || 1;
-        dataset.opacity = 1;
-      });
-      
-      chart.update('none');
-    },
-    onClick: function(event, legendItem, legend) {
-      // Enhanced click to toggle - default Chart.js behavior
-      const index = legendItem.datasetIndex !== undefined ? 
-                   legendItem.datasetIndex : legendItem.index;
-      const chart = legend.chart;
-      
-      if (chart.data.datasets.length > 1) {
-        // Toggle dataset visibility
-        const dataset = chart.data.datasets[index];
-        dataset.hidden = !dataset.hidden;
-      } else {
-        // For pie/doughnut, toggle segment visibility
-        const meta = chart.getDatasetMeta(0);
-        meta.data[index].hidden = !meta.data[index].hidden;
-      }
-      
-      chart.update();
+      color: '#333333'
     }
   };
+}
+
+/**
+ * Generate legend data for popup display
+ * Returns array of { label, value, percentage, color } objects
+ */
+function generateLegendData(chartData, chartType) {
+  if (!chartData || !chartData.datasets) return [];
   
-  // Special positioning for certain chart types
-  if (chartType === 'horizontalBar' || chartType === 'funnel') {
-    legendConfig.position = 'bottom'; // Keep bottom for horizontal layouts
-    legendConfig.align = 'start';
+  const legendItems = [];
+  
+  if (chartType === 'pie' || chartType === 'doughnut') {
+    // For pie/doughnut, labels are in chartData.labels and values in datasets[0].data
+    const dataset = chartData.datasets[0];
+    const total = dataset.data.reduce((sum, val) => sum + val, 0);
+    
+    chartData.labels.forEach((label, idx) => {
+      const value = dataset.data[idx];
+      legendItems.push({
+        label: label,
+        value: value,
+        formattedValue: formatCurrencyShort(value),
+        percentage: total > 0 ? ((value / total) * 100).toFixed(1) : '0.0',
+        color: dataset.backgroundColor[idx] || CHART_COLORS.entityPalette[idx % 15]
+      });
+    });
+  } else {
+    // For bar/line charts, each dataset is a legend item
+    chartData.datasets.forEach((dataset, idx) => {
+      const total = dataset.data.reduce((sum, val) => sum + val, 0);
+      legendItems.push({
+        label: dataset.label,
+        value: total,
+        formattedValue: formatCurrencyShort(total),
+        percentage: null,
+        color: dataset.backgroundColor || dataset.borderColor || CHART_COLORS.entityPalette[idx % 15]
+      });
+    });
   }
   
-  return legendConfig;
+  return legendItems;
 }
 
 /**
@@ -3196,7 +3148,7 @@ function generateChartBuffet(entityType, columnId, entities, options = {}) {
   }
   
   // 3. ADD TREND OVER TIME
-  const trendCard = generateTrendOverTime(entityType, columnId, selectedEntities);
+  const trendCard = generateTrendOverTime(entityType, columnId, selectedEntities, effectiveTopN);
   if (trendCard) cards.push(trendCard);
   
   return cards;
@@ -3600,7 +3552,8 @@ function generateBreakdownAreaChart(data, columnId, entityType) {
 }
 
 /**
- * Generate breakdown stacked bar chart
+ * Generate stacked bar chart showing category breakdown per entity
+ * ENHANCED: Tooltips now show full category breakdown with values and percentages
  */
 function generateBreakdownStackedBarChart(entities, columnId, entityType, topN = 5) {
   console.log(`📊 generateBreakdownStackedBarChart for ${columnId}: Received ${entities.length} entities, topN: ${topN}`);
@@ -3712,7 +3665,7 @@ function generateBreakdownStackedBarChart(entities, columnId, entityType, topN =
   }
   
   // Convert to sorted array and limit categories
-  const sortedCategories = Array.from(allCategories); // Use all categories for breakdown chart
+  const sortedCategories = Array.from(allCategories);
   const entityNames = entityBreakdowns.map(eb => eb.entityName);
   
   // Create datasets - one per category
@@ -3729,6 +3682,28 @@ function generateBreakdownStackedBarChart(entities, columnId, entityType, topN =
     borderWidth: 1
   }));
   
+  // Pre-calculate entity totals and category breakdowns for tooltips
+  const entityTotals = {};
+  const entityCategoryBreakdowns = {};
+  
+  entityBreakdowns.forEach(eb => {
+    const total = sortedCategories.reduce((sum, cat) => sum + (eb.breakdown[cat] || 0), 0);
+    entityTotals[eb.entityName] = total;
+    
+    // Sort categories by value for this entity
+    const sortedBreakdown = sortedCategories
+      .map(cat => ({
+        name: cat,
+        value: eb.breakdown[cat] || 0,
+        percentage: total > 0 ? ((eb.breakdown[cat] || 0) / total * 100) : 0
+      }))
+      .filter(item => item.value > 0)
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5); // Top 5 categories per entity
+    
+    entityCategoryBreakdowns[eb.entityName] = sortedBreakdown;
+  });
+  
   // Calculate totals for table
   const tableRows = entityBreakdowns.map(eb => {
     const total = sortedCategories.reduce((sum, cat) => sum + (eb.breakdown[cat] || 0), 0);
@@ -3739,6 +3714,10 @@ function generateBreakdownStackedBarChart(entities, columnId, entityType, topN =
     row.push(formatCurrency(total));
     return row;
   });
+  
+  // Get entity type label for tooltip
+  const entityLabel = entityType === 'agency' ? 'Agency' : 
+                     entityType === 'oem' ? 'OEM' : 'Vendor';
   
   return {
     id: `${entityType}_${columnId}_breakdown_stackedBar`,
@@ -3757,12 +3736,37 @@ function generateBreakdownStackedBarChart(entities, columnId, entityType, topN =
         legend: getSharedLegendConfig('stackedBar', true),
         tooltip: {
           callbacks: {
+            title: function(context) {
+              const entityName = context[0].label;
+              const total = entityTotals[entityName] || 0;
+              return `${entityName}: ${formatCurrencyShort(total)}`;
+            },
             label: function(context) {
-              const total = context.dataset.data.reduce((a, b) => a + b, 0);
-              const percentage = ((context.parsed.x / total) * 100).toFixed(1);
-              return `${context.dataset.label}: ${formatCurrencyShort(context.parsed.x)} (${percentage}%)`;
+              // Return empty - we'll use afterBody for detailed breakdown
+              return '';
+            },
+            afterBody: function(context) {
+              const entityName = context[0].label;
+              const breakdown = entityCategoryBreakdowns[entityName] || [];
+              
+              if (breakdown.length === 0) return [];
+              
+              const lines = [`───────────────`, `Top 5 Categories:`];
+              breakdown.forEach((item, i) => {
+                const valueStr = formatCurrencyShort(item.value);
+                const pctStr = item.percentage.toFixed(1);
+                lines.push(`${i + 1}. ${item.name}: ${valueStr} (${pctStr}%)`);
+              });
+              
+              return lines;
             }
-          }
+          },
+          displayColors: false,
+          backgroundColor: 'rgba(0, 0, 0, 0.85)',
+          titleFont: { size: 14, weight: 'bold' },
+          bodyFont: { size: 12 },
+          padding: 12,
+          cornerRadius: 8
         }
       },
       scales: {
@@ -3779,6 +3783,8 @@ function generateBreakdownStackedBarChart(entities, columnId, entityType, topN =
         }
       }
     },
+    // Store breakdown data for export
+    breakdownByEntity: entityCategoryBreakdowns,
     tableData: {
       headers: ['Entity', ...sortedCategories, 'Total'],
       rows: tableRows
@@ -3794,6 +3800,7 @@ function generateBreakdownStackedBarChart(entities, columnId, entityType, topN =
 
 /**
  * Generate fiscal year trend line chart - shows total spending over time
+ * ENHANCED: Tooltips now show top 5 entity breakdown with values and percentages
  */
 function generateBreakdownFiscalTrend(entities, columnId, entityType, options = {}) {
   console.log('🎯 Trend Analysis Chart:');
@@ -3814,15 +3821,14 @@ function generateBreakdownFiscalTrend(entities, columnId, entityType, options = 
       const name = (entity.name || '').toUpperCase();
       const isDOD = DOD_AGENCIES.some(dod => name.includes(dod));
       const shouldInclude = options.deptFilter === 'dod' ? isDOD : !isDOD;
-      console.log(`    ${entity.name}: isDOD=${isDOD}, shouldInclude=${shouldInclude}`);
       return shouldInclude;
     });
     
     console.log(`  After filter: ${originalCount} → ${entities.length} entities`);
-  } else {
-    console.log('  No department filter applied (filter is "all" or not set)');
   }
   
+  // Store entity-level fiscal year data for tooltip breakdown
+  const entityFiscalData = {}; // { entityName: { year: value } }
   const fiscalData = {};
   
   // Aggregate fiscal year data across all entities for this column
@@ -3839,14 +3845,30 @@ function generateBreakdownFiscalTrend(entities, columnId, entityType, options = 
       }
     }
     
+    const entityName = entityType === 'agency' ? abbreviateAgencyName(entity.name) : entity.name;
+    if (!entityFiscalData[entityName]) {
+      entityFiscalData[entityName] = {};
+    }
+    
     // Extract fiscal year data based on column structure
+    let entityYearData = {};
+    
     switch(columnId) {
+      case 'obligations':
+        // For obligations, use the fiscal_year_obligations from entity root
+        if (entity.fiscal_year_obligations) {
+          entityYearData = entity.fiscal_year_obligations;
+        } else if (jsonData.fiscal_year_obligations) {
+          entityYearData = jsonData.fiscal_year_obligations;
+        }
+        break;
+        
       case 'contractVehicle':
         if (jsonData.top_contract_summaries) {
           Object.values(jsonData.top_contract_summaries).forEach(vehicleData => {
             if (vehicleData.fiscal_years) {
               Object.entries(vehicleData.fiscal_years).forEach(([year, value]) => {
-                fiscalData[year] = (fiscalData[year] || 0) + value;
+                entityYearData[year] = (entityYearData[year] || 0) + value;
               });
             }
           });
@@ -3858,7 +3880,7 @@ function generateBreakdownFiscalTrend(entities, columnId, entityType, options = 
           Object.values(jsonData.sum_type_summaries).forEach(typeData => {
             if (typeData.fiscal_years) {
               Object.entries(typeData.fiscal_years).forEach(([year, value]) => {
-                fiscalData[year] = (fiscalData[year] || 0) + value;
+                entityYearData[year] = (entityYearData[year] || 0) + value;
               });
             }
           });
@@ -3870,7 +3892,7 @@ function generateBreakdownFiscalTrend(entities, columnId, entityType, options = 
           Object.values(jsonData.tier_summaries).forEach(tierData => {
             if (tierData.fiscal_years) {
               Object.entries(tierData.fiscal_years).forEach(([year, value]) => {
-                fiscalData[year] = (fiscalData[year] || 0) + value;
+                entityYearData[year] = (entityYearData[year] || 0) + value;
               });
             }
           });
@@ -3882,7 +3904,7 @@ function generateBreakdownFiscalTrend(entities, columnId, entityType, options = 
           Object.values(jsonData.business_size_summaries).forEach(sizeData => {
             if (sizeData.fiscal_years) {
               Object.entries(sizeData.fiscal_years).forEach(([year, value]) => {
-                fiscalData[year] = (fiscalData[year] || 0) + value;
+                entityYearData[year] = (entityYearData[year] || 0) + value;
               });
             }
           });
@@ -3894,7 +3916,7 @@ function generateBreakdownFiscalTrend(entities, columnId, entityType, options = 
           Object.values(jsonData.top_15_reseller_summaries).forEach(resellerData => {
             if (resellerData.fiscal_years) {
               Object.entries(resellerData.fiscal_years).forEach(([year, value]) => {
-                fiscalData[year] = (fiscalData[year] || 0) + value;
+                entityYearData[year] = (entityYearData[year] || 0) + value;
               });
             }
           });
@@ -3906,7 +3928,7 @@ function generateBreakdownFiscalTrend(entities, columnId, entityType, options = 
           Object.values(jsonData.top_10_department_summaries).forEach(deptData => {
             if (deptData.fiscal_years) {
               Object.entries(deptData.fiscal_years).forEach(([year, value]) => {
-                fiscalData[year] = (fiscalData[year] || 0) + value;
+                entityYearData[year] = (entityYearData[year] || 0) + value;
               });
             }
           });
@@ -3918,7 +3940,7 @@ function generateBreakdownFiscalTrend(entities, columnId, entityType, options = 
           Object.values(jsonData.top_10_agency_summaries).forEach(agencyData => {
             if (agencyData.fiscal_years) {
               Object.entries(agencyData.fiscal_years).forEach(([year, value]) => {
-                fiscalData[year] = (fiscalData[year] || 0) + value;
+                entityYearData[year] = (entityYearData[year] || 0) + value;
               });
             }
           });
@@ -3930,7 +3952,7 @@ function generateBreakdownFiscalTrend(entities, columnId, entityType, options = 
           Object.values(jsonData.top_10_oem_summaries).forEach(oemData => {
             if (oemData.fiscal_years) {
               Object.entries(oemData.fiscal_years).forEach(([year, value]) => {
-                fiscalData[year] = (fiscalData[year] || 0) + value;
+                entityYearData[year] = (entityYearData[year] || 0) + value;
               });
             }
           });
@@ -3939,9 +3961,7 @@ function generateBreakdownFiscalTrend(entities, columnId, entityType, options = 
         
       case 'bicOem':
         if (jsonData.yearly_totals) {
-          Object.entries(jsonData.yearly_totals).forEach(([year, value]) => {
-            fiscalData[year] = (fiscalData[year] || 0) + value;
-          });
+          entityYearData = jsonData.yearly_totals;
         }
         break;
         
@@ -3950,7 +3970,7 @@ function generateBreakdownFiscalTrend(entities, columnId, entityType, options = 
           jsonData.top_25_products.forEach(product => {
             if (product.fiscal_years) {
               Object.entries(product.fiscal_years).forEach(([year, value]) => {
-                fiscalData[year] = (fiscalData[year] || 0) + value;
+                entityYearData[year] = (entityYearData[year] || 0) + value;
               });
             }
           });
@@ -3961,8 +3981,7 @@ function generateBreakdownFiscalTrend(entities, columnId, entityType, options = 
       case 'productObligations':
         if (jsonData.fiscal_year_summaries) {
           Object.entries(jsonData.fiscal_year_summaries).forEach(([year, yearData]) => {
-            const yearTotal = yearData.total_obligations || 0;
-            fiscalData[year] = (fiscalData[year] || 0) + yearTotal;
+            entityYearData[year] = yearData.total_obligations || 0;
           });
         }
         break;
@@ -3972,8 +3991,7 @@ function generateBreakdownFiscalTrend(entities, columnId, entityType, options = 
       case 'categoryObligations':
         if (jsonData.fiscal_year_summaries) {
           Object.entries(jsonData.fiscal_year_summaries).forEach(([year, yearData]) => {
-            const yearTotal = yearData.total_obligations || 0;
-            fiscalData[year] = (fiscalData[year] || 0) + yearTotal;
+            entityYearData[year] = yearData.total_obligations || 0;
           });
         }
         break;
@@ -3987,10 +4005,16 @@ function generateBreakdownFiscalTrend(entities, columnId, entityType, options = 
         
         if (yearlyData && typeof yearlyData === 'object') {
           Object.entries(yearlyData).forEach(([year, value]) => {
-            fiscalData[year] = (fiscalData[year] || 0) + (parseFloat(value) || 0);
+            entityYearData[year] = parseFloat(value) || 0;
           });
         }
     }
+    
+    // Store entity-level data and aggregate totals
+    Object.entries(entityYearData).forEach(([year, value]) => {
+      entityFiscalData[entityName][year] = value;
+      fiscalData[year] = (fiscalData[year] || 0) + value;
+    });
   });
   
   const years = Object.keys(fiscalData).sort();
@@ -4005,6 +4029,27 @@ function generateBreakdownFiscalTrend(entities, columnId, entityType, options = 
     const prevVal = values[idx - 1];
     return prevVal > 0 ? ((val - prevVal) / prevVal * 100) : 0;
   });
+  
+  // Pre-calculate top 5 entities for each year (for tooltips)
+  const topEntitiesByYear = {};
+  years.forEach(year => {
+    const yearTotal = fiscalData[year];
+    const entitiesForYear = Object.entries(entityFiscalData)
+      .map(([name, yearData]) => ({
+        name,
+        value: yearData[year] || 0,
+        percentage: yearTotal > 0 ? ((yearData[year] || 0) / yearTotal * 100) : 0
+      }))
+      .filter(e => e.value > 0)
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
+    
+    topEntitiesByYear[year] = entitiesForYear;
+  });
+  
+  // Get entity type label for tooltip
+  const entityLabel = entityType === 'agency' ? 'Agencies' : 
+                     entityType === 'oem' ? 'OEMs' : 'Vendors';
   
   return {
     id: `${entityType}_${columnId}_breakdown_fiscalTrend`,
@@ -4032,14 +4077,41 @@ function generateBreakdownFiscalTrend(entities, columnId, entityType, options = 
         legend: getSharedLegendConfig('line', true),
         tooltip: {
           callbacks: {
-            label: function(context) {
-              const idx = context.dataIndex;
-              const value = formatCurrencyShort(context.parsed.y);
+            title: function(context) {
+              const idx = context[0].dataIndex;
+              const year = years[idx];
+              const value = formatCurrencyShort(context[0].parsed.y);
               const growth = growthRates[idx];
               const growthText = growth !== null ? ` (${growth > 0 ? '+' : ''}${growth.toFixed(1)}% YoY)` : '';
-              return `${value}${growthText}`;
+              return `FY${year}: ${value}${growthText}`;
+            },
+            label: function(context) {
+              // Return empty - we'll use afterBody for detailed breakdown
+              return '';
+            },
+            afterBody: function(context) {
+              const idx = context[0].dataIndex;
+              const year = years[idx];
+              const topEntities = topEntitiesByYear[year] || [];
+              
+              if (topEntities.length === 0) return [];
+              
+              const lines = [`───────────────`, `Top 5 ${entityLabel}:`];
+              topEntities.forEach((entity, i) => {
+                const valueStr = formatCurrencyShort(entity.value);
+                const pctStr = entity.percentage.toFixed(1);
+                lines.push(`${i + 1}. ${entity.name}: ${valueStr} (${pctStr}%)`);
+              });
+              
+              return lines;
             }
-          }
+          },
+          displayColors: false,
+          backgroundColor: 'rgba(0, 0, 0, 0.85)',
+          titleFont: { size: 14, weight: 'bold' },
+          bodyFont: { size: 12 },
+          padding: 12,
+          cornerRadius: 8
         }
       },
       scales: {
@@ -4053,17 +4125,22 @@ function generateBreakdownFiscalTrend(entities, columnId, entityType, options = 
         }
       }
     },
+    // Store breakdown data for export/table
+    breakdownByYear: topEntitiesByYear,
     tableData: {
-      headers: ['Fiscal Year', `Total ${getMonetaryLabel(columnId)}`, 'YoY Change', 'YoY Growth %'],
+      headers: ['Fiscal Year', `Total ${getMonetaryLabel(columnId)}`, 'YoY Change', 'YoY Growth %', 'Top Entity'],
       rows: years.map((year, index) => {
         const value = values[index];
         const change = index > 0 ? values[index] - values[index - 1] : 0;
         const growth = growthRates[index];
+        const topEntity = topEntitiesByYear[year]?.[0];
+        const topEntityText = topEntity ? `${topEntity.name} (${topEntity.percentage.toFixed(1)}%)` : 'N/A';
         return [
           `FY${year}`,
           formatCurrency(value),
           index > 0 ? formatCurrency(change) : 'N/A',
-          growth !== null ? `${growth > 0 ? '+' : ''}${growth.toFixed(1)}%` : 'N/A'
+          growth !== null ? `${growth > 0 ? '+' : ''}${growth.toFixed(1)}%` : 'N/A',
+          topEntityText
         ];
       })
     },
@@ -4876,7 +4953,8 @@ function generateDoughnutChart(entities, entityType, columnId, topN, percentageB
 }
 
 /**
- * Generate stacked bar chart for fiscal year comparisons
+ * Generate stacked bar chart showing year-over-year comparison
+ * ENHANCED: Tooltips now show top 5 entity breakdown with values and percentages per year
  */
 function generateStackedBarChart(entities, entityType, columnId, maxEntities = 5, fiscalYearFilter = 'all') {
   console.log('📊 generateStackedBarChart DEBUG');
@@ -4923,7 +5001,6 @@ function generateStackedBarChart(entities, entityType, columnId, maxEntities = 5
         // Extract fiscal year data based on column structure
         switch(columnId) {
           case 'obligations':
-            // For obligations column, try to extract from various locations
             if (jsonData.fiscal_year_obligations) {
               fiscalYearBreakdown = jsonData.fiscal_year_obligations;
             } else if (jsonData.total_obligated && entity.fiscal_year_obligations) {
@@ -5037,15 +5114,48 @@ function generateStackedBarChart(entities, entityType, columnId, maxEntities = 5
   const topEntitiesWithNames = entities.slice(0, maxEntities);
   const entityNames = topEntitiesWithNames.map(e => entityType === 'agency' ? abbreviateAgencyName(e.name) : e.name);
   
+  // Pre-calculate year totals and entity breakdowns for tooltips
+  const yearTotals = {};
+  const topEntitiesByYear = {};
+  
+  years.forEach(year => {
+    const yearTotal = Object.values(fiscalYearData[year] || {}).reduce((sum, val) => sum + val, 0);
+    yearTotals[year] = yearTotal;
+    
+    // Get top 5 entities for this year
+    const entitiesForYear = Object.entries(fiscalYearData[year] || {})
+      .map(([name, value]) => {
+        const displayName = entityType === 'agency' ? abbreviateAgencyName(name) : name;
+        return {
+          name: displayName,
+          value: value,
+          percentage: yearTotal > 0 ? (value / yearTotal * 100) : 0
+        };
+      })
+      .filter(e => e.value > 0)
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
+    
+    topEntitiesByYear[year] = entitiesForYear;
+  });
+  
   // Create table data
   const tableRows = [];
   entityNames.forEach(entityName => {
     const entityRow = [entityName];
     years.forEach(year => {
-      const value = fiscalYearData[year]?.[entityName] || 0;
+      const entity = topEntitiesWithNames.find(e => 
+        (entityType === 'agency' ? abbreviateAgencyName(e.name) : e.name) === entityName
+      );
+      const value = fiscalYearData[year]?.[entity?.name] || 0;
       entityRow.push(formatCurrency(value));
     });
-    const total = years.reduce((sum, year) => sum + (fiscalYearData[year]?.[entityName] || 0), 0);
+    const total = years.reduce((sum, year) => {
+      const entity = topEntitiesWithNames.find(e => 
+        (entityType === 'agency' ? abbreviateAgencyName(e.name) : e.name) === entityName
+      );
+      return sum + (fiscalYearData[year]?.[entity?.name] || 0);
+    }, 0);
     entityRow.push(formatCurrency(total));
     tableRows.push(entityRow);
   });
@@ -5060,7 +5170,7 @@ function generateStackedBarChart(entities, entityType, columnId, maxEntities = 5
     return null;
   }
   
-  // Create datasets for debugging
+  // Create datasets
   const datasets = entityNames.map((name, index) => ({
     label: name,
     data: years.map(year => {
@@ -5081,6 +5191,10 @@ function generateStackedBarChart(entities, entityType, columnId, maxEntities = 5
   console.log('  Years:', years);
   console.log('  Datasets:', datasets);
   console.log('  Sample dataset data:', datasets[0]?.data);
+  
+  // Get entity type label for tooltip
+  const entityLabel = entityType === 'agency' ? 'Agencies' : 
+                     entityType === 'oem' ? 'OEMs' : 'Vendors';
   
   return {
     id: `${entityType}_${columnId}_stackedBar`,
@@ -5105,16 +5219,38 @@ function generateStackedBarChart(entities, entityType, columnId, maxEntities = 5
           }
         },
         tooltip: {
-          mode: 'point',
-          intersect: false,
           callbacks: {
+            title: function(context) {
+              const year = context[0].label;
+              const total = yearTotals[year] || 0;
+              return `FY${year}: ${formatCurrencyShort(total)}`;
+            },
             label: function(context) {
-              const entityName = context.dataset.label;
-              const value = context.raw;
-              const year = context.label;
-              return `${entityName} (${year}): ${formatCurrencyShort(value)}`;
+              // Return empty - we'll use afterBody for detailed breakdown
+              return '';
+            },
+            afterBody: function(context) {
+              const year = context[0].label;
+              const topEntities = topEntitiesByYear[year] || [];
+              
+              if (topEntities.length === 0) return [];
+              
+              const lines = [`───────────────`, `Top 5 ${entityLabel}:`];
+              topEntities.forEach((entity, i) => {
+                const valueStr = formatCurrencyShort(entity.value);
+                const pctStr = entity.percentage.toFixed(1);
+                lines.push(`${i + 1}. ${entity.name}: ${valueStr} (${pctStr}%)`);
+              });
+              
+              return lines;
             }
-          }
+          },
+          displayColors: false,
+          backgroundColor: 'rgba(0, 0, 0, 0.85)',
+          titleFont: { size: 14, weight: 'bold' },
+          bodyFont: { size: 12 },
+          padding: 12,
+          cornerRadius: 8
         }
       },
       scales: {
@@ -5132,6 +5268,8 @@ function generateStackedBarChart(entities, entityType, columnId, maxEntities = 5
         }
       }
     },
+    // Store breakdown data for export
+    breakdownByYear: topEntitiesByYear,
     tableData: {
       headers: ['Entity', ...years, 'Total'],
       rows: tableRows
@@ -5189,14 +5327,14 @@ function generateAreaChart(entities, entityType, columnId, fiscalYearFilter = 'a
   };
 }
 
-/**
- * Generate trend over time chart
- */
-/**
+ /**
  * Generate trend over time chart - MULTI-ENTITY VERSION
- * Shows fiscal years on X-axis with one colored line per entity (top 10)
+ * Shows fiscal years on X-axis with one colored line per entity (top N)
+ * FIXED: Now properly respects topN filter
  */
-function generateTrendOverTime(entityType, columnId, selectedEntities = []) {
+function generateTrendOverTime(entityType, columnId, selectedEntities = [], topN = 10) {
+  console.log(`📊 generateTrendOverTime: entityType=${entityType}, columnId=${columnId}, topN=${topN}`);
+  
   const dataManager = getDataManager();
   
   // Get all entities
@@ -5266,18 +5404,52 @@ function generateTrendOverTime(entityType, columnId, selectedEntities = []) {
   
   if (sortedFYs.length === 0) return null;
   
-  // Calculate total obligations per entity (for sorting to get top 10)
+  // Calculate total obligations per entity (for sorting to get top N)
   const entityTotals = [];
   for (const [entityName, fyData] of Object.entries(entityData)) {
     const total = Object.values(fyData).reduce((sum, val) => sum + val, 0);
     entityTotals.push({ name: entityName, total: total, fyData: fyData });
   }
   
-  // Sort by total - don't artificially limit here since function gets filtered entities
+  // Sort by total and limit to topN
   entityTotals.sort((a, b) => b.total - a.total);
-  const topEntities = entityTotals;
+  
+  // Apply topN limit - if null or undefined, use all; otherwise slice to topN
+  const effectiveTopN = topN === null || topN === undefined ? entityTotals.length : topN;
+  const topEntities = entityTotals.slice(0, effectiveTopN);
+  
+  console.log(`📊 generateTrendOverTime: Found ${entityTotals.length} entities with FY data, limiting to ${topEntities.length}`);
   
   if (topEntities.length === 0) return null;
+  
+  // Pre-calculate year totals and entity breakdowns for enhanced tooltips
+  const yearTotals = {};
+  const topEntitiesByYear = {};
+  
+  sortedFYs.forEach(fy => {
+    let yearTotal = 0;
+    const entitiesForYear = [];
+    
+    topEntities.forEach(entity => {
+      const value = entity.fyData[fy] || 0;
+      yearTotal += value;
+      if (value > 0) {
+        entitiesForYear.push({
+          name: entityType === 'agency' ? abbreviateAgencyName(entity.name) : entity.name,
+          value: value
+        });
+      }
+    });
+    
+    yearTotals[fy] = yearTotal;
+    
+    // Sort and add percentages
+    entitiesForYear.sort((a, b) => b.value - a.value);
+    topEntitiesByYear[fy] = entitiesForYear.slice(0, 5).map(e => ({
+      ...e,
+      percentage: yearTotal > 0 ? (e.value / yearTotal * 100) : 0
+    }));
+  });
   
   // Define color palette for entities
   const colors = [
@@ -5295,13 +5467,14 @@ function generateTrendOverTime(entityType, columnId, selectedEntities = []) {
   
   // Create datasets - one per entity
   const datasets = topEntities.map((entity, index) => {
+    const displayName = entityType === 'agency' ? abbreviateAgencyName(entity.name) : entity.name;
     const data = sortedFYs.map(fy => entity.fyData[fy] || 0);
     
     return {
-      label: entity.name,
+      label: displayName,
       data: data,
       borderColor: colors[index % colors.length],
-      backgroundColor: 'transparent',
+      backgroundColor: colors[index % colors.length],
       tension: 0.4,
       borderWidth: 2,
       pointRadius: 4,
@@ -5312,7 +5485,8 @@ function generateTrendOverTime(entityType, columnId, selectedEntities = []) {
   // Build table data showing each entity's trend
   const tableHeaders = ['Entity', ...sortedFYs.map(fy => `FY${fy}`), 'Total'];
   const tableRows = topEntities.map(entity => {
-    const row = [entity.name];
+    const displayName = entityType === 'agency' ? abbreviateAgencyName(entity.name) : entity.name;
+    const row = [displayName];
     
     // Add value for each fiscal year
     sortedFYs.forEach(fy => {
@@ -5325,6 +5499,10 @@ function generateTrendOverTime(entityType, columnId, selectedEntities = []) {
     
     return row;
   });
+  
+  // Get entity type label for tooltip
+  const entityLabel = entityType === 'agency' ? 'Agencies' : 
+                     entityType === 'oem' ? 'OEMs' : 'Vendors';
   
   return {
     id: `${entityType}_${columnId}_vstackedbar`,
@@ -5350,11 +5528,41 @@ function generateTrendOverTime(entityType, columnId, selectedEntities = []) {
         },
         title: {
           display: true,
-          text: `Top ${topEntities.length} ${entityType.charAt(0).toUpperCase() + entityType.slice(1)} - Fiscal Year Trends`
+          text: `Top ${topEntities.length} ${entityLabel} - Fiscal Year Trends`
         },
         tooltip: {
-          mode: 'index',
-          intersect: false
+          callbacks: {
+            title: function(context) {
+              const fy = sortedFYs[context[0].dataIndex];
+              const total = yearTotals[fy] || 0;
+              return `FY${fy}: ${formatCurrencyShort(total)}`;
+            },
+            label: function(context) {
+              // Return empty - we'll use afterBody for detailed breakdown
+              return '';
+            },
+            afterBody: function(context) {
+              const fy = sortedFYs[context[0].dataIndex];
+              const breakdown = topEntitiesByYear[fy] || [];
+              
+              if (breakdown.length === 0) return [];
+              
+              const lines = [`───────────────`, `Top 5 ${entityLabel}:`];
+              breakdown.forEach((entity, i) => {
+                const valueStr = formatCurrencyShort(entity.value);
+                const pctStr = entity.percentage.toFixed(1);
+                lines.push(`${i + 1}. ${entity.name}: ${valueStr} (${pctStr}%)`);
+              });
+              
+              return lines;
+            }
+          },
+          displayColors: false,
+          backgroundColor: 'rgba(0, 0, 0, 0.85)',
+          titleFont: { size: 14, weight: 'bold' },
+          bodyFont: { size: 12 },
+          padding: 12,
+          cornerRadius: 8
         }
       },
       scales: {
@@ -5377,6 +5585,8 @@ function generateTrendOverTime(entityType, columnId, selectedEntities = []) {
         intersect: false
       }
     },
+    // Store breakdown data for export
+    breakdownByYear: topEntitiesByYear,
     tableData: {
       headers: tableHeaders,
       rows: tableRows
