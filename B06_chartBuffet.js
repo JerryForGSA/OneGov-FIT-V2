@@ -1709,25 +1709,25 @@ function getChartTypesByContext(entityType, columnId, entityCount) {
     // ─────────────────────────────────────────────────────────────────────────
     obligations: {
       agency: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       oem: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       vendor: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       }
     },
     
@@ -1736,25 +1736,25 @@ function getChartTypesByContext(entityType, columnId, entityCount) {
     // ─────────────────────────────────────────────────────────────────────────
     smallBusiness: {
       agency: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       oem: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       vendor: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       }
     },
     
@@ -1763,25 +1763,25 @@ function getChartTypesByContext(entityType, columnId, entityCount) {
     // ─────────────────────────────────────────────────────────────────────────
     sumTier: {
       agency: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       oem: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       vendor: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       }
     },
     
@@ -1790,25 +1790,25 @@ function getChartTypesByContext(entityType, columnId, entityCount) {
     // ─────────────────────────────────────────────────────────────────────────
     sumType: {
       agency: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       oem: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       vendor: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       }
     },
     
@@ -1817,25 +1817,25 @@ function getChartTypesByContext(entityType, columnId, entityCount) {
     // ─────────────────────────────────────────────────────────────────────────
     contractVehicle: {
       agency: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       oem: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       vendor: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       }
     },
     
@@ -1844,25 +1844,25 @@ function getChartTypesByContext(entityType, columnId, entityCount) {
     // ─────────────────────────────────────────────────────────────────────────
     fundingDepartment: {
       agency: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       oem: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       vendor: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       }
     },
     
@@ -1871,25 +1871,25 @@ function getChartTypesByContext(entityType, columnId, entityCount) {
     // ─────────────────────────────────────────────────────────────────────────
     fundingAgency: {
       agency: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       oem: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       vendor: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       }
     },
     
@@ -1898,25 +1898,25 @@ function getChartTypesByContext(entityType, columnId, entityCount) {
     // ─────────────────────────────────────────────────────────────────────────
     discount: {
       agency: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       oem: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       vendor: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       }
     },
     
@@ -1925,25 +1925,25 @@ function getChartTypesByContext(entityType, columnId, entityCount) {
     // ─────────────────────────────────────────────────────────────────────────
     topRefPiid: {
       agency: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       oem: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       vendor: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       }
     },
     
@@ -1952,25 +1952,25 @@ function getChartTypesByContext(entityType, columnId, entityCount) {
     // ─────────────────────────────────────────────────────────────────────────
     topPiid: {
       agency: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       oem: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       vendor: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       }
     },
     
@@ -1979,25 +1979,25 @@ function getChartTypesByContext(entityType, columnId, entityCount) {
     // ─────────────────────────────────────────────────────────────────────────
     activeContracts: {
       agency: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       oem: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       vendor: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       }
     },
     
@@ -2006,25 +2006,25 @@ function getChartTypesByContext(entityType, columnId, entityCount) {
     // ─────────────────────────────────────────────────────────────────────────
     discountOfferings: {
       agency: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       oem: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       vendor: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       }
     },
     
@@ -2033,25 +2033,25 @@ function getChartTypesByContext(entityType, columnId, entityCount) {
     // ─────────────────────────────────────────────────────────────────────────
     aiProduct: {
       agency: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       oem: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       vendor: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       }
     },
     
@@ -2060,25 +2060,25 @@ function getChartTypesByContext(entityType, columnId, entityCount) {
     // ─────────────────────────────────────────────────────────────────────────
     aiCategory: {
       agency: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       oem: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       vendor: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       }
     },
     
@@ -2087,25 +2087,25 @@ function getChartTypesByContext(entityType, columnId, entityCount) {
     // ─────────────────────────────────────────────────────────────────────────
     topBicProducts: {
       agency: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       oem: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       vendor: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       }
     },
     
@@ -2114,25 +2114,25 @@ function getChartTypesByContext(entityType, columnId, entityCount) {
     // ─────────────────────────────────────────────────────────────────────────
     reseller: {
       agency: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       oem: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       vendor: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       }
     },
     
@@ -2141,25 +2141,25 @@ function getChartTypesByContext(entityType, columnId, entityCount) {
     // ─────────────────────────────────────────────────────────────────────────
     bicReseller: {
       agency: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       oem: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       vendor: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       }
     },
     
@@ -2168,25 +2168,25 @@ function getChartTypesByContext(entityType, columnId, entityCount) {
     // ─────────────────────────────────────────────────────────────────────────
     bicOem: {
       agency: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       oem: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       vendor: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       }
     },
     
@@ -2195,25 +2195,25 @@ function getChartTypesByContext(entityType, columnId, entityCount) {
     // ─────────────────────────────────────────────────────────────────────────
     fasOem: {
       agency: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       oem: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       vendor: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       }
     },
     
@@ -2222,25 +2222,25 @@ function getChartTypesByContext(entityType, columnId, entityCount) {
     // ─────────────────────────────────────────────────────────────────────────
     bicTopProductsPerAgency: {
       agency: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       oem: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       vendor: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       }
     },
     
@@ -2249,25 +2249,25 @@ function getChartTypesByContext(entityType, columnId, entityCount) {
     // ─────────────────────────────────────────────────────────────────────────
     oneGovTier: {
       agency: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       oem: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       },
       vendor: {
-        5:  ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        10: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        15: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        20: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar'],
-        all: ['verticalBar', 'horizontalBar', 'pie', 'doughnut', 'line', 'funnel', 'stackedBar', 'area', 'fiscalTrend', 'fiscalArea', 'fiscalBar']
+        5:  ['verticalBar', 'pie', 'doughnut'],
+        10: ['horizontalBar', 'pie', 'doughnut', 'line'],
+        15: ['horizontalBar', 'funnel'],
+        20: ['horizontalBar', 'funnel'],
+        all: ['horizontalBar', 'funnel']
       }
     }
   };
@@ -2990,20 +2990,21 @@ function getColumnCategoryValue(entity, columnId, categoryName) {
  * @returns {Array} Array of chart cards
  */
 function generateChartBuffet(entityType, columnId, entities, options = {}) {
+  console.log('🔴 CHART BUFFET VERSION: 2024-12-17-AllOtherFix-v3');
   console.log(`🎨 Chart Buffet generateChartBuffet: Received columnId "${columnId}" for ${entityType} with ${entities?.length || 0} entities`);
   
   const { 
     topN = 10, 
     selectedEntities = [], 
     forceChartTypes = null,
-    showAllOther = true,
+    showAllOther = true,  // Keep default as true
     percentageMode = 'total',
     fiscalYearFilter = 'all'
   } = options;
   
   // Handle "All" option - if topN is null, don't limit results
   const effectiveTopN = topN === null ? undefined : topN;
-  console.log(`🔍 DEBUG generateColumnReportsBuffet: topN=${topN}, effectiveTopN=${effectiveTopN}, columnId=${columnId}, entityType=${entityType}, fiscalYearFilter=${fiscalYearFilter}`);
+  console.log(`🔍 DEBUG generateChartBuffet: topN=${topN}, effectiveTopN=${effectiveTopN}, columnId=${columnId}, entityType=${entityType}, fiscalYearFilter=${fiscalYearFilter}`);
   
   // If no entities, return empty array immediately
   if (!entities || entities.length === 0) {
@@ -3038,22 +3039,32 @@ function generateChartBuffet(entityType, columnId, entities, options = {}) {
   const overallTotal = chartEntities.reduce((sum, e) => sum + (e.value || 0), 0);
   
   // Get top N entities and calculate "All Other" if enabled
-  console.log(`🔧 FUNNEL DEBUG: chartEntities.length=${chartEntities.length}, effectiveTopN=${effectiveTopN}`);
+  console.log(`🔧 CHART GENERATION: chartEntities.length=${chartEntities.length}, effectiveTopN=${effectiveTopN}`);
   
   // Fix: Handle "All" case where effectiveTopN is undefined
   const topEntities = effectiveTopN ? chartEntities.slice(0, effectiveTopN) : chartEntities;
-  console.log(`🔧 FUNNEL DEBUG: topEntities.length after slice=${topEntities.length}`);
+  console.log(`🔧 Top entities after slice=${topEntities.length}`);
   const topTotal = topEntities.reduce((sum, e) => sum + (e.value || 0), 0);
   const othersValue = overallTotal - topTotal;
   
+  // DEBUG: Log the othersValue calculation
+  console.log('🔍 ALL OTHER CALCULATION:');
+  console.log('  overallTotal:', overallTotal);
+  console.log('  topTotal:', topTotal);
+  console.log('  othersValue:', othersValue);
+  console.log('  showAllOther:', showAllOther);
+  console.log('  effectiveTopN:', effectiveTopN);
+  console.log('  chartEntities.length:', chartEntities.length);
+  
   // Create entities with "All Other" category based on user preference
   const entitiesWithOthers = [...topEntities];
-  if (showAllOther && othersValue > 0 && effectiveTopN && chartEntities.length > effectiveTopN) {
+  if (showAllOther && effectiveTopN && chartEntities.length > effectiveTopN) {
     entitiesWithOthers.push({
       name: 'All Other',
       value: othersValue,
       isOthers: true
     });
+    console.log('✅ Added "All Other" entity with value:', othersValue);
   }
   
   // Determine percentage calculation base (total vs topN)
@@ -3099,57 +3110,163 @@ function generateChartBuffet(entityType, columnId, entities, options = {}) {
     'categoryObligations',
     'contractVehicle'
   ].includes(columnId);
+  
+  // ENHANCED LOGIC: Generate "All Other" versions more aggressively
+  // Generate both versions whenever there are more entities than shown
+  const shouldGenerateAllOther = showAllOther && effectiveTopN && chartEntities.length > effectiveTopN;
+  
+  // DEBUG: Log the decision
+  console.log('🎯 ALL OTHER DECISION:');
+  console.log('  Should generate All Other?', shouldGenerateAllOther);
+  console.log('  Reason:', shouldGenerateAllOther ? 
+    'More entities than topN' : 
+    !showAllOther ? 'showAllOther is false' :
+    !effectiveTopN ? 'effectiveTopN is undefined (showing all)' :
+    'Not enough entities to exceed topN');
+  
+  // Determine recommended chart types - NOW USES 3-DIMENSIONAL SELECTION
+  const chartTypes = forceChartTypes || getChartTypesByContext(entityType, columnId, effectiveTopN);
+  console.log('📊 Chart types to generate:', chartTypes);
 
   // Only generate entity rankings if it's NOT a breakdown column
   if (!isBreakdownColumn || breakdownCharts.length === 0) {
-    
-    // Determine recommended chart types - NOW USES 3-DIMENSIONAL SELECTION
-    const chartTypes = forceChartTypes || getChartTypesByContext(entityType, columnId, effectiveTopN);
     
     // Generate each recommended chart type
     chartTypes.forEach(chartType => {
       let card = null;
       
-      switch(chartType) {
-        case 'verticalBar':
-          card = generateVerticalBarChart(entitiesWithOthers, entityType, columnId, effectiveTopN, percentageBase, percentageMode, showAllOther, overallTotal, fiscalYearFilter);
-          break;
-        case 'horizontalBar':
-          card = generateHorizontalBarChart(entitiesWithOthers, entityType, columnId, effectiveTopN, percentageBase, percentageMode, showAllOther, overallTotal, fiscalYearFilter);
-          break;
-        case 'line':
-          card = generateLineChart(entitiesWithOthers, entityType, columnId, percentageBase, percentageMode, fiscalYearFilter);
-          break;
-        case 'funnel':
-          card = generateFunnelChart(entitiesWithOthers, entityType, columnId, effectiveTopN, percentageBase, percentageMode, showAllOther, fiscalYearFilter);
-          break;
-        case 'pie':
-          card = generatePieChart(entitiesWithOthers, entityType, columnId, effectiveTopN, percentageBase, percentageMode, showAllOther, overallTotal, fiscalYearFilter);
-          break;
-        case 'doughnut':
-          card = generateDoughnutChart(entitiesWithOthers, entityType, columnId, effectiveTopN, percentageBase, percentageMode, showAllOther, overallTotal, fiscalYearFilter);
-          break;
-        case 'stackedBar':
-          // Year over Year chart limited to max 5 entities
-          console.log(`📊 CALLING generateStackedBarChart with ${chartEntities.length} entities, topN: ${Math.min(effectiveTopN, 5)}`);
-          card = generateStackedBarChart(chartEntities, entityType, columnId, Math.min(effectiveTopN, 5), fiscalYearFilter);
-          if (!card) {
-            console.error('⚠️ generateStackedBarChart returned null - Year over Year chart will be missing');
-            console.error('  This usually means no fiscal year data was found in entities');
-          }
-          break;
-        case 'area':
-          card = generateAreaChart(chartEntities, entityType, columnId, fiscalYearFilter);
-          break;
+      // Handle special chart types first (line, stackedBar, area)
+      if (chartType === 'line') {
+        // Generate line chart showing trends for each item in the column
+        const lineCard = generateColumnItemTrendChart(entities, entityType, columnId, effectiveTopN, fiscalYearFilter);
+        if (lineCard) cards.push(lineCard);
+        return; // Skip the rest for line charts
+      } else if (chartType === 'stackedBar') {
+        // Year over Year chart limited to max 5 entities
+        console.log(`📊 CALLING generateStackedBarChart with ${chartEntities.length} entities, topN: ${Math.min(effectiveTopN, 5)}`);
+        const stackedCard = generateStackedBarChart(chartEntities, entityType, columnId, Math.min(effectiveTopN, 5), fiscalYearFilter);
+        if (stackedCard) cards.push(stackedCard);
+        return; // Skip the rest for stacked bar
+      } else if (chartType === 'area') {
+        const areaCard = generateAreaChart(chartEntities, entityType, columnId, fiscalYearFilter);
+        if (areaCard) cards.push(areaCard);
+        return; // Skip the rest for area charts
       }
       
-      if (card) cards.push(card);
+      // For regular chart types (bar, pie, doughnut, funnel), generate both versions if applicable
+      
+      // ALWAYS generate BOTH versions when there are more entities than shown
+      if (shouldGenerateAllOther) {
+        console.log(`✅ Generating BOTH versions for ${chartType}`);
+        
+        // First, generate WITH "All Other" as the primary version
+        switch(chartType) {
+          case 'verticalBar':
+            card = generateVerticalBarChart(entitiesWithOthers, entityType, columnId, effectiveTopN, percentageBase, percentageMode, true, overallTotal, fiscalYearFilter);
+            break;
+          case 'horizontalBar':
+            card = generateHorizontalBarChart(entitiesWithOthers, entityType, columnId, effectiveTopN, percentageBase, percentageMode, true, overallTotal, fiscalYearFilter);
+            break;
+          case 'pie':
+            card = generatePieChart(entitiesWithOthers, entityType, columnId, effectiveTopN, percentageBase, percentageMode, true, overallTotal, fiscalYearFilter);
+            break;
+          case 'doughnut':
+            card = generateDoughnutChart(entitiesWithOthers, entityType, columnId, effectiveTopN, percentageBase, percentageMode, true, overallTotal, fiscalYearFilter);
+            break;
+          case 'funnel':
+            card = generateFunnelChart(entitiesWithOthers, entityType, columnId, effectiveTopN, percentageBase, percentageMode, true, fiscalYearFilter);
+            break;
+        }
+        
+        // Add the chart WITH "All Other"
+        if (card) {
+          // Update title to clearly indicate it includes "All Other"
+          if (card.title && othersValue > 0) {
+            card.title = card.title.replace(/Top (\d+)/, 'Top $1 + All Other');
+          }
+          cards.push(card);
+          console.log(`  Added WITH All Other: ${card.id}`);
+        }
+        
+        // ALWAYS generate WITHOUT "All Other" as well for comparison
+        let cardWithoutOther = null;
+        switch(chartType) {
+          case 'verticalBar':
+            cardWithoutOther = generateVerticalBarChart(topEntities, entityType, columnId, effectiveTopN, percentageBase, percentageMode, false, overallTotal, fiscalYearFilter);
+            break;
+          case 'horizontalBar':
+            cardWithoutOther = generateHorizontalBarChart(topEntities, entityType, columnId, effectiveTopN, percentageBase, percentageMode, false, overallTotal, fiscalYearFilter);
+            break;
+          case 'pie':
+            cardWithoutOther = generatePieChart(topEntities, entityType, columnId, effectiveTopN, percentageBase, percentageMode, false, overallTotal, fiscalYearFilter);
+            break;
+          case 'doughnut':
+            cardWithoutOther = generateDoughnutChart(topEntities, entityType, columnId, effectiveTopN, percentageBase, percentageMode, false, overallTotal, fiscalYearFilter);
+            break;
+          case 'funnel':
+            cardWithoutOther = generateFunnelChart(topEntities, entityType, columnId, effectiveTopN, percentageBase, percentageMode, false, fiscalYearFilter);
+            break;
+        }
+        
+        if (cardWithoutOther) {
+          // Update the ID and title to clearly indicate it's "Top N Only" version
+          cardWithoutOther.id = cardWithoutOther.id + '_no_other';
+          if (cardWithoutOther.title) {
+            cardWithoutOther.title = cardWithoutOther.title.replace(/Top (\d+)/, 'Top $1 Only');
+          }
+          cards.push(cardWithoutOther);
+          console.log(`  Added WITHOUT All Other: ${cardWithoutOther.id}`);
+        }
+        
+      } else {
+        // If no "All Other" needed (all entities fit), just generate the standard chart
+        console.log(`📊 Generating single version for ${chartType} (no All Other needed)`);
+        
+        switch(chartType) {
+          case 'verticalBar':
+            card = generateVerticalBarChart(topEntities, entityType, columnId, effectiveTopN, percentageBase, percentageMode, false, overallTotal, fiscalYearFilter);
+            break;
+          case 'horizontalBar':
+            card = generateHorizontalBarChart(topEntities, entityType, columnId, effectiveTopN, percentageBase, percentageMode, false, overallTotal, fiscalYearFilter);
+            break;
+          case 'pie':
+            card = generatePieChart(topEntities, entityType, columnId, effectiveTopN, percentageBase, percentageMode, false, overallTotal, fiscalYearFilter);
+            break;
+          case 'doughnut':
+            card = generateDoughnutChart(topEntities, entityType, columnId, effectiveTopN, percentageBase, percentageMode, false, overallTotal, fiscalYearFilter);
+            break;
+          case 'funnel':
+            card = generateFunnelChart(topEntities, entityType, columnId, effectiveTopN, percentageBase, percentageMode, false, fiscalYearFilter);
+            break;
+        }
+        if (card) {
+          cards.push(card);
+          console.log(`  Added single chart: ${card.id}`);
+        }
+      }
     });
   }
   
   // 3. ADD TREND OVER TIME
   const trendCard = generateTrendOverTime(entityType, columnId, selectedEntities, effectiveTopN);
   if (trendCard) cards.push(trendCard);
+  
+  // FINAL DEBUG OUTPUT
+  console.log(`🎯 CHART GENERATION COMPLETE: ${cards.length} total cards generated for ${entityType}/${columnId}`);
+  console.log(`   - Breakdown charts: ${breakdownCharts.length}`);
+  console.log(`   - Entity breakdown charts: ${entityBreakdownCharts.length}`);
+  console.log(`   - Should generate All Other: ${shouldGenerateAllOther}`);
+  console.log(`   - Others value: ${othersValue}`);
+  
+  // List all generated cards
+  console.log('📋 GENERATED CARDS:');
+  cards.forEach(card => {
+    console.log(`   - ${card.id}: ${card.title}`);
+  });
+  
+  const withOtherCards = cards.filter(c => c.title && c.title.includes('All Other'));
+  const withoutOtherCards = cards.filter(c => c.id && c.id.includes('_no_other'));
+  console.log(`📊 SUMMARY: ${withOtherCards.length} charts WITH "All Other", ${withoutOtherCards.length} charts WITHOUT "All Other"`);
   
   return cards;
 }
@@ -4759,6 +4876,170 @@ function generateLineChart(entities, entityType, columnId, percentageBase, perce
 }
 
 /**
+ * Generate improved line chart showing trends for each item in the column
+ * This shows actual time-series trends for each entity/item
+ */
+function generateImprovedLineChart(entities, entityType, columnId, fiscalYearFilter = 'all') {
+  console.log(`📈 generateImprovedLineChart called for ${columnId} with ${entities.length} entities`);
+  
+  // Extract fiscal year data for all entities
+  const fiscalYearData = {};
+  const allYears = new Set();
+  const entityNames = [];
+  
+  entities.forEach(entity => {
+    const entityName = entityType === 'agency' ? abbreviateAgencyName(entity.name) : entity.name;
+    entityNames.push(entityName);
+    
+    // Try to extract fiscal year data based on column type
+    let fyData = null;
+    
+    // For obligations column
+    if (columnId === 'obligations') {
+      if (entity.fiscal_year_obligations) {
+        fyData = entity.fiscal_year_obligations;
+      } else if (entity.obligations?.fiscal_year_obligations) {
+        fyData = entity.obligations.fiscal_year_obligations;
+      }
+    } else {
+      // For other columns, try to extract from JSON data
+      const columnData = entity[columnId];
+      if (columnData) {
+        let parsed = columnData;
+        if (typeof parsed === 'string') {
+          try {
+            parsed = JSON.parse(parsed);
+          } catch(e) {
+            console.log(`Could not parse JSON for ${columnId}`);
+          }
+        }
+        
+        // Look for fiscal year data in various structures
+        if (parsed && typeof parsed === 'object') {
+          // Check for direct fiscal_years property
+          if (parsed.fiscal_years) {
+            fyData = parsed.fiscal_years;
+          } else {
+            // Check nested structures
+            const summaryKeys = ['top_contract_summaries', 'tier_summaries', 'sum_type_summaries'];
+            for (const key of summaryKeys) {
+              if (parsed[key]) {
+                // Aggregate fiscal years from all sub-items
+                fyData = {};
+                Object.values(parsed[key]).forEach(item => {
+                  if (item.fiscal_years) {
+                    Object.entries(item.fiscal_years).forEach(([year, value]) => {
+                      fyData[year] = (fyData[year] || 0) + parseFloat(value || 0);
+                    });
+                  }
+                });
+                if (Object.keys(fyData).length > 0) break;
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    // Store the fiscal year data if found
+    if (fyData && typeof fyData === 'object') {
+      Object.entries(fyData).forEach(([year, value]) => {
+        if (!fiscalYearData[entityName]) {
+          fiscalYearData[entityName] = {};
+        }
+        fiscalYearData[entityName][year] = parseFloat(value) || 0;
+        allYears.add(year);
+      });
+    }
+  });
+  
+  // If no fiscal year data found, return null
+  const years = Array.from(allYears).sort();
+  if (years.length === 0) {
+    console.log('No fiscal year data found for line chart');
+    return null;
+  }
+  
+  // Create datasets for each entity
+  const datasets = entityNames.map((name, idx) => ({
+    label: name,
+    data: years.map(year => fiscalYearData[name]?.[year] || 0),
+    borderColor: getChartColor({
+      columnId: columnId,
+      label: name,
+      index: idx,
+      isEntity: true
+    }),
+    backgroundColor: getChartColor({
+      columnId: columnId,
+      label: name,
+      index: idx,
+      isEntity: true
+    }) + '33', // Add transparency
+    borderWidth: 2,
+    tension: 0.1,
+    fill: false
+  }));
+  
+  return {
+    id: `${entityType}_${columnId}_line_trends`,
+    title: `${getColumnDisplayName(columnId)} - Trends Over Time (FY ${years[0]} - FY ${years[years.length - 1]})`,
+    cardType: 'chart',
+    chartType: 'line',
+    chartData: {
+      labels: years.map(y => `FY ${y}`),
+      datasets: datasets
+    },
+    chartOptions: {
+      responsive: true,
+      maintainAspectRatio: false,
+      layout: getSharedLayoutConfig(),
+      plugins: {
+        legend: getSharedLegendConfig('line', true),
+        tooltip: {
+          mode: 'index',
+          intersect: false,
+          callbacks: {
+            label: function(context) {
+              return `${context.dataset.label}: ${formatCurrencyShort(context.parsed.y)}`;
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return formatCurrencyShort(value);
+            }
+          }
+        }
+      },
+      interaction: {
+        mode: 'nearest',
+        axis: 'x',
+        intersect: false
+      }
+    },
+    tableData: {
+      headers: ['Entity', ...years.map(y => `FY ${y}`), 'Total'],
+      rows: entityNames.map(name => {
+        const row = [name];
+        let total = 0;
+        years.forEach(year => {
+          const value = fiscalYearData[name]?.[year] || 0;
+          row.push(formatCurrency(value));
+          total += value;
+        });
+        row.push(formatCurrency(total));
+        return row;
+      })
+    }
+  };
+}
+
+/**
  * Generate funnel chart (for PIID and conversion data)
  */
 function generateFunnelChart(entities, entityType, columnId, topN, percentageBase, percentageMode, showAllOther, fiscalYearFilter = 'all') {
@@ -5327,6 +5608,142 @@ function generateAreaChart(entities, entityType, columnId, fiscalYearFilter = 'a
   };
 }
 
+/**
+ * Generate line chart showing trends for each item within a column
+ * For example: if column is sumTier, show one line for each tier over time
+ * If column is obligations, show one line for each agency over time
+ */
+function generateColumnItemTrendChart(entities, entityType, columnId, topN = 10, fiscalYearFilter = 'all') {
+  console.log(`📈 generateColumnItemTrendChart: ${columnId} for ${entityType}, topN=${topN}`);
+  
+  // First try to extract breakdown data (for columns like sumTier, sumType, etc.)
+  const breakdownData = extractColumnData(entities, columnId);
+  
+  if (breakdownData.length > 0) {
+    // For breakdown columns, show trends for each category (e.g., each tier)
+    console.log(`📈 Using breakdown data: ${breakdownData.length} items found`);
+    
+    // Group by category and collect fiscal year data
+    const categoryTrends = {};
+    const allYears = new Set();
+    
+    breakdownData.forEach(item => {
+      const categoryName = item.name;
+      if (!categoryTrends[categoryName]) {
+        categoryTrends[categoryName] = {};
+      }
+      
+      // Try to get fiscal year data from the item
+      if (item.fiscal_years) {
+        Object.entries(item.fiscal_years).forEach(([year, value]) => {
+          categoryTrends[categoryName][year] = (categoryTrends[categoryName][year] || 0) + parseFloat(value || 0);
+          allYears.add(year);
+        });
+      }
+    });
+    
+    const years = Array.from(allYears).sort();
+    if (years.length === 0) {
+      console.log('❌ No fiscal year data found in breakdown data');
+      return null;
+    }
+    
+    // Create datasets for top categories
+    const sortedCategories = Object.entries(categoryTrends)
+      .map(([name, yearData]) => ({
+        name,
+        total: Object.values(yearData).reduce((sum, val) => sum + val, 0),
+        yearData
+      }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, topN);
+    
+    const datasets = sortedCategories.map((cat, idx) => ({
+      label: cat.name,
+      data: years.map(year => cat.yearData[year] || 0),
+      borderColor: getChartColor({
+        columnId: columnId,
+        label: cat.name,
+        index: idx,
+        isEntity: false
+      }),
+      backgroundColor: getChartColor({
+        columnId: columnId,
+        label: cat.name,
+        index: idx,
+        isEntity: false
+      }) + '33',
+      borderWidth: 3,
+      tension: 0.2,
+      fill: false,
+      pointRadius: 4,
+      pointHoverRadius: 6
+    }));
+    
+    return {
+      id: `${entityType}_${columnId}_category_trends`,
+      title: `${getColumnDisplayName(columnId)} - Category Trends Over Time (FY ${years[0]} - FY ${years[years.length - 1]})`,
+      cardType: 'chart',
+      chartType: 'line',
+      chartData: {
+        labels: years.map(y => `FY ${y}`),
+        datasets: datasets
+      },
+      chartOptions: {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: getSharedLayoutConfig(),
+        plugins: {
+          legend: getSharedLegendConfig('line', true),
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+            callbacks: {
+              label: function(context) {
+                return `${context.dataset.label}: ${formatCurrencyShort(context.parsed.y)}`;
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) {
+                return formatCurrencyShort(value);
+              }
+            }
+          }
+        },
+        interaction: {
+          mode: 'nearest',
+          axis: 'x',
+          intersect: false
+        }
+      },
+      tableData: {
+        headers: ['Category', ...years.map(y => `FY ${y}`), 'Total'],
+        rows: sortedCategories.map(cat => {
+          const row = [cat.name];
+          let total = 0;
+          years.forEach(year => {
+            const value = cat.yearData[year] || 0;
+            row.push(formatCurrency(value));
+            total += value;
+          });
+          row.push(formatCurrency(total));
+          return row;
+        })
+      }
+    };
+    
+  } else {
+    // Fallback: show entity trends (for columns like obligations)
+    console.log(`📈 Using entity-level data for ${entities.length} entities`);
+    return null; // For now, just return null for non-breakdown columns
+  }
+}
+
  /**
  * Generate trend over time chart - MULTI-ENTITY VERSION
  * Shows fiscal years on X-axis with one colored line per entity (top N)
@@ -5722,9 +6139,6 @@ function getColumnDisplayName(columnId) {
   return columnNames[columnId] || columnId;
 }
 
-/**
- * Main entry point to replace existing generateColumnReports
- */
 function generateColumnReportsBuffet(entityType, columnId, topN = 10, selectedEntities = [], deptFilter = 'all', tierFilter = 'all', fiscalYearFilter = 'all') {
   console.log('🔍 RAW ARGUMENTS generateColumnReportsBuffet:');
   console.log('  entityType:', entityType);
@@ -5741,33 +6155,21 @@ function generateColumnReportsBuffet(entityType, columnId, topN = 10, selectedEn
     // Get DataManager instance
     const dataManager = getDataManager();
     
-    // Get entities using DataManager
-    const options = {
-      entityType: entityType,
-      columnId: columnId,
-      topN: topN,
-      selectedEntities: selectedEntities,
-      deptFilter: deptFilter,
-      tierFilter: tierFilter
-    };
-    
-    // Load entities for report building
+    // CRITICAL FIX: Always get ALL entities first, don't pre-filter by topN
     let reportEntities = [];
     
     try {
-      // Primary method: Try getEntitiesForView first
-      reportEntities = dataManager.getEntitiesForView('reportBuilder', options);
-      
-      // Fallback method: Direct entity type loading if primary failed
-      if (reportEntities.length === 0) {
-        if (entityType === 'agency') {
-          reportEntities = dataManager.getAgencies();
-        } else if (entityType === 'oem') {
-          reportEntities = dataManager.getOEMs();
-        } else if (entityType === 'vendor') {
-          reportEntities = dataManager.getVendors();
-        }
+      // Get ALL entities of this type (not filtered by topN)
+      if (entityType === 'agency') {
+        reportEntities = dataManager.getAgencies();
+      } else if (entityType === 'oem') {
+        reportEntities = dataManager.getOEMs();
+      } else if (entityType === 'vendor') {
+        reportEntities = dataManager.getVendors();
       }
+      
+      console.log(`📊 Loaded ${reportEntities.length} total ${entityType} entities (before any filtering)`);
+      
     } catch (error) {
       console.error('DataManager entity loading failed:', error);
     }
@@ -5785,15 +6187,18 @@ function generateColumnReportsBuffet(entityType, columnId, topN = 10, selectedEn
         'NATIONAL SECURITY AGENCY', 'DEFENSE INTELLIGENCE AGENCY', 'NATIONAL GEOSPATIAL-INTELLIGENCE AGENCY',
         'DEFENSE ADVANCED RESEARCH PROJECTS AGENCY', 'DISA', 'DLA', 'ARMY', 'NAVY', 'AIR FORCE', 'USAF', 'USA', 'USN', 'DOD'];
       
+      const originalCount = reportEntities.length;
       reportEntities = reportEntities.filter(entity => {
         const name = (entity.name || '').toUpperCase();
         const isDOD = DOD_AGENCIES.some(dod => name.includes(dod));
         return deptFilter === 'dod' ? isDOD : !isDOD;
       });
+      console.log(`  Applied DOD/Civilian filter: ${originalCount} → ${reportEntities.length} entities`);
     }
     
     // Apply CFO Act Agency filter if specified
     if (tierFilter && tierFilter !== 'all') {
+      const originalCount = reportEntities.length;
       reportEntities = reportEntities.filter(entity => {
         if (tierFilter === 'Yes') {
           return entity.cfoActAgency === 'Yes';
@@ -5802,10 +6207,19 @@ function generateColumnReportsBuffet(entityType, columnId, topN = 10, selectedEn
         }
         return true;
       });
+      console.log(`  Applied CFO Act filter: ${originalCount} → ${reportEntities.length} entities`);
     }
     
-    // *** GET AVAILABLE YEARS BEFORE FILTERING ***
-    // This must happen before fiscal year filtering to capture all available years
+    // Apply selected entities filter if specified
+    if (selectedEntities && selectedEntities.length > 0) {
+      const originalCount = reportEntities.length;
+      reportEntities = reportEntities.filter(entity => 
+        selectedEntities.includes(entity.name)
+      );
+      console.log(`  Applied entity selection filter: ${originalCount} → ${reportEntities.length} entities`);
+    }
+    
+    // Get available years BEFORE fiscal year filtering
     const availableYears = getAvailableFiscalYears(reportEntities, columnId);
     console.log('📅 Available years BEFORE filtering:', availableYears);
     
@@ -5813,13 +6227,13 @@ function generateColumnReportsBuffet(entityType, columnId, topN = 10, selectedEn
     console.log('🔍 FISCAL YEAR FILTER DEBUG:');
     console.log('  fiscalYearFilter:', fiscalYearFilter);
     console.log('  columnId:', columnId);
-    console.log('  Sample entity before filter:', reportEntities[0]);
+    console.log('  Sample entity before filter:', reportEntities[0]?.name);
     console.log('📊 Before FY filter - First entity value:', reportEntities[0]?.value);
     
     if (fiscalYearFilter && fiscalYearFilter !== 'all') {
       console.log('Applying dynamic FY filter:', fiscalYearFilter);
       
-      // Parse fiscal year filter dynamically - no hard-coding
+      // Parse fiscal year filter dynamically
       let targetYears = [];
       if (fiscalYearFilter.includes('-')) {
         // Range format like "2023-2025" or "2024-2025"
@@ -5840,7 +6254,6 @@ function generateColumnReportsBuffet(entityType, columnId, topN = 10, selectedEn
         
         // Handle direct fiscal_year_obligations (obligations column)
         if (cloned.fiscal_year_obligations) {
-          console.log('💰 Processing direct fiscal_year_obligations');
           const filtered = {};
           targetYears.forEach(year => {
             if (cloned.fiscal_year_obligations[year]) {
@@ -5855,7 +6268,6 @@ function generateColumnReportsBuffet(entityType, columnId, topN = 10, selectedEn
         
         // Handle nested obligations structure
         if (cloned.obligations && cloned.obligations.fiscal_year_obligations) {
-          console.log('💰 Processing nested obligations.fiscal_year_obligations');
           const filtered = {};
           targetYears.forEach(year => {
             if (cloned.obligations.fiscal_year_obligations[year]) {
@@ -5931,14 +6343,57 @@ function generateColumnReportsBuffet(entityType, columnId, topN = 10, selectedEn
         return cloned;
       });
       
+      // Re-sort after fiscal year filtering
       reportEntities.sort((a, b) => (b.value || 0) - (a.value || 0));
       console.log('📊 After FY filter - First entity value:', reportEntities[0]?.value);
-      console.log('📊 Filtered years included:', targetYears);
     }
     
-    // Generate the complete chart buffet
+    // CRITICAL: Sort entities by value for the specific column BEFORE passing to chart generation
+    // This ensures we have ALL entities sorted, not just topN
+    if (columnId === 'obligations') {
+      // For obligations, sort by total_obligated or value
+      reportEntities.sort((a, b) => {
+        const aVal = a.total_obligated || a.value || 0;
+        const bVal = b.total_obligated || b.value || 0;
+        return bVal - aVal;
+      });
+    } else {
+      // For other columns, extract and sort by column value
+      const entitiesWithColumnValue = reportEntities.map(entity => {
+        let columnValue = 0;
+        const columnData = entity[columnId];
+        
+        if (columnData) {
+          if (typeof columnData === 'number') {
+            columnValue = columnData;
+          } else if (typeof columnData === 'string') {
+            try {
+              const parsed = JSON.parse(columnData);
+              columnValue = parsed.total || parsed.value || 0;
+            } catch(e) {
+              columnValue = 0;
+            }
+          } else if (typeof columnData === 'object') {
+            columnValue = columnData.total || columnData.value || 0;
+          }
+        }
+        
+        return {
+          ...entity,
+          _sortValue: columnValue
+        };
+      });
+      
+      entitiesWithColumnValue.sort((a, b) => b._sortValue - a._sortValue);
+      reportEntities = entitiesWithColumnValue;
+    }
+    
+    console.log(`📊 FINAL: Passing ${reportEntities.length} sorted entities to chart generation (topN=${topN} will be applied there)`);
+    
+    // Generate the complete chart buffet with ALL entities
+    // The chart generation will handle topN internally
     const cards = generateChartBuffet(entityType, columnId, reportEntities, {
-      topN: topN,
+      topN: topN,  // Pass topN but don't pre-filter entities
       selectedEntities: selectedEntities,
       deptFilter: deptFilter,
       tierFilter: tierFilter,
@@ -5948,10 +6403,12 @@ function generateColumnReportsBuffet(entityType, columnId, topN = 10, selectedEn
     // Add metadata to each card
     cards.forEach(card => {
       card.metadata = {
-        generatedBy: 'Chart Buffet v1.6.0',
+        generatedBy: 'Chart Buffet v1.7.0',
         entityType: entityType,
         columnId: columnId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        totalEntities: reportEntities.length,
+        topN: topN
       };
     });
     
@@ -6434,4 +6891,47 @@ function testSpecificColumn(columnId) {
   
   const hasFiscal = charts.some(c => c.id.includes('fiscal'));
   console.log(`Has fiscal charts? ${hasFiscal}`);
+}
+
+/**
+ * Test function to verify All Other generation
+ * Run this from Apps Script editor to test
+ */
+function testAllOtherGeneration() {
+  console.log('🧪 TESTING ALL OTHER GENERATION');
+  
+  // Get test data
+  const dataManager = getDataManager();
+  const agencies = dataManager.getAgencies();
+  
+  if (agencies.length < 10) {
+    console.log('❌ Not enough agencies for test');
+    return;
+  }
+  
+  // Test with Top 5 (should generate All Other)
+  console.log('\n📊 TEST 1: Top 5 Agencies');
+  const result1 = generateChartBuffet('agency', 'obligations', agencies, {
+    topN: 5,
+    showAllOther: true
+  });
+  
+  console.log('Result 1 Summary:');
+  console.log('  Total charts:', result1.length);
+  console.log('  With All Other:', result1.filter(c => c.title && c.title.includes('All Other')).length);
+  console.log('  Without All Other:', result1.filter(c => c.id && c.id.includes('_no_other')).length);
+  
+  // Test with Top 15 (might not generate All Other if not enough data)
+  console.log('\n📊 TEST 2: Top 15 Agencies');
+  const result2 = generateChartBuffet('agency', 'obligations', agencies, {
+    topN: 15,
+    showAllOther: true
+  });
+  
+  console.log('Result 2 Summary:');
+  console.log('  Total charts:', result2.length);
+  console.log('  With All Other:', result2.filter(c => c.title && c.title.includes('All Other')).length);
+  console.log('  Without All Other:', result2.filter(c => c.id && c.id.includes('_no_other')).length);
+  
+  console.log('\n✅ TEST COMPLETE');
 }

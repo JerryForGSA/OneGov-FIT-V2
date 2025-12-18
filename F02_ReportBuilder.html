@@ -40,6 +40,120 @@
             font-size: 14px;
         }
         
+        /* OneGov FIT Loader Styles */
+        .onegov-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(245, 247, 250, 0.95);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .loader-card {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(20, 70, 115, 0.15);
+            min-width: 400px;
+            text-align: center;
+        }
+        
+        .loader-logo {
+            margin-bottom: 30px;
+            animation: pulse 2s infinite;
+        }
+        
+        .logo-text {
+            font-size: 32px;
+            font-weight: 700;
+            color: #144673;
+            background: linear-gradient(135deg, #144673 0%, #1e5a9a 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .logo-subtitle {
+            font-size: 14px;
+            color: #64748b;
+            margin-top: 4px;
+            letter-spacing: 2px;
+        }
+        
+        .progress-container {
+            margin: 30px 0;
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background: #e2e8f0;
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: var(--progress, 0%);
+            background: linear-gradient(90deg, #144673 0%, #f47920 100%);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+            animation: shimmer 2s infinite;
+        }
+        
+        .progress-text {
+            margin-top: 12px;
+            color: #475569;
+            font-size: 14px;
+        }
+        
+        .loading-stats {
+            color: #64748b;
+            font-size: 13px;
+            margin: 20px 0;
+            min-height: 20px;
+        }
+        
+        .powered-by {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            color: #94a3b8;
+            font-size: 12px;
+        }
+        
+        .usai-badge {
+            color: #144673;
+            font-weight: 600;
+            margin: 0 4px;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.02); opacity: 0.9; }
+        }
+        
+        @keyframes shimmer {
+            0% { filter: brightness(1); }
+            50% { filter: brightness(1.2); }
+            100% { filter: brightness(1); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
         /* Header Styles */
         .header {
             background: linear-gradient(135deg, var(--dark-blue) 0%, var(--blue) 100%);
@@ -304,12 +418,268 @@
         .back-link:hover {
             opacity: 0.8;
         }
+
+        /* OneGov FIT Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #f8faff 0%, #e8f2ff 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .loading-content {
+            text-align: center;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .loading-logo {
+            margin-bottom: 2rem;
+        }
+
+        .logo-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #144673 0%, #f47920 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 1rem;
+            animation: logoSpin 3s ease-in-out infinite;
+            position: relative;
+        }
+
+        .logo-text {
+            color: white;
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-subtext {
+            color: #f47920;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: -0.3rem;
+        }
+
+        .loading-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #144673;
+            margin-bottom: 0.5rem;
+        }
+
+        .loading-subtitle {
+            font-size: 1rem;
+            color: #64748b;
+            margin-bottom: 2rem;
+            font-weight: 500;
+        }
+
+        .loading-powered-by {
+            color: #64748b;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.3rem;
+        }
+
+        .loading-powered-by .usai-badge {
+            background: linear-gradient(135deg, #144673 0%, #f47920 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes logoSpin {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(180deg) scale(1.05); }
+        }
     </style>
 </head>
 <body>
+    <!-- OneGov FIT Loading Overlay -->
+    <div id="oneGovLoader" class="onegov-loader" style="display: none;">
+        <div class="loader-card">
+            <div class="loader-logo">
+                <div class="logo-text">OneGov FIT</div>
+                <div class="logo-subtitle">Market Intelligence</div>
+            </div>
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+                <div class="progress-text" id="progressText">Initializing...</div>
+            </div>
+            <div class="loading-stats">
+                <span id="loadingDetails">Preparing data...</span>
+            </div>
+            <div class="powered-by">
+                <span>Powered by</span>
+                <span class="usai-badge">USAi</span>
+                <span class="flag"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- OneGov FIT Loading Overlay -->
+    <div id="oneGovLoadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="loading-content">
+            <div class="loading-logo">
+                <div class="logo-circle">
+                    <span class="logo-text">OneGov</span>
+                    <span class="logo-subtext">FIT</span>
+                </div>
+            </div>
+            <div class="loading-title">OneGov FIT Market</div>
+            <div class="loading-subtitle">Federal Information Technology Market Intelligence</div>
+            <div class="loading-powered-by">
+                <span>Powered by</span>
+                <span class="usai-badge">USAi</span>
+                <span class="flag"></span>
+            </div>
+        </div>
+    </div>
+
     <div id="root"></div>
 
     <script type="text/babel">
+        // Show loader immediately when page starts loading
+        const showInitialLoading = () => {
+            const overlay = document.getElementById('oneGovLoadingOverlay');
+            if (overlay) {
+                overlay.style.display = 'flex';
+                const subtitle = overlay.querySelector('.loading-subtitle');
+                if (subtitle) {
+                    subtitle.textContent = 'Loading Report Builder View...';
+                }
+            }
+        };
+        
+        // Call immediately
+        showInitialLoading();
+
+        // Loading Manager for OneGov FIT
+        const LoadingManager = {
+            startTime: null,
+            estimatedDuration: 3000, // default 3 seconds
+            progressInterval: null,
+            context: 'data', // 'init', 'entity', 'view', 'data'
+
+            show: function(message, estimatedMs = 3000, context = 'data') {
+                this.context = context;
+                this.startTime = Date.now();
+                this.estimatedDuration = estimatedMs;
+                
+                // Use the OneGov loading overlay
+                const overlay = document.getElementById('oneGovLoadingOverlay');
+                const loadingSubtitle = overlay ? overlay.querySelector('.loading-subtitle') : null;
+                
+                if (overlay) {
+                    overlay.style.display = 'flex';
+                    if (loadingSubtitle) {
+                        loadingSubtitle.textContent = message || 'Loading Report Builder View...';
+                    }
+                }
+                
+                // Context-specific progress messages
+                const progressMessages = {
+                    init: ['Initializing system...', 'Loading configurations...', 'Connecting to database...', 'Preparing interface...'],
+                    entity: ['Loading entity data...', 'Fetching relationships...', 'Building visualizations...', 'Rendering charts...'],
+                    view: ['Switching view...', 'Loading components...', 'Preparing layout...', 'Finalizing display...'],
+                    data: ['Connecting to database...', 'Fetching records...', 'Processing data...', 'Finalizing visualizations...']
+                };
+
+                // Update progress based on estimated time
+                this.progressInterval = setInterval(() => {
+                    const elapsed = Date.now() - this.startTime;
+                    const progress = Math.min((elapsed / this.estimatedDuration) * 100, 95);
+
+                    progressBar.style.setProperty('--progress', progress + '%');
+                    
+                    // Update text based on progress and context
+                    const messages = progressMessages[this.context];
+                    const messageIndex = Math.floor((progress / 100) * messages.length);
+                    progressText.textContent = messages[Math.min(messageIndex, messages.length - 1)];
+
+                    // Context-specific details
+                    if (Math.random() > 0.7) {
+                        const detailsByContext = {
+                            init: [
+                                'Loaded ' + Math.floor(progress) + '% of application modules',
+                                'Establishing secure connection...',
+                                'Verifying credentials...',
+                                'Loading OneGov FIT components...'
+                            ],
+                            entity: [
+                                'Processing ' + Math.floor(Math.random() * 100 + 50) + ' entity records',
+                                'Calculating metrics...',
+                                'Analyzing relationships...',
+                                'Building entity profiles...'
+                            ],
+                            view: [
+                                'Loading view components...',
+                                'Applying filters...',
+                                'Refreshing data...',
+                                'Optimizing layout...'
+                            ],
+                            data: [
+                                'Analyzing ' + Math.floor(Math.random() * 500 + 100) + ' contracts',
+                                'Processing $' + (Math.random() * 100 + 10).toFixed(1) + 'B in obligations',
+                                'Aggregating ' + Math.floor(Math.random() * 50 + 10) + ' agencies',
+                                'Calculating tier distributions',
+                                'Optimizing chart renders'
+                            ]
+                        };
+                        const details = detailsByContext[this.context];
+                        loadingDetails.textContent = details[Math.floor(Math.random() * details.length)];
+                    }
+                }, 100);
+            },
+
+            hide: function() {
+                clearInterval(this.progressInterval);
+                const overlay = document.getElementById('oneGovLoadingOverlay');
+                if (overlay) {
+                    overlay.style.display = 'none';
+                }
+            }
+        };
+
+        // Global navigation function with loading states
+        function navigateWithLoading(action, message, duration = 3000) {
+            LoadingManager.show(message, duration, action);
+            
+            // Return a promise for async operations
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    LoadingManager.hide();
+                    resolve();
+                }, 300);
+            });
+        }
+
         const { useState, useEffect } = React;
 
         const ReportsView = () => {
@@ -327,6 +697,9 @@
                 setIsLoading(true);
                 setError(null);
                 
+                // Show the professional OneGov FIT loader
+                LoadingManager.show('Loading reports dashboard...', 4000, 'data');
+                
                 google.script.run
                     .withSuccessHandler(handleReportsLoaded)
                     .withFailureHandler(handleLoadError)
@@ -335,35 +708,46 @@
             
             const handleReportsLoaded = (result) => {
                 console.log('📊 Reports loaded:', result);
-                setIsLoading(false);
                 
-                if (result.error) {
-                    console.error('📊 Reports error:', result.error);
-                    setError(result.error);
-                } else if (result.activeReports !== undefined && result.archivedReports !== undefined) {
-                    // New function format with active/archived separation
-                    const activeReports = result.activeReports || [];
-                    const archivedReports = result.archivedReports || [];
+                // TEMPORARY: Add delay to test the loading animation - REMOVE AFTER TESTING
+                setTimeout(() => {
+                    setIsLoading(false);
                     
-                    console.log('📊 Active reports:', activeReports.length);
-                    console.log('📊 First report:', activeReports[0]);
+                    // Hide the loader
+                    LoadingManager.hide();
                     
-                    setActiveReports(activeReports);
-                    setArchivedReports(archivedReports);
-                } else if (result.reports) {
-                    // Old function format - treat all as active for now
-                    const allReports = result.reports || [];
-                    setActiveReports(allReports);
-                    setArchivedReports([]);
-                } else {
-                    console.error('📊 Unexpected result format:', result);
-                    setError('Unexpected response format from server');
-                }
+                    if (result.error) {
+                        console.error('📊 Reports error:', result.error);
+                        setError(result.error);
+                    } else if (result.activeReports !== undefined && result.archivedReports !== undefined) {
+                        // New function format with active/archived separation
+                        const activeReports = result.activeReports || [];
+                        const archivedReports = result.archivedReports || [];
+                        
+                        console.log('📊 Active reports:', activeReports.length);
+                        console.log('📊 First report:', activeReports[0]);
+                        
+                        setActiveReports(activeReports);
+                        setArchivedReports(archivedReports);
+                    } else if (result.reports) {
+                        // Old function format - treat all as active for now
+                        const allReports = result.reports || [];
+                        setActiveReports(allReports);
+                        setArchivedReports([]);
+                    } else {
+                        console.error('📊 Unexpected result format:', result);
+                        setError('Unexpected response format from server');
+                    }
+                }, 2000); // 2 second delay to see the animation
             };
             
             const handleLoadError = (error) => {
                 console.error('Error loading reports:', error);
                 setIsLoading(false);
+                
+                // Hide the loader
+                LoadingManager.hide();
+                
                 setError(error.toString());
             };
             
@@ -395,23 +779,14 @@
                 // ALWAYS show generating popup for ANY report that has a driveUrl (prioritize over reportType)
                 if (report.driveUrl && report.driveUrl.trim() !== '') {
                     console.log('🔍 DEBUG: Using driveUrl path');
-                    // Show generating popup like Entity Profile
-                    const loadingModal = document.createElement('div');
-                    loadingModal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10002;';
-                    loadingModal.innerHTML = `
-                        <div style="background: white; padding: 30px; border-radius: 12px; text-align: center;">
-                            <div style="font-size: 2rem; margin-bottom: 10px;">📄</div>
-                            <div style="color: #333; font-weight: 600;">Opening Document...</div>
-                            <div style="color: #666; font-size: 0.9rem; margin-top: 5px;">Please wait</div>
-                        </div>
-                    `;
-                    document.body.appendChild(loadingModal);
+                    // Show loading with OneGov FIT loader
+                    LoadingManager.show('Opening document...', 1000, 'view');
                     
                     // Add a small delay to show the modal, then open the URL
                     setTimeout(() => {
                         try {
                             const popup = window.open(report.driveUrl, '_blank');
-                            loadingModal.remove();
+                            LoadingManager.hide();
                             
                             // Check if popup was blocked
                             if (!popup || popup.closed || typeof popup.closed == 'undefined') {
@@ -439,7 +814,7 @@
                             }
                         } catch (error) {
                             console.error('Error opening document:', error);
-                            loadingModal.remove();
+                            LoadingManager.hide();
                             
                             // Show error popup with the actual error
                             const errorModal = document.createElement('div');
@@ -470,23 +845,13 @@
             const generateReportDocument = (report) => {
                 console.log('🔄 Generating report document for:', report.reportType);
                 
-                // Show loading indicator while generating document
-                const loadingModal = document.createElement('div');
-                loadingModal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 10002;';
-                loadingModal.innerHTML = `
-                    <div style="background: white; padding: 30px; border-radius: 12px; text-align: center;">
-                        <div style="font-size: 2rem; margin-bottom: 10px;">📄</div>
-                        <div style="color: #333; font-weight: 600;">Generating Document...</div>
-                        <div style="color: #666; font-size: 0.9rem; margin-top: 5px;">Creating from template</div>
-                    </div>
-                `;
-                
-                document.body.appendChild(loadingModal);
+                // Show loading with OneGov FIT loader
+                LoadingManager.show(`Generating ${report.reportType} document...`, 6000, 'data');
                 
                 // Call backend to generate document from template
                 google.script.run
                     .withSuccessHandler((result) => {
-                        loadingModal.remove();
+                        LoadingManager.hide();
                         
                         if (result.success && result.documentUrl) {
                             console.log('✅ Document generated successfully:', result.documentUrl);
@@ -502,7 +867,7 @@
                         }
                     })
                     .withFailureHandler((error) => {
-                        loadingModal.remove();
+                        LoadingManager.hide();
                         console.error('❌ Error calling backend:', error);
                         showErrorDialog('Connection Failed', 'Unable to connect to server. Please try again.');
                     })
@@ -771,7 +1136,14 @@
                                 </div>
                             </div>
                             <div className="header-right">
-                                <a href="?" className="back-link" style={{color: 'white'}}>
+                                <a 
+                                    href="?" 
+                                    className="back-link" 
+                                    style={{color: 'white'}}
+                                    onClick={() => {
+                                        navigateWithLoading('view', 'Loading Main Dashboard...', 2000);
+                                    }}
+                                >
                                     ← Back to Main Dashboard
                                 </a>
                             </div>
@@ -849,6 +1221,8 @@
         
         // Render the app
         ReactDOM.createRoot(document.getElementById('root')).render(<ReportsView />);
+        
+        // Let the ReportsView component handle hiding the loading screen when data is loaded
     </script>
 </body>
 </html>

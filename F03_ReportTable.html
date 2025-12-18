@@ -347,12 +347,163 @@
                 justify-content: center;
             }
         }
+
+        /* OneGov FIT Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #f8faff 0%, #e8f2ff 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .loading-content {
+            text-align: center;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .loading-logo {
+            margin-bottom: 2rem;
+        }
+
+        .logo-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #144673 0%, #f47920 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 1rem;
+            animation: logoSpin 3s ease-in-out infinite;
+            position: relative;
+        }
+
+        .logo-text {
+            color: white;
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-subtext {
+            color: #f47920;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-top: -0.3rem;
+        }
+
+        .loading-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #144673;
+            margin-bottom: 0.5rem;
+        }
+
+        .loading-subtitle {
+            font-size: 1rem;
+            color: #64748b;
+            margin-bottom: 2rem;
+            font-weight: 500;
+        }
+
+        .loading-powered-by {
+            color: #64748b;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.3rem;
+        }
+
+        .loading-powered-by .usai-badge {
+            background: linear-gradient(135deg, #144673 0%, #f47920 100%);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes logoSpin {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(180deg) scale(1.05); }
+        }
     </style>
 </head>
 <body>
+    <!-- OneGov FIT Loading Overlay -->
+    <div id="oneGovLoadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="loading-content">
+            <div class="loading-logo">
+                <div class="logo-circle">
+                    <span class="logo-text">OneGov</span>
+                    <span class="logo-subtext">FIT</span>
+                </div>
+            </div>
+            <div class="loading-title">OneGov FIT Market</div>
+            <div class="loading-subtitle">Loading Report View...</div>
+            <div class="loading-powered-by">
+                <span>Powered by</span>
+                <span class="usai-badge">USAi</span>
+                <span class="flag"></span>
+            </div>
+        </div>
+    </div>
+
     <div id="root"></div>
 
     <script type="text/babel">
+        // Show OneGov loader immediately
+        const showInitialLoading = () => {
+            const overlay = document.getElementById('oneGovLoadingOverlay');
+            if (overlay) {
+                overlay.style.display = 'flex';
+                const subtitle = overlay.querySelector('.loading-subtitle');
+                if (subtitle) subtitle.textContent = 'Loading Report View...';
+            }
+        };
+        
+        // Call immediately
+        showInitialLoading();
+
+        // LoadingManager for OneGov FIT
+        const LoadingManager = {
+            show: function(message = 'Loading Report View...') {
+                const overlay = document.getElementById('oneGovLoadingOverlay');
+                if (overlay) {
+                    overlay.style.display = 'flex';
+                    const subtitle = overlay.querySelector('.loading-subtitle');
+                    if (subtitle) subtitle.textContent = message;
+                }
+            },
+            
+            hide: function() {
+                const overlay = document.getElementById('oneGovLoadingOverlay');
+                if (overlay) {
+                    overlay.style.display = 'none';
+                }
+            }
+        };
+
         const { useState, useEffect, useMemo } = React;
         
         // Report Table Component
@@ -376,18 +527,21 @@
                 try {
                     setLoading(true);
                     setError('');
+                    LoadingManager.show('Loading report data...');
                     
                     google.script.run
                         .withSuccessHandler((result) => {
                             console.log('Loaded report table data:', result);
                             setData(result || generateDefaultData());
                             setLoading(false);
+                            LoadingManager.hide();
                         })
                         .withFailureHandler((err) => {
                             console.error('Error loading report data:', err);
                             setError(err.toString());
                             setData(generateDefaultData());
                             setLoading(false);
+                            LoadingManager.hide();
                         })
                         .getReportTableData();
                 } catch (err) {
@@ -395,6 +549,7 @@
                     setError(err.toString());
                     setData(generateDefaultData());
                     setLoading(false);
+                    LoadingManager.hide();
                 }
             };
             
@@ -804,6 +959,8 @@
         
         // Render the app
         ReactDOM.render(<ReportTable />, document.getElementById('root'));
+        
+        // Let the ReportTable component handle hiding the loading screen when data is loaded
     </script>
 </body>
 </html>

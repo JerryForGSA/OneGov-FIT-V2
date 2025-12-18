@@ -1574,10 +1574,13 @@ function getEntityNames(entityType) {
   }
 }
 
-/**
- * Generate column-specific reports using Chart Buffet System
- */
 function generateColumnReports(entityType, columnId, topN = 10, selectedEntities = [], deptFilter = 'all', tierFilter = 'all', fiscalYearFilter = 'all') {
+  // DEBUG: Verify deployment version
+  console.log('🔴 DEPLOYMENT VERSION: 2024-12-17-AllOtherFix-v3');
+  console.log('📊 generateColumnReports called with:', {
+    entityType, columnId, topN, selectedEntities, deptFilter, tierFilter, fiscalYearFilter
+  });
+  
   // Expanded valid columns matching KPI Carousel (removed discount, discountOfferings, activeContracts)
   const validColumns = {
     agency: ['obligations', 'smallBusiness', 'sumTier', 'sumType', 'contractVehicle', 'fundingDepartment', 
@@ -1597,9 +1600,18 @@ function generateColumnReports(entityType, columnId, topN = 10, selectedEntities
   }
   
   // Use the new Chart Buffet system with filters
-  return generateColumnReportsBuffet(entityType, columnId, topN, selectedEntities, deptFilter, tierFilter, fiscalYearFilter);
+  const result = generateColumnReportsBuffet(entityType, columnId, topN, selectedEntities, deptFilter, tierFilter, fiscalYearFilter);
+  
+  // Check what we're returning
+  console.log('📊 generateColumnReports returning:', {
+    hasCards: !!result.cards,
+    cardCount: result.cards ? result.cards.length : 0,
+    availableYears: result.availableYears
+  });
+  
+  // Return just the cards array for backward compatibility with frontend
+  return result.cards || [];
 }
-
 /**
  * LEGACY: Generate column-specific reports using DataManager
  * Keeping for backward compatibility

@@ -375,9 +375,173 @@
     }
     
     .empty-state-icon { font-size: 48px; margin-bottom: 16px; }
+    /* OneGov FIT Loading Overlay */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #0a2240 0%, #144673 50%, #3a6ea5 100%);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 10000;
+        opacity: 0;
+        animation: fadeInOverlay 0.5s ease-out forwards;
+    }
+
+    .loading-content {
+        text-align: center;
+        color: white;
+        position: relative;
+    }
+
+    .loading-logo {
+        margin-bottom: 2rem;
+    }
+
+    .logo-circle {
+        width: 120px;
+        height: 120px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+        animation: logoFloat 3s ease-in-out infinite;
+    }
+
+    .logo-text {
+        font-size: 1.5rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        color: #f47920;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .logo-subtext {
+        font-size: 0.9rem;
+        font-weight: 600;
+        letter-spacing: 2px;
+        color: rgba(255, 255, 255, 0.9);
+    }
+
+    .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(255, 255, 255, 0.2);
+        border-top: 3px solid #f47920;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1.5rem;
+    }
+
+    .loading-message {
+        font-size: 1.1rem;
+        font-weight: 500;
+        margin-bottom: 1rem;
+        min-height: 1.5rem;
+        animation: messageGlow 2s ease-in-out infinite alternate;
+    }
+
+    .loading-progress {
+        width: 300px;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 2px;
+        margin: 1rem auto;
+        overflow: hidden;
+    }
+
+    .progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #f47920, #ff8c42);
+        border-radius: 2px;
+        width: 0%;
+        transition: width 0.3s ease;
+    }
+
+    .loading-subtitle {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.7);
+        margin-top: 1rem;
+        font-weight: 300;
+        letter-spacing: 0.5px;
+    }
+
+    .loading-powered-by {
+        margin-top: 2rem;
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .usai-badge {
+        background: linear-gradient(45deg, #f47920, #ff8c42);
+        color: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+    }
+
+    .flag {
+        font-size: 1rem;
+    }
+
+    @keyframes fadeInOverlay {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes logoFloat {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    @keyframes messageGlow {
+        0% { opacity: 0.8; }
+        100% { opacity: 1; }
+    }
   </style>
 </head>
 <body>
+  <!-- OneGov FIT Loading Overlay -->
+  <div id="oneGovLoadingOverlay" class="loading-overlay" style="display: none;">
+      <div class="loading-content">
+          <div class="loading-logo">
+              <div class="logo-circle">
+                  <span class="logo-text">OneGov</span>
+                  <span class="logo-subtext">FIT</span>
+              </div>
+          </div>
+          <div class="loading-spinner"></div>
+          <div class="loading-message" id="loadingMessage">Loading savings reports...</div>
+          <div class="loading-progress">
+              <div class="progress-bar" id="progressBar"></div>
+          </div>
+          <div class="loading-subtitle">Federal Information Technology Market Intelligence</div>
+          <div class="loading-powered-by">
+              <span>Powered by</span>
+              <span class="usai-badge">USAi</span>
+              <span class="flag"></span>
+          </div>
+      </div>
+  </div>
+
   <!-- Header -->
   <div class="header">
     <h1>📊 OneGov Savings Report Viewer</h1>
@@ -412,6 +576,84 @@
   <div id="modalContainer"></div>
   
   <script>
+    // OneGov FIT Loading Manager
+    const LoadingManager = {
+        startTime: null,
+        estimatedDuration: 3000,
+        progressInterval: null,
+        context: 'data', // 'init', 'entity', 'view', 'data'
+
+        show: function(message, estimatedMs = 3000, context = 'data') {
+            this.context = context;
+            this.startTime = Date.now();
+            this.estimatedDuration = estimatedMs;
+
+            const overlay = document.getElementById('oneGovLoadingOverlay');
+            const messageEl = document.getElementById('loadingMessage');
+            const progressBar = document.getElementById('progressBar');
+
+            if (overlay) {
+                overlay.style.display = 'flex';
+                messageEl.textContent = message || 'Processing...';
+                progressBar.style.width = '0%';
+
+                // Context-specific progress messages
+                const progressMessages = {
+                    init: ['Initializing system...', 'Loading configurations...', 'Connecting to database...', 'Preparing interface...'],
+                    entity: ['Loading entity data...', 'Fetching relationships...', 'Building visualizations...', 'Rendering charts...'],
+                    view: ['Switching view...', 'Loading components...', 'Preparing layout...', 'Finalizing display...'],
+                    data: ['Connecting to database...', 'Fetching reports...', 'Processing data...', 'Rendering visualizations...']
+                };
+
+                const messages = progressMessages[context] || progressMessages.data;
+                let messageIndex = 0;
+
+                this.progressInterval = setInterval(() => {
+                    const elapsed = Date.now() - this.startTime;
+                    const progress = Math.min((elapsed / this.estimatedDuration) * 100, 95);
+                    progressBar.style.width = progress + '%';
+
+                    // Update message every 25% progress
+                    const newMessageIndex = Math.floor(progress / 25);
+                    if (newMessageIndex !== messageIndex && newMessageIndex < messages.length) {
+                        messageIndex = newMessageIndex;
+                        messageEl.textContent = messages[messageIndex];
+                    }
+
+                    if (progress >= 95) {
+                        clearInterval(this.progressInterval);
+                    }
+                }, 100);
+            }
+        },
+
+        hide: function() {
+            const overlay = document.getElementById('oneGovLoadingOverlay');
+            const progressBar = document.getElementById('progressBar');
+            
+            if (overlay && this.progressInterval) {
+                // Complete the progress bar
+                progressBar.style.width = '100%';
+                
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                    progressBar.style.width = '0%';
+                    clearInterval(this.progressInterval);
+                    this.progressInterval = null;
+                }, 200);
+            }
+        }
+    };
+
+    // Global navigation function with loading
+    function navigateWithLoading(url, loadingMessage = 'Loading...', context = 'view') {
+        LoadingManager.show(loadingMessage, 2000, context);
+        
+        setTimeout(() => {
+            window.location.href = url;
+        }, 300);
+    }
+
     // Global state
     let allReports = [];
     let currentReport = null;
@@ -427,11 +669,18 @@
     
     // Initialize on load
     document.addEventListener('DOMContentLoaded', () => {
+      // Show initialization loading
+      LoadingManager.show('Loading Savings Report View...', 1500, 'view');
+      
       // Log access to Reports view
       if (window.google?.script?.run) {
         google.script.run.logReportsAccess();
       }
-      loadReports();
+      
+      setTimeout(() => {
+        LoadingManager.hide();
+        loadReports();
+      }, 1500);
     });
     
     // Load reports list

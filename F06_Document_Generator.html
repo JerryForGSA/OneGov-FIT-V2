@@ -366,9 +366,51 @@
             background: #6c757d;
             color: white;
         }
+
+        /* Simple Loading Overlay for F06 */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a2240 0%, #144673 50%, #3a6ea5 100%);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+
+        .loading-content {
+            text-align: center;
+            color: white;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-top: 3px solid #f47920;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
+    <!-- Simple Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div>Loading document...</div>
+        </div>
+    </div>
+
     <!-- Action Bar (won't print) -->
     <div class="action-bar no-print">
         <button class="action-btn btn-email" onclick="emailProfile()">📧 Email PDF</button>
@@ -579,6 +621,50 @@
     </div>
 
     <script>
+        // Simple loading functions
+        function showLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                overlay.style.display = 'flex';
+            }
+        }
+
+        function hideLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                overlay.style.display = 'none';
+            }
+        }
+
+        // ===== LOADING MANAGER =====
+        const LoadingManager = {
+            show: function(message = 'Processing document...', context = 'document') {
+                const overlay = document.getElementById('loadingOverlay');
+                if (overlay) {
+                    const loadingText = overlay.querySelector('.loading-content div:last-child');
+                    if (loadingText) {
+                        loadingText.textContent = message;
+                    }
+                    overlay.style.display = 'flex';
+                }
+            },
+            
+            hide: function() {
+                const overlay = document.getElementById('loadingOverlay');
+                if (overlay) {
+                    overlay.style.display = 'none';
+                }
+            }
+        };
+
+        // ===== NAVIGATION WITH LOADING =====
+        function navigateWithLoading(url, message = 'Loading...', context = 'navigation') {
+            LoadingManager.show(message, context);
+            setTimeout(() => {
+                window.location.href = url;
+            }, 100);
+        }
+
         // Detect if page is in iframe and hide action bar
         if (window.self !== window.top) {
             document.body.classList.add('in-iframe');
@@ -586,9 +672,11 @@
         
         // JavaScript functions for download, email, and close
         function downloadPDF() {
+            LoadingManager.show('Generating PDF document...', 'document');
             // This will be called from Google Apps Script
             google.script.run
                 .withSuccessHandler(function(result) {
+                    LoadingManager.hide();
                     if (result.success) {
                         window.open(result.url, '_blank');
                     } else {
@@ -596,15 +684,18 @@
                     }
                 })
                 .withFailureHandler(function(error) {
+                    LoadingManager.hide();
                     alert('Error: ' + error.message);
                 })
                 .generatePDF(getProfileHTML());
         }
         
         function emailProfile() {
+            LoadingManager.show('Sending email with PDF...', 'document');
             // Email automatically to current user - no prompt needed
             google.script.run
                 .withSuccessHandler(function(result) {
+                    LoadingManager.hide();
                     if (result.success) {
                         alert('Profile PDF sent to your email successfully!');
                     } else {
@@ -612,6 +703,7 @@
                     }
                 })
                 .withFailureHandler(function(error) {
+                    LoadingManager.hide();
                     alert('Error: ' + error.message);
                 })
                 .emailProfileReport(null, getProfileHTML()); // null = auto-detect user email

@@ -632,12 +632,274 @@
             text-align: center;
             margin: 2rem 0;
         }
+
+        /* OneGov FIT Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a2240 0%, #144673 50%, #3a6ea5 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            opacity: 0;
+            animation: fadeInOverlay 0.5s ease-out forwards;
+        }
+
+        .loading-content {
+            text-align: center;
+            color: white;
+            position: relative;
+        }
+
+        .loading-logo {
+            margin-bottom: 2rem;
+        }
+
+        .logo-circle {
+            width: 120px;
+            height: 120px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            animation: logoFloat 3s ease-in-out infinite;
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: #f47920;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .logo-subtext {
+            font-size: 0.9rem;
+            font-weight: 600;
+            letter-spacing: 2px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-top: 3px solid #f47920;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1.5rem;
+        }
+
+        .loading-message {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 1rem;
+            min-height: 1.5rem;
+            animation: messageGlow 2s ease-in-out infinite alternate;
+        }
+
+        .loading-progress {
+            width: 300px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            margin: 1rem auto;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #f47920, #ff8c42);
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .loading-subtitle {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 1rem;
+            font-weight: 300;
+            letter-spacing: 0.5px;
+        }
+
+        .loading-powered-by {
+            margin-top: 2rem;
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .usai-badge {
+            background: linear-gradient(45deg, #f47920, #ff8c42);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            letter-spacing: 0.5px;
+        }
+
+        .flag {
+            font-size: 1rem;
+        }
+
+        @keyframes fadeInOverlay {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes messageGlow {
+            0% { opacity: 0.8; }
+            100% { opacity: 1; }
+        }
     </style>
 </head>
 <body>
+    <!-- OneGov FIT Loading Overlay -->
+    <div id="oneGovLoadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="loading-content">
+            <div class="loading-logo">
+                <div class="logo-circle">
+                    <span class="logo-text">OneGov</span>
+                    <span class="logo-subtext">FIT</span>
+                </div>
+            </div>
+            <div class="loading-spinner"></div>
+            <div class="loading-message" id="loadingMessage">Initializing OneGov FIT Market...</div>
+            <div class="loading-progress">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <div class="loading-subtitle">Federal Information Technology Market Intelligence</div>
+            <div class="loading-powered-by">
+                <span>Powered by</span>
+                <span class="usai-badge">USAi</span>
+                <span class="flag"></span>
+            </div>
+        </div>
+    </div>
+
     <div id="app">
         <div class="loading">Loading OneGov FIT Market...</div>
     </div>
+
+    <script>
+        // OneGov FIT Loading Manager
+        const LoadingManager = {
+            startTime: null,
+            estimatedDuration: 3000,
+            progressInterval: null,
+            context: 'data', // 'init', 'entity', 'view', 'data'
+
+            show: function(message, estimatedMs = 3000, context = 'data') {
+                this.context = context;
+                this.startTime = Date.now();
+                this.estimatedDuration = estimatedMs;
+
+                const overlay = document.getElementById('oneGovLoadingOverlay');
+                const messageEl = document.getElementById('loadingMessage');
+                const subtitleEl = overlay ? overlay.querySelector('.loading-subtitle') : null;
+                const progressBar = document.getElementById('progressBar');
+
+                if (overlay) {
+                    overlay.style.display = 'flex';
+                    messageEl.textContent = message || 'Processing...';
+                    
+                    // Update subtitle with view-specific information
+                    if (subtitleEl && context === 'entity') {
+                        subtitleEl.textContent = message || 'Federal Information Technology Market Intelligence';
+                    } else if (subtitleEl && context === 'view') {
+                        subtitleEl.textContent = message || 'Loading View...';
+                    } else if (subtitleEl) {
+                        subtitleEl.textContent = 'Federal Information Technology Market Intelligence';
+                    }
+                    
+                    progressBar.style.width = '0%';
+
+                    // Context-specific progress messages
+                    const progressMessages = {
+                        init: ['Initializing system...', 'Loading configurations...', 'Connecting to database...', 'Preparing interface...'],
+                        entity: ['Loading entity data...', 'Fetching relationships...', 'Building visualizations...', 'Rendering charts...'],
+                        view: ['Switching view...', 'Loading components...', 'Preparing layout...', 'Finalizing display...'],
+                        data: ['Connecting to database...', 'Fetching records...', 'Processing data...', 'Finalizing visualizations...']
+                    };
+
+                    const messages = progressMessages[context] || progressMessages.data;
+                    let messageIndex = 0;
+
+                    this.progressInterval = setInterval(() => {
+                        const elapsed = Date.now() - this.startTime;
+                        const progress = Math.min((elapsed / this.estimatedDuration) * 100, 95);
+                        progressBar.style.width = progress + '%';
+
+                        // Update message every 25% progress
+                        const newMessageIndex = Math.floor(progress / 25);
+                        if (newMessageIndex !== messageIndex && newMessageIndex < messages.length) {
+                            messageIndex = newMessageIndex;
+                            messageEl.textContent = messages[messageIndex];
+                        }
+
+                        if (progress >= 95) {
+                            clearInterval(this.progressInterval);
+                        }
+                    }, 100);
+                }
+            },
+
+            hide: function() {
+                const overlay = document.getElementById('oneGovLoadingOverlay');
+                const progressBar = document.getElementById('progressBar');
+                
+                if (overlay && this.progressInterval) {
+                    // Complete the progress bar
+                    progressBar.style.width = '100%';
+                    
+                    setTimeout(() => {
+                        overlay.style.display = 'none';
+                        progressBar.style.width = '0%';
+                        clearInterval(this.progressInterval);
+                        this.progressInterval = null;
+                    }, 200);
+                }
+            }
+        };
+
+        // Global navigation function with loading
+        function navigateWithLoading(url, loadingMessage = 'Loading...', context = 'view') {
+            LoadingManager.show(loadingMessage, 2000, context);
+            
+            setTimeout(() => {
+                window.location.href = url;
+            }, 300);
+        }
+
+        // Show loading on page initialization and keep it until data loads
+        window.addEventListener('load', function() {
+            LoadingManager.show('Initializing OneGov FIT Market...', 30000, 'init');
+            // Don't auto-hide - let the React component handle hiding when cards are rendered
+        });
+    </script>
 
     <script type="text/babel">
         const { useState, useEffect, useMemo, useCallback } = React;
@@ -6214,10 +6476,10 @@
             const [availableEntities, setAvailableEntities] = React.useState([]);
             const [availableParents, setAvailableParents] = React.useState([]);
             
-            // Column-first approach state variables
-            const [selectedEntityType, setSelectedEntityType] = React.useState(null);
+            // Column-first approach state variables - auto-load OEMs obligations with 5 entities
+            const [selectedEntityType, setSelectedEntityType] = React.useState('oem');
             const [selectedColumn, setSelectedColumn] = React.useState('obligations');
-            const [topN, setTopN] = React.useState(10);
+            const [topN, setTopN] = React.useState(5);
             
             // Entity name filtering state variables
             const [selectedEntities, setSelectedEntities] = React.useState([]);
@@ -6730,6 +6992,7 @@
                 if (!selectedEntityType) {
                     setCardData([]);
                     setLoading(false);
+                    LoadingManager.hide(); // Hide loading overlay when no entity type
                     return;
                 }
                 
@@ -6786,6 +7049,7 @@
                                 setAvailableYears(['2022', '2023', '2024', '2025']);
                             }
                             setLoading(false);
+                            LoadingManager.hide(); // Hide the global loading overlay when data is loaded
                         })
                         .withFailureHandler((error) => {
                             console.error('FRONTEND: Error loading column report data:', error);
@@ -6804,6 +7068,7 @@
                             });
                             setCardData(processedCards);
                             setLoading(false);
+                            LoadingManager.hide(); // Hide loading overlay on error too
                         })
                         .generateColumnReports(selectedEntityType, selectedColumn, topN, selectedEntities, 'all', 
                             selectedEntityType === 'Agencies' ? cfoActFilter : oneGovFilter, fiscalYearFilter);
@@ -6824,6 +7089,7 @@
                     });
                     setCardData(processedCards);
                     setLoading(false);
+                    LoadingManager.hide(); // Hide loading overlay on catch error too
                 }
             };
             
@@ -6870,6 +7136,7 @@
                 if (!selectedEntityType) {
                     setCardData([]);
                     setLoading(false);
+                    LoadingManager.hide(); // Hide loading overlay when no entity type
                     return;
                 }
                 
@@ -6894,17 +7161,20 @@
                             });
                             setCardData(processedCards);
                             setLoading(false);
+                            LoadingManager.hide(); // Hide loading overlay when filtered data is loaded
                         })
                         .withFailureHandler((error) => {
                             console.error('FRONTEND: Error loading filtered column data:', error);
                             setCardData([]);
                             setLoading(false);
+                            LoadingManager.hide(); // Hide loading overlay on filtered data error
                         })
                         .getFilteredReportBuilderData(entityNameFilter, parentDeptFilter);
                 } catch (error) {
                     console.error('Error in loadFilteredData:', error);
                     setCardData([]);
                     setLoading(false);
+                    LoadingManager.hide(); // Hide loading overlay on filtered data catch error
                 }
             };
             
@@ -7678,53 +7948,113 @@
                                     padding: '8px',
                                     fontSize: '0.8rem',
                                     maxHeight: '280px',
+                                    overflowX: 'auto',
                                     overflowY: 'auto'
                                 }}>
-                                    {card.tableData && (
-                                        <table style={{
-                                            width: '100%',
-                                            borderCollapse: 'collapse',
-                                            fontSize: '0.75rem'
-                                        }}>
-                                            <thead>
-                                                <tr>
-                                                    {card.tableData.headers?.map((header, idx) => (
-                                                        <th key={idx} style={{
-                                                            backgroundColor: '#f8f9fa',
-                                                            padding: '6px',
-                                                            border: '1px solid #e5e7eb',
-                                                            color: '#144673',
-                                                            fontWeight: '600',
-                                                            fontSize: '0.7rem',
-                                                            textAlign: idx === 0 ? 'left' : 'right'
-                                                        }}>
-                                                            {header}
-                                                        </th>
-                                                    ))}
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {card.tableData.rows?.map((row, rowIdx) => (
-                                                    <tr key={rowIdx} style={{
-                                                        borderBottom: '1px solid #e5e7eb'
-                                                    }}>
-                                                        {row.map((cell, cellIdx) => (
-                                                            <td key={cellIdx} style={{
-                                                                padding: '4px 6px',
+                                    {card.tableData && (() => {
+                                        // Calculate column totals (skip first column which is usually labels)
+                                        const columnTotals = card.tableData.headers.map((_, colIdx) => {
+                                            if (colIdx === 0) return 'Total';
+                                            
+                                            let total = 0;
+                                            card.tableData.rows.forEach(row => {
+                                                const cellValue = row[colIdx];
+                                                if (cellValue) {
+                                                    // Try to parse numeric value, handling currency format
+                                                    const numericValue = parseFloat(cellValue.toString().replace(/[$,]/g, ''));
+                                                    if (!isNaN(numericValue)) {
+                                                        total += numericValue;
+                                                    }
+                                                }
+                                            });
+                                            
+                                            // Format total appropriately
+                                            if (total > 0) {
+                                                if (card.tableData.headers[colIdx]?.toLowerCase().includes('percentage') || 
+                                                    card.tableData.headers[colIdx]?.includes('%')) {
+                                                    return `${(total / card.tableData.rows.length).toFixed(1)}%`;
+                                                } else if (total >= 1000000000) {
+                                                    return `$${(total / 1000000000).toFixed(1)}B`;
+                                                } else if (total >= 1000000) {
+                                                    return `$${(total / 1000000).toFixed(1)}M`;
+                                                } else if (total >= 1000) {
+                                                    return `$${(total / 1000).toFixed(1)}K`;
+                                                } else {
+                                                    return total.toFixed(0);
+                                                }
+                                            }
+                                            return '-';
+                                        });
+                                        
+                                        return (
+                                            <table style={{
+                                                width: '100%',
+                                                borderCollapse: 'collapse',
+                                                fontSize: '0.75rem',
+                                                minWidth: '400px'
+                                            }}>
+                                                <thead>
+                                                    <tr>
+                                                        {card.tableData.headers?.map((header, idx) => (
+                                                            <th key={idx} style={{
+                                                                backgroundColor: '#f8f9fa',
+                                                                padding: '6px',
                                                                 border: '1px solid #e5e7eb',
-                                                                color: '#374151',
+                                                                color: '#144673',
+                                                                fontWeight: '600',
                                                                 fontSize: '0.7rem',
-                                                                textAlign: cellIdx === 0 ? 'left' : 'right',
-                                                                fontWeight: cellIdx === 0 ? '500' : '400'
+                                                                textAlign: idx === 0 ? 'left' : 'right',
+                                                                position: 'sticky',
+                                                                top: 0,
+                                                                zIndex: 1
                                                             }}>
-                                                                {cell}
+                                                                {header}
+                                                            </th>
+                                                        ))}
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {card.tableData.rows?.map((row, rowIdx) => (
+                                                        <tr key={rowIdx} style={{
+                                                            borderBottom: '1px solid #e5e7eb'
+                                                        }}>
+                                                            {row.map((cell, cellIdx) => (
+                                                                <td key={cellIdx} style={{
+                                                                    padding: '4px 6px',
+                                                                    border: '1px solid #e5e7eb',
+                                                                    color: '#374151',
+                                                                    fontSize: '0.7rem',
+                                                                    textAlign: cellIdx === 0 ? 'left' : 'right',
+                                                                    fontWeight: cellIdx === 0 ? '500' : '400'
+                                                                }}>
+                                                                    {cell}
+                                                                </td>
+                                                            ))}
+                                                        </tr>
+                                                    ))}
+                                                    {/* Add totals row */}
+                                                    <tr style={{
+                                                        backgroundColor: '#144673',
+                                                        color: 'white',
+                                                        fontWeight: '600'
+                                                    }}>
+                                                        {columnTotals.map((total, idx) => (
+                                                            <td key={idx} style={{
+                                                                padding: '6px',
+                                                                border: '1px solid #e5e7eb',
+                                                                color: 'white',
+                                                                fontSize: '0.7rem',
+                                                                textAlign: idx === 0 ? 'left' : 'right',
+                                                                fontWeight: '600'
+                                                            }}>
+                                                                {total}
                                                             </td>
                                                         ))}
                                                     </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    )}
+                                                </tbody>
+                                            </table>
+                                        );
+                                    })()}
                                 </div>
                             ) : card.cardType === 'chart' ? (
                                 <div style={{ position: 'relative', height: '100%', width: '100%' }}>
@@ -8177,59 +8507,187 @@
                                     ) : card.cardType === 'table' && card.tableData ? (
                                         <div style={{
                                             width: '100%',
-                                            maxHeight: '500px',
-                                            overflowY: 'auto',
+                                            height: 'calc(100% - 40px)',
+                                            display: 'flex',
+                                            flexDirection: 'column',
                                             padding: '20px',
                                             fontSize: '0.9rem'
                                         }}>
-                                            <table style={{
-                                                width: '100%',
-                                                borderCollapse: 'collapse',
-                                                fontSize: '0.85rem',
-                                                backgroundColor: 'white',
-                                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                                                borderRadius: '6px',
-                                                overflow: 'hidden'
-                                            }}>
-                                                <thead>
-                                                    <tr>
-                                                        {card.tableData.headers?.map((header, idx) => (
-                                                            <th key={idx} style={{
-                                                                backgroundColor: '#144673',
-                                                                color: 'white',
-                                                                padding: '12px',
-                                                                border: 'none',
-                                                                fontWeight: '600',
-                                                                fontSize: '0.8rem',
-                                                                textAlign: idx === 0 ? 'left' : 'right'
-                                                            }}>
-                                                                {header}
-                                                            </th>
-                                                        ))}
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {card.tableData.rows?.map((row, rowIdx) => (
-                                                        <tr key={rowIdx} style={{
-                                                            backgroundColor: rowIdx % 2 === 0 ? '#f8f9fa' : 'white',
-                                                            borderBottom: rowIdx === card.tableData.rows.length - 1 ? 'none' : '1px solid #e5e7eb'
+                                            {(() => {
+                                                // Calculate column totals and row totals
+                                                const columnTotals = card.tableData.headers.map((_, colIdx) => {
+                                                    if (colIdx === 0) return 'Total';
+                                                    
+                                                    let total = 0;
+                                                    let isPercentage = false;
+                                                    card.tableData.rows.forEach(row => {
+                                                        const cellValue = row[colIdx];
+                                                        if (cellValue) {
+                                                            if (cellValue.toString().includes('%')) {
+                                                                isPercentage = true;
+                                                            }
+                                                            const numericValue = parseFloat(cellValue.toString().replace(/[$,%]/g, ''));
+                                                            if (!isNaN(numericValue)) {
+                                                                total += numericValue;
+                                                            }
+                                                        }
+                                                    });
+                                                    
+                                                    if (total > 0) {
+                                                        if (isPercentage) {
+                                                            return `${(total / card.tableData.rows.length).toFixed(1)}%`;
+                                                        } else if (total >= 1000000000) {
+                                                            return `$${(total / 1000000000).toFixed(2)}B`;
+                                                        } else if (total >= 1000000) {
+                                                            return `$${(total / 1000000).toFixed(2)}M`;
+                                                        } else if (total >= 1000) {
+                                                            return `$${(total / 1000).toFixed(2)}K`;
+                                                        } else {
+                                                            return `$${total.toFixed(2)}`;
+                                                        }
+                                                    }
+                                                    return '-';
+                                                });
+                                                
+                                                // Calculate row totals if there are multiple numeric columns
+                                                const rowsWithTotals = card.tableData.rows.map(row => {
+                                                    const newRow = [...row];
+                                                    let rowTotal = 0;
+                                                    let hasNumbers = false;
+                                                    
+                                                    row.forEach((cell, idx) => {
+                                                        if (idx > 0 && cell) {
+                                                            const numericValue = parseFloat(cell.toString().replace(/[$,%]/g, ''));
+                                                            if (!isNaN(numericValue) && !cell.toString().includes('%')) {
+                                                                rowTotal += numericValue;
+                                                                hasNumbers = true;
+                                                            }
+                                                        }
+                                                    });
+                                                    
+                                                    if (hasNumbers && card.tableData.headers.length > 2) {
+                                                        if (rowTotal >= 1000000000) {
+                                                            newRow.push(`$${(rowTotal / 1000000000).toFixed(2)}B`);
+                                                        } else if (rowTotal >= 1000000) {
+                                                            newRow.push(`$${(rowTotal / 1000000).toFixed(2)}M`);
+                                                        } else if (rowTotal >= 1000) {
+                                                            newRow.push(`$${(rowTotal / 1000).toFixed(2)}K`);
+                                                        } else {
+                                                            newRow.push(`$${rowTotal.toFixed(2)}`);
+                                                        }
+                                                    }
+                                                    
+                                                    return newRow;
+                                                });
+                                                
+                                                // Add 'Row Total' to headers if we added row totals
+                                                const headersWithTotal = [...card.tableData.headers];
+                                                if (rowsWithTotals[0]?.length > card.tableData.headers.length) {
+                                                    headersWithTotal.push('Row Total');
+                                                    // Add the grand total to column totals
+                                                    let grandTotal = 0;
+                                                    columnTotals.forEach((total, idx) => {
+                                                        if (idx > 0 && total !== '-') {
+                                                            const numericValue = parseFloat(total.replace(/[$,%BMK]/g, ''));
+                                                            if (!isNaN(numericValue)) {
+                                                                if (total.includes('B')) grandTotal += numericValue * 1000000000;
+                                                                else if (total.includes('M')) grandTotal += numericValue * 1000000;
+                                                                else if (total.includes('K')) grandTotal += numericValue * 1000;
+                                                                else grandTotal += numericValue;
+                                                            }
+                                                        }
+                                                    });
+                                                    if (grandTotal >= 1000000000) {
+                                                        columnTotals.push(`$${(grandTotal / 1000000000).toFixed(2)}B`);
+                                                    } else if (grandTotal >= 1000000) {
+                                                        columnTotals.push(`$${(grandTotal / 1000000).toFixed(2)}M`);
+                                                    } else if (grandTotal >= 1000) {
+                                                        columnTotals.push(`$${(grandTotal / 1000).toFixed(2)}K`);
+                                                    } else {
+                                                        columnTotals.push(`$${grandTotal.toFixed(2)}`);
+                                                    }
+                                                }
+                                                
+                                                return (
+                                                    <div style={{
+                                                        flex: 1,
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        overflow: 'auto',
+                                                        border: '1px solid #e5e7eb',
+                                                        borderRadius: '6px'
+                                                    }}>
+                                                        <table style={{
+                                                            width: '100%',
+                                                            borderCollapse: 'collapse',
+                                                            fontSize: '0.85rem',
+                                                            backgroundColor: 'white'
                                                         }}>
-                                                            {row.map((cell, cellIdx) => (
-                                                                <td key={cellIdx} style={{
-                                                                    padding: '8px 12px',
-                                                                    border: 'none',
-                                                                    color: '#374151',
-                                                                    fontSize: '0.8rem',
-                                                                    textAlign: cellIdx === 0 ? 'left' : 'right',
-                                                                    fontWeight: cellIdx === 0 ? '600' : '400'
+                                                            <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
+                                                                <tr>
+                                                                    {headersWithTotal.map((header, idx) => (
+                                                                        <th key={idx} style={{
+                                                                            backgroundColor: '#144673',
+                                                                            color: 'white',
+                                                                            padding: '12px',
+                                                                            borderRight: idx < headersWithTotal.length - 1 ? '1px solid #2563eb' : 'none',
+                                                                            fontWeight: '600',
+                                                                            fontSize: '0.8rem',
+                                                                            textAlign: idx === 0 ? 'left' : 'right',
+                                                                            whiteSpace: 'nowrap'
+                                                                        }}>
+                                                                            {header}
+                                                                        </th>
+                                                                    ))}
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {rowsWithTotals.map((row, rowIdx) => (
+                                                                    <tr key={rowIdx} style={{
+                                                                        backgroundColor: rowIdx % 2 === 0 ? '#f8f9fa' : 'white'
+                                                                    }}>
+                                                                        {row.map((cell, cellIdx) => (
+                                                                            <td key={cellIdx} style={{
+                                                                                padding: '8px 12px',
+                                                                                borderRight: cellIdx < row.length - 1 ? '1px solid #e5e7eb' : 'none',
+                                                                                borderBottom: '1px solid #e5e7eb',
+                                                                                color: '#374151',
+                                                                                fontSize: '0.8rem',
+                                                                                textAlign: cellIdx === 0 ? 'left' : 'right',
+                                                                                fontWeight: cellIdx === 0 || cellIdx === row.length - 1 ? '600' : '400',
+                                                                                backgroundColor: cellIdx === row.length - 1 && headersWithTotal.length > card.tableData.headers.length ? '#f3f4f6' : 'transparent',
+                                                                                whiteSpace: 'nowrap'
+                                                                            }}>
+                                                                                {cell}
+                                                                            </td>
+                                                                        ))}
+                                                                    </tr>
+                                                                ))}
+                                                                {/* Add totals row */}
+                                                                <tr style={{
+                                                                    backgroundColor: '#144673',
+                                                                    position: 'sticky',
+                                                                    bottom: 0
                                                                 }}>
-                                                                    {cell}
-                                                                </td>
-                                                            ))}
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
+                                                                    {columnTotals.map((total, idx) => (
+                                                                        <td key={idx} style={{
+                                                                            padding: '10px 12px',
+                                                                            borderRight: idx < columnTotals.length - 1 ? '1px solid #2563eb' : 'none',
+                                                                            color: 'white',
+                                                                            fontSize: '0.85rem',
+                                                                            textAlign: idx === 0 ? 'left' : 'right',
+                                                                            fontWeight: '700',
+                                                                            whiteSpace: 'nowrap'
+                                                                        }}>
+                                                                            {total}
+                                                                        </td>
+                                                                    ))}
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                );
+                                            })()}
                                         </div>
                                     ) : card.cardType === 'funnel' && card.funnelData ? (
                                         <div style={{
@@ -8566,6 +9024,7 @@
                     console.error('ReportsView: Error loading report types:', error);
                 } finally {
                     setLoading(false);
+                    LoadingManager.hide(); // Hide the loading screen when Reports data is loaded
                 }
             };
             
@@ -9654,6 +10113,9 @@
                 setError(null);
                 setEntityType(type);
                 
+                // Show loading overlay with specific view information
+                LoadingManager.show(`Loading ${type} View...`, 15000, 'entity');
+                
                 // Reset filters when switching entity types
                 setSelectedTier('All Tiers');
                 setColumnBFilter('All');
@@ -9701,17 +10163,50 @@
                         
                         setEntities(filteredEntities);
                         currentEntities = filteredEntities; // Store for detail view
+                        
+                        // Update loading message to show rendering phase
+                        const messageEl = document.getElementById('loadingMessage');
+                        if (messageEl) {
+                            messageEl.textContent = `Rendering ${filteredEntities.length} ${type} cards...`;
+                        }
+                        
+                        // Set loading false so React can render the cards
+                        setLoading(false);
                     }
                 } catch (err) {
                     setError(err.toString());
-                } finally {
                     setLoading(false);
+                    LoadingManager.hide();
+                } finally {
+                    // Don't set loading false here for success case, do it in setTimeout
                 }
             }, []);
 
             useEffect(() => {
                 loadEntities('OEMs');
             }, [loadEntities]);
+
+            // Effect to hide loading when cards are actually rendered
+            useEffect(() => {
+                if (!loading && entities.length > 0) {
+                    // Wait for DOM to update, then check if cards are rendered
+                    const checkCardsRendered = () => {
+                        const cardElements = document.querySelectorAll('.entity-card');
+                        if (cardElements.length === entities.length) {
+                            // All cards are in DOM, wait a bit more for content to load
+                            setTimeout(() => {
+                                LoadingManager.hide();
+                            }, 300);
+                        } else {
+                            // Cards not rendered yet, check again
+                            setTimeout(checkCardsRendered, 100);
+                        }
+                    };
+                    
+                    // Start checking after a brief delay
+                    setTimeout(checkCardsRendered, 50);
+                }
+            }, [loading, entities.length]);
 
             // Filter entities by tier, sheet type, and parent company/department
             const filteredEntities = useMemo(() => {
@@ -10023,9 +10518,16 @@
                                             }
                                             
                                             if (type === 'ReportBuilder' || type === 'Reports') {
+                                                // Show loading for view transitions - let the component handle hiding
+                                                const viewName = type === 'ReportBuilder' ? 'Report Builder' : 'Reports';
+                                                LoadingManager.show(`Loading ${viewName} View...`, 15000, 'view');
+                                                
                                                 setEntityType(type);
                                                 setEntities([]);
                                                 setLoading(false);
+                                                
+                                                // Let the ReportBuilder/Reports components handle hiding the loading screen
+                                                // when their data is actually loaded
                                             } else {
                                                 loadEntities(type);
                                             }
@@ -10050,7 +10552,7 @@
                         
                         {entityType !== 'ReportBuilder' && entityType !== 'Reports' && (
                             <>
-                                {loading && <div className="loading">Loading {entityType}...</div>}
+                                {/* Loading handled by OneGov loading overlay - no text needed */}
                                 {error && <div className="error">Error: {error}</div>}
                                 
                                 {!loading && !error && entities.length > 0 && (
