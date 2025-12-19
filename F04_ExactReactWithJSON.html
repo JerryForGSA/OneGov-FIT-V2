@@ -777,6 +777,47 @@
     </style>
 </head>
 <body>
+    <!-- View Selection Welcome Screen -->
+    <div id="viewSelectionOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #0a2240 0%, #144673 50%, #3a6ea5 100%); display: flex; justify-content: center; align-items: center; z-index: 9999;">
+        <div style="text-align: center; color: white; max-width: 1100px; padding: 2rem;">
+            <!-- OneGov FIT Logo -->
+            <div style="margin-bottom: 3rem;">
+                <div style="display: inline-block; background: rgba(255,255,255,0.1); border-radius: 50%; padding: 1.5rem; margin-bottom: 1rem; backdrop-filter: blur(10px); border: 3px solid rgba(244, 121, 32, 0.3);">
+                    <div style="font-size: 2.5rem; font-weight: 700; color: white; line-height: 1;">OneGov</div>
+                    <div style="font-size: 1rem; color: #f47920; font-weight: 600; letter-spacing: 2px;">FIT</div>
+                </div>
+                <div style="font-size: 1.1rem; opacity: 0.95; margin-bottom: 0.5rem; font-weight: 500;">Powered by USAi</div>
+                <div style="font-size: 1.1rem; color: #f47920; font-weight: 600;">Choose Your Starting View</div>
+            </div>
+            
+            <!-- Single Row of Orange Buttons -->
+            <div style="display: flex; justify-content: center; gap: 1.2rem; margin-bottom: 3rem; flex-wrap: wrap;">
+                <button onclick="selectView('oem')" style="background: linear-gradient(135deg, #f47920, #e67300); border: none; color: white; padding: 1.2rem 1.8rem; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(244, 121, 32, 0.3); min-width: 160px;" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 25px rgba(244, 121, 32, 0.5)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(244, 121, 32, 0.3)'">
+                    OEM View
+                </button>
+                <button onclick="selectView('vendor')" style="background: linear-gradient(135deg, #f47920, #e67300); border: none; color: white; padding: 1.2rem 1.8rem; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(244, 121, 32, 0.3); min-width: 160px;" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 25px rgba(244, 121, 32, 0.5)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(244, 121, 32, 0.3)'">
+                    Vendor View
+                </button>
+                <button onclick="selectView('agency')" style="background: linear-gradient(135deg, #f47920, #e67300); border: none; color: white; padding: 1.2rem 1.8rem; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(244, 121, 32, 0.3); min-width: 160px;" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 25px rgba(244, 121, 32, 0.5)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(244, 121, 32, 0.3)'">
+                    Agency View
+                </button>
+                <button onclick="selectView('reportbuilder')" style="background: linear-gradient(135deg, #f47920, #e67300); border: none; color: white; padding: 1.2rem 1.8rem; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(244, 121, 32, 0.3); min-width: 160px;" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 25px rgba(244, 121, 32, 0.5)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(244, 121, 32, 0.3)'">
+                    Report Builder
+                </button>
+                <button onclick="selectView('reports')" style="background: linear-gradient(135deg, #f47920, #e67300); border: none; color: white; padding: 1.2rem 1.8rem; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 15px rgba(244, 121, 32, 0.3); min-width: 160px;" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 6px 25px rgba(244, 121, 32, 0.5)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(244, 121, 32, 0.3)'">
+                    Reports
+                </button>
+            </div>
+            
+            <!-- Footer with Credits -->
+            <div style="display: flex; justify-content: center; align-items: center; opacity: 0.8; font-size: 0.85rem; margin-top: 1rem;">
+                <div style="color: rgba(255,255,255,0.7);">
+                    Built by gerald.mavis@gsa.gov
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- OneGov FIT Loading Overlay -->
     <div id="oneGovLoadingOverlay" class="loading-overlay" style="display: none;">
         <div class="loading-content">
@@ -895,10 +936,26 @@
         }
 
         // Show loading on page initialization and keep it until data loads
-        window.addEventListener('load', function() {
-            LoadingManager.show('Initializing OneGov FIT Market...', 30000, 'init');
-            // Don't auto-hide - let the React component handle hiding when cards are rendered
-        });
+        // DISABLED: Wait for view selection instead
+        // window.addEventListener('load', function() {
+        //     LoadingManager.show('Initializing OneGov FIT Market...', 30000, 'init');
+        //     // Don't auto-hide - let the React component handle hiding when cards are rendered
+        // });
+    </script>
+    
+    <script>
+        // Simple view selection function
+        window.selectView = function(viewType) {
+            console.log('View selected:', viewType);
+            // Hide the selection overlay
+            document.getElementById('viewSelectionOverlay').style.display = 'none';
+            // Set the initial view type for React
+            window.initialViewType = viewType;
+            // Start React app
+            window.startReactApp();
+            // Now start the loading and app initialization
+            LoadingManager.show('Loading ' + viewType.toUpperCase() + ' view...', 30000, 'init');
+        };
     </script>
 
     <script type="text/babel">
@@ -10099,7 +10156,12 @@
 
         const App = () => {
             const [entities, setEntities] = useState([]);
-            const [entityType, setEntityType] = useState('OEMs');
+            const [entityType, setEntityType] = useState(window.initialViewType ? 
+                (window.initialViewType === 'oem' ? 'OEMs' : 
+                 window.initialViewType === 'vendor' ? 'Vendors' :
+                 window.initialViewType === 'agency' ? 'Agencies' :
+                 window.initialViewType === 'reportbuilder' ? 'ReportBuilder' :
+                 window.initialViewType === 'reports' ? 'Reports' : 'OEMs') : 'OEMs');
             const [loading, setLoading] = useState(true);
             const [error, setError] = useState(null);
             const [selectedTier, setSelectedTier] = useState('All Tiers');
@@ -10183,8 +10245,8 @@
             }, []);
 
             useEffect(() => {
-                loadEntities('OEMs');
-            }, [loadEntities]);
+                loadEntities(entityType);
+            }, [loadEntities, entityType]);
 
             // Effect to hide loading when cards are actually rendered
             useEffect(() => {
@@ -10454,7 +10516,6 @@
                             <div className="nav-brand">
                                 <div className="brand-text">
                                     <span className="brand-name">OneGov FIT Market</span>
-                                    <span className="brand-tagline">Built by ITVMO</span>
                                 </div>
                             </div>
                             
@@ -10586,9 +10647,15 @@
         };
 
 
-        // Render with React 18 syntax
-        const root = ReactDOM.createRoot(document.getElementById('app'));
-        root.render(<App />);
+        // DISABLED: Wait for view selection before rendering React
+        // const root = ReactDOM.createRoot(document.getElementById('app'));
+        // root.render(<App />);
+        
+        // Function to start React app after view selection
+        window.startReactApp = function() {
+            const root = ReactDOM.createRoot(document.getElementById('app'));
+            root.render(<App />);
+        };
     </script>
     
     <script>
