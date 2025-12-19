@@ -1654,6 +1654,68 @@ function createEnhancedLabel(name, value, total, isOthers = false) {
 }
 
 /**
+ * Generate standardized chart title with all required elements
+ * @param {string} columnId - Column identifier
+ * @param {number} topN - Number of top entities (5, 10, 15, or undefined for 'All')
+ * @param {number} totalValue - Total dollar amount
+ * @param {string} fiscalYearFilter - Fiscal year filter ('all' or specific years)
+ * @param {boolean} hasOthers - Whether "All Other" is included
+ * @returns {string} Formatted title
+ */
+function generateStandardChartTitle(columnId, topN, totalValue, fiscalYearFilter, hasOthers = false) {
+  // Get column display name
+  const columnName = getColumnDisplayName(columnId);
+  
+  // Format top N text
+  let topText = '';
+  if (!topN || topN === 'all' || topN === null) {
+    topText = 'All';
+  } else {
+    topText = 'Top ' + topN;
+    if (hasOthers) {
+      topText += ' + All Other';
+    }
+  }
+  
+  // Format total value
+  const totalText = formatCurrencyShort(totalValue) + ' total';
+  
+  // Format fiscal year range with better error handling
+  let fyText = '';
+  try {
+    if (fiscalYearFilter && fiscalYearFilter !== 'all') {
+      // Single year filter
+      const year = fiscalYearFilter.toString();
+      fyText = 'FY' + (year.length === 4 ? year.slice(-2) : year);
+    } else {
+      // Default fallback for all years
+      fyText = 'FY22-FY25';
+      
+      // Try to get actual year range if possible
+      // Note: In actual implementation, you might pass entities to detect actual years
+      const years = getAvailableFiscalYears ? getAvailableFiscalYears([], columnId) : null;
+      if (years && years.length > 0) {
+        const sortedYears = years.sort();
+        const firstYear = sortedYears[0].toString().slice(-2);
+        const lastYear = sortedYears[sortedYears.length - 1].toString().slice(-2);
+        
+        if (firstYear === lastYear) {
+          fyText = 'FY' + firstYear;
+        } else {
+          fyText = 'FY' + firstYear + '-FY' + lastYear;
+        }
+      }
+    }
+  } catch (e) {
+    console.log('Error formatting fiscal year text:', e);
+    fyText = 'All Years';
+  }
+  
+  // Combine all parts
+  return `${columnName} - ${topText} (${totalText}, ${fyText})`;
+}
+
+/**
  * Chart type selection logic based on entity count and data type (LEGACY - kept for fallback)
  * @param {number} entityCount - Number of entities to display
  * @param {string} dataType - Type of data (obligations, piid, etc.)
@@ -3280,7 +3342,13 @@ function generateBreakdownPieChart(data, columnId, entityType) {
   
   return {
     id: `${entityType}_${columnId}_breakdown_pie`,
-    title: `${getColumnDisplayName(columnId)} - Category Breakdown`,
+    title: generateStandardChartTitle(
+      columnId,
+      data.length,
+      totalValue,
+      'all',
+      false
+    ),
     cardType: 'chart',
     chartType: 'pie',
     chartData: {
@@ -3346,7 +3414,13 @@ function generateBreakdownHorizontalBarChart(data, columnId, entityType, topN) {
   
   return {
     id: `${entityType}_${columnId}_breakdown_horizontalBar`,
-    title: `${getColumnDisplayName(columnId)} - Top ${Math.min(topN, data.length)} Categories`,
+    title: generateStandardChartTitle(
+      columnId,
+      Math.min(topN, data.length),
+      totalValue,
+      'all',
+      false
+    ),
     cardType: 'chart',
     chartType: 'bar',
     chartData: {
@@ -3412,7 +3486,13 @@ function generateBreakdownVerticalBarChart(data, columnId, entityType, topN) {
   
   return {
     id: `${entityType}_${columnId}_breakdown_verticalBar`,
-    title: `${getColumnDisplayName(columnId)} - Top ${Math.min(topN, data.length)} Categories`,
+    title: generateStandardChartTitle(
+      columnId,
+      Math.min(topN, data.length),
+      totalValue,
+      'all',
+      false
+    ),
     cardType: 'chart',
     chartType: 'bar',
     chartData: {
@@ -4170,7 +4250,7 @@ function generateBreakdownFiscalTrend(entities, columnId, entityType, options = 
   
   return {
     id: `${entityType}_${columnId}_breakdown_fiscalTrend`,
-    title: `${getColumnDisplayName(columnId)} - Historical Trend (${years.length} Years)`,
+    title: `${getColumnDisplayName(columnId)} - Fiscal Year Trend (${formatCurrencyShort(totalValue)} total, FY${years[0].toString().slice(-2)}-FY${years[years.length-1].toString().slice(-2)})`,
     cardType: 'chart',
     chartType: 'line',
     chartData: {
@@ -4567,7 +4647,13 @@ function generateVerticalBarChart(entities, entityType, columnId, topN, percenta
   
   return {
     id: `${entityType}_${columnId}_verticalBar`,
-    title: `${getColumnDisplayName(columnId)} - ${titleSuffix} (${formatCurrencyShort(totalDisplayed)}, ${getFiscalYearRangeText(fiscalYearFilter)})`,
+    title: generateStandardChartTitle(
+      columnId,
+      actualTopN,
+      totalDisplayed,
+      fiscalYearFilter,
+      entities.some(e => e.isOthers)
+    ),
     cardType: 'chart',
     chartType: 'bar',
     chartData: {
@@ -4650,7 +4736,13 @@ function generateHorizontalBarChart(entities, entityType, columnId, topN, percen
   
   return {
     id: `${entityType}_${columnId}_horizontalBar`,
-    title: `${getColumnDisplayName(columnId)} - ${titleSuffix} (${formatCurrencyShort(totalDisplayed)} total, ${getFiscalYearRangeText(fiscalYearFilter)})`,
+    title: generateStandardChartTitle(
+      columnId,
+      actualTopN,
+      totalDisplayed,
+      fiscalYearFilter,
+      entities.some(e => e.isOthers)
+    ),
     cardType: 'chart',
     chartType: 'bar',
     chartData: {
@@ -4981,9 +5073,19 @@ function generateImprovedLineChart(entities, entityType, columnId, fiscalYearFil
     fill: false
   }));
   
+  // Calculate total value across all entities and years
+  const totalValue = datasets.reduce((sum, dataset) => 
+    sum + dataset.data.reduce((dataSum, val) => dataSum + (val || 0), 0), 0);
+  
   return {
     id: `${entityType}_${columnId}_line_trends`,
-    title: `${getColumnDisplayName(columnId)} - Trends Over Time (FY ${years[0]} - FY ${years[years.length - 1]})`,
+    title: generateStandardChartTitle(
+      columnId,
+      entities.length,
+      totalValue,
+      fiscalYearFilter,
+      false
+    ),
     cardType: 'chart',
     chartType: 'line',
     chartData: {
@@ -5049,6 +5151,7 @@ function generateFunnelChart(entities, entityType, columnId, topN, percentageBas
   console.log(`🔻 DEBUG: topEntities count after slice: ${topEntities.length}`);
   const titleSuffix = !topN || topN >= entities.length ? `All ${entities.length}` : `Top ${topN}`;
   const fiscalYearText = getFiscalYearRangeText(fiscalYearFilter);
+  const totalValue = topEntities.reduce((sum, e) => sum + (e.value || 0), 0);
   
   // Calculate percentages for funnel
   const maxValue = Math.max(...topEntities.map(e => e.value));
@@ -5059,7 +5162,13 @@ function generateFunnelChart(entities, entityType, columnId, topN, percentageBas
   
   return {
     id: `${entityType}_${columnId}_funnel`,
-    title: `${getColumnDisplayName(columnId)} - ${titleSuffix} Funnel${fiscalYearText}`,
+    title: generateStandardChartTitle(
+      columnId,
+      topN || entities.length,
+      totalValue,
+      fiscalYearFilter,
+      entities.some(e => e.isOthers)
+    ),
     cardType: 'funnel',
     funnelData: funnelData.map((item, index) => ({
       label: entityType === 'agency' ? abbreviateAgencyName(item.name) : item.name,
@@ -5106,7 +5215,13 @@ function generatePieChart(entities, entityType, columnId, topN, percentageBase, 
   
   return {
     id: `${entityType}_${columnId}_pie`,
-    title: `${getColumnDisplayName(columnId)} - Top ${actualTopN}${entities.some(e => e.isOthers) ? ' + All Other' : ''} (${formatCurrencyShort(totalDisplayed)} total)`,
+    title: generateStandardChartTitle(
+      columnId, 
+      actualTopN, 
+      totalDisplayed, 
+      fiscalYearFilter, 
+      entities.some(e => e.isOthers)
+    ),
     cardType: 'chart',
     chartType: 'pie',
     chartData: {
@@ -5477,9 +5592,19 @@ function generateStackedBarChart(entities, entityType, columnId, maxEntities = 5
   const entityLabel = entityType === 'agency' ? 'Agencies' : 
                      entityType === 'oem' ? 'OEMs' : 'Vendors';
   
+  // Calculate total value across all datasets
+  const totalValue = datasets.reduce((sum, dataset) => 
+    sum + dataset.data.reduce((dataSum, val) => dataSum + (val || 0), 0), 0);
+  
   return {
     id: `${entityType}_${columnId}_stackedBar`,
-    title: `${getColumnDisplayName(columnId)} - Year over Year${fiscalYearText}`,
+    title: generateStandardChartTitle(
+      columnId,
+      maxEntities,
+      totalValue,
+      'all', // Stacked bar shows all years
+      false
+    ),
     cardType: 'chart',
     chartType: 'bar',
     chartData: {
@@ -5564,9 +5689,17 @@ function generateStackedBarChart(entities, entityType, columnId, maxEntities = 5
 function generateAreaChart(entities, entityType, columnId, fiscalYearFilter = 'all') {
   console.log(`📊 generateAreaChart called with fiscalYearFilter: ${fiscalYearFilter}, entities: ${entities.length}`);
   const fiscalYearText = getFiscalYearRangeText(fiscalYearFilter);
+  const totalSum = entities.reduce((sum, e) => sum + (e.value || 0), 0);
+  
   return {
     id: `${entityType}_${columnId}_area`,
-    title: `${getColumnDisplayName(columnId)} - Area Chart${fiscalYearText}`,
+    title: generateStandardChartTitle(
+      columnId,
+      entities.length,
+      totalSum,
+      fiscalYearFilter,
+      false
+    ),
     cardType: 'chart',
     chartType: 'line',
     chartData: {
