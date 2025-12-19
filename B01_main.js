@@ -48,8 +48,8 @@ function doGet(e) {
     
     // If no action or page specified, serve the main HTML page
     if (!action) {
-      // Use the exact React version with advanced JSON architecture
-      return HtmlService.createHtmlOutputFromFile('F04_ExactReactWithJSON')
+      // Use F01_MainDashboard.html with welcome screen functionality
+      return HtmlService.createHtmlOutputFromFile('F01_MainDashboard')
         .setTitle('OneGov FIT Market')
         .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
     }
