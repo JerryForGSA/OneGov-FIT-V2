@@ -1626,6 +1626,84 @@ function formatCurrencyShort(value) {
   }
 }
 
+/**
+ * Helper function to parse currency strings
+ * @param {string} currencyStr - Currency string like '$1.5M'
+ * @returns {number} Parsed numeric value
+ */
+function parseCurrencyValue(currencyStr) {
+  if (!currencyStr || typeof currencyStr !== 'string') return 0;
+  
+  let multiplier = 1;
+  let cleanValue = currencyStr.replace(/[$,]/g, '');
+  
+  if (cleanValue.includes('B')) {
+    multiplier = 1000000000;
+    cleanValue = cleanValue.replace('B', '');
+  } else if (cleanValue.includes('M')) {
+    multiplier = 1000000;
+    cleanValue = cleanValue.replace('M', '');
+  } else if (cleanValue.includes('K')) {
+    multiplier = 1000;
+    cleanValue = cleanValue.replace('K', '');
+  }
+  
+  return parseFloat(cleanValue) * multiplier;
+}
+
+/**
+ * Add totals row to table data
+ * @param {Object} tableData - Original table data with headers and rows
+ * @param {number} totalValue - Total value to display
+ * @param {boolean} includePercentage - Whether to include percentage column
+ * @returns {Object} Table data with totals row added
+ */
+function addTotalsRowToTable(tableData, totalValue, includePercentage = true) {
+  if (!tableData || !tableData.rows || tableData.rows.length === 0) return tableData;
+  
+  const updatedTableData = {
+    headers: [...tableData.headers],
+    rows: [...tableData.rows]
+  };
+  
+  const totalsRow = [];
+  
+  // Analyze each column to determine if it contains summable values
+  for (let colIndex = 0; colIndex < tableData.headers.length; colIndex++) {
+    const header = tableData.headers[colIndex].toLowerCase();
+    let columnSum = 0;
+    let isCurrency = false;
+    
+    // Check if this column has currency values
+    for (let rowIndex = 0; rowIndex < tableData.rows.length; rowIndex++) {
+      const cellValue = tableData.rows[rowIndex][colIndex];
+      if (typeof cellValue === 'string' && cellValue.includes('$')) {
+        isCurrency = true;
+        // Parse currency value
+        const numValue = parseCurrencyValue(cellValue);
+        if (!isNaN(numValue)) {
+          columnSum += numValue;
+        }
+      }
+    }
+
+    // Determine what to put in totals row for this column
+    if (colIndex === 0) {
+      totalsRow.push('TOTAL');
+    } else if (isCurrency) {
+      totalsRow.push(formatCurrencyShort(columnSum || totalValue));
+    } else if (header.includes('percentage') || header.includes('%')) {
+      totalsRow.push(includePercentage ? '100.0%' : '-');
+    } else {
+      totalsRow.push('-');
+    }
+  }
+  
+  updatedTableData.rows.push(totalsRow);
+  updatedTableData.hasTotalsRow = true;
+  
+  return updatedTableData;
+}
 
 /**
  * Calculate percentage with proper formatting
@@ -3401,7 +3479,7 @@ function generateBreakdownPieChart(data, columnId, entityType) {
         }
       }
     },
-    tableData: {
+    tableData: addTotalsRowToTable({
       headers: ['Category', `Total ${getMonetaryLabel(columnId)}`, 'Percentage'],
       rows: data.map(item => {
         const percentage = totalValue > 0 ? ((item.value / totalValue) * 100).toFixed(1) : '0.0';
@@ -3411,7 +3489,7 @@ function generateBreakdownPieChart(data, columnId, entityType) {
           `${percentage}%`
         ];
       })
-    },
+    }, totalValue, true),
     summary: {
       totalDisplayed: formatCurrencyShort(totalValue),
       categoriesShown: data.length,
@@ -3472,7 +3550,7 @@ function generateBreakdownHorizontalBarChart(data, columnId, entityType, topN) {
         }
       }
     },
-    tableData: {
+    tableData: addTotalsRowToTable({
       headers: ['Rank', 'Category', getMonetaryLabel(columnId), 'Percentage'],
       rows: displayData.map((item, index) => {
         const percentage = totalValue > 0 ? ((item.value / totalValue) * 100).toFixed(1) : '0.0';
@@ -3483,7 +3561,7 @@ function generateBreakdownHorizontalBarChart(data, columnId, entityType, topN) {
           `${percentage}%`
         ];
       })
-    },
+    }, totalValue, true),
     summary: {
       totalDisplayed: formatCurrencyShort(displayData.reduce((sum, item) => sum + item.value, 0)),
       percentageOfTotal: totalValue > 0 ? formatPercentage(displayData.reduce((sum, item) => sum + item.value, 0), totalValue) : '0.0%',
@@ -4749,7 +4827,7 @@ function generateVerticalBarChart(entities, entityType, columnId, topN, percenta
         }
       }
     },
-    tableData: {
+    tableData: addTotalsRowToTable({
       headers: ['Rank', 'Entity', getMonetaryLabel(columnId), 'Percentage'],
       rows: entities.map((entity, index) => {
         const percentage = formatPercentage(entity.value, percentageBase);
@@ -4760,7 +4838,7 @@ function generateVerticalBarChart(entities, entityType, columnId, topN, percenta
           percentage
         ];
       })
-    },
+    }, totalDisplayed, true),
     summary: {
       totalDisplayed: formatCurrencyShort(totalDisplayed),
       percentageOfTotal: formatPercentage(totalDisplayed, overallTotal),
@@ -4843,7 +4921,7 @@ function generateHorizontalBarChart(entities, entityType, columnId, topN, percen
         }
       }
     },
-    tableData: {
+    tableData: addTotalsRowToTable({
       headers: ['Rank', 'Entity', getMonetaryLabel(columnId), 'Percentage'],
       rows: entities.map((entity, index) => {
         const percentage = formatPercentage(entity.value, percentageBase);
@@ -4854,7 +4932,7 @@ function generateHorizontalBarChart(entities, entityType, columnId, topN, percen
           percentage
         ];
       })
-    },
+    }, totalDisplayed, true),
     summary: {
       totalDisplayed: formatCurrencyShort(totalDisplayed),
       percentageOfTotal: formatPercentage(totalDisplayed, overallTotal),
@@ -5235,7 +5313,7 @@ function generateFunnelChart(entities, entityType, columnId, topN, percentageBas
         ((funnelData[funnelData.length - 1].value / funnelData[0].value) * 100).toFixed(1) + '%' : 
         'N/A'
     },
-    tableData: {
+    tableData: addTotalsRowToTable({
       headers: ['Stage', 'Entity', `Value${fiscalYearText ? ` ${fiscalYearText}` : ''}`, 'Relative %', 'Drop-off %'],
       rows: funnelData.map((item, index) => {
         const prevValue = index > 0 ? funnelData[index - 1].value : item.value;
@@ -5250,7 +5328,7 @@ function generateFunnelChart(entities, entityType, columnId, topN, percentageBas
           dropOff
         ];
       })
-    }
+    }, funnelData[0]?.value || 0, false)
   };
 }
 
@@ -5346,7 +5424,7 @@ function generatePieChart(entities, entityType, columnId, topN, percentageBase, 
         }
       }
     },
-    tableData: {
+    tableData: addTotalsRowToTable({
       headers: ['Rank', 'Entity', getMonetaryLabel(columnId), 'Percentage'],
       rows: entities.map((entity, index) => {
         const percentage = formatPercentage(entity.value, percentageBase);
@@ -5357,7 +5435,7 @@ function generatePieChart(entities, entityType, columnId, topN, percentageBase, 
           percentage
         ];
       })
-    },
+    }, totalDisplayed, true),
     summary: {
       totalDisplayed: formatCurrencyShort(totalDisplayed),
       percentageOfTotal: formatPercentage(totalDisplayed, overallTotal),
@@ -5727,10 +5805,33 @@ function generateStackedBarChart(entities, entityType, columnId, maxEntities = 5
     },
     // Store breakdown data for export
     breakdownByYear: topEntitiesByYear,
-    tableData: {
-      headers: ['Entity', ...years, 'Total'],
-      rows: tableRows
-    }
+    tableData: (() => {
+      // Calculate totals by year for the totals row
+      const totalsByYear = {};
+      years.forEach(year => {
+        totalsByYear[year] = 0;
+        topEntitiesWithNames.forEach(entity => {
+          const value = fiscalYearData[year]?.[entity.name] || 0;
+          totalsByYear[year] += value;
+        });
+      });
+
+      // Add totals row
+      const totalsRow = ['TOTAL'];
+      years.forEach(year => {
+        totalsRow.push(formatCurrencyShort(totalsByYear[year]));
+      });
+      // Add grand total
+      const grandTotal = Object.values(totalsByYear).reduce((sum, val) => sum + val, 0);
+      totalsRow.push(formatCurrencyShort(grandTotal));
+
+      const updatedTableData = {
+        headers: ['Entity', ...years.map(year => `FY${year.toString().slice(-2)}`), 'Total'],
+        rows: [...tableRows, totalsRow]
+      };
+      updatedTableData.hasTotalsRow = true;
+      return updatedTableData;
+    })()
   };
 }
 
