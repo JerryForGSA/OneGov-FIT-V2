@@ -1008,6 +1008,9 @@
                 <li><button id="changeViewBtn" class="nav-btn" onclick="showViewSelector()" style="display: none;">
                     <span>↻</span> Change View
                 </button></li>
+                <li><button onclick="resetViewSelection()" class="nav-btn" style="background: #f47920; color: white;">
+                    ↻ Reset Starting View
+                </button></li>
                 <li><a href="#" onclick="testAccessLogging()" style="background: #ff6b6b;">🧪 Test Log</a></li>
                 <li><a href="#" onclick="simpleTest()" style="background: #00ff00; color: black;">✅ SIMPLE TEST</a></li>
                 <li><a href="#" onclick="testEntityLogging()" style="background: #4CAF50; color: white;">🎯 Test Entity</a></li>
@@ -1033,12 +1036,12 @@
             init: function() {
                 console.log('🎯 WelcomeScreen.init called');
                 // Show welcome screen on first load
-                if (!sessionStorage.getItem('viewSelected')) {
+                if (!sessionStorage.getItem('selectedView')) {
                     console.log('🎯 No view selected - showing welcome screen');
                     this.show();
                 } else {
                     // If returning user, load their last view
-                    const lastView = sessionStorage.getItem('lastView') || 'agency';
+                    const lastView = sessionStorage.getItem('selectedView') || 'agency';
                     console.log('🎯 Returning user - loading last view:', lastView);
                     this.loadView(lastView);
                 }
@@ -1083,8 +1086,7 @@
                 $(`.view-card[data-view="${viewType}"]`).addClass('selected');
                 
                 // Store selection and preference
-                sessionStorage.setItem('viewSelected', 'true');
-                sessionStorage.setItem('lastView', viewType);
+                sessionStorage.setItem('selectedView', viewType);
                 this.rememberPreference(viewType);
                 
                 // Short delay for visual feedback
@@ -1156,10 +1158,52 @@
         // Global function for Change View button
         window.showViewSelector = function() {
             if (confirm('Return to view selection? Current work will be preserved.')) {
-                sessionStorage.removeItem('viewSelected');
+                sessionStorage.removeItem('selectedView');
                 WelcomeScreen.show();
             }
         };
+
+        // Reset view selection function
+        window.resetViewSelection = function() {
+            sessionStorage.removeItem('selectedView');
+            location.reload(); // This will show selection screen again
+        };
+
+        // View-specific loading functions for more granular control
+        function loadAgencyData() {
+            console.log('🏛️ Loading Agency data...');
+            window.initialViewType = 'agency';
+            const root = ReactDOM.createRoot(document.getElementById('dashboardApp'));
+            root.render(<DashboardApp />);
+        }
+
+        function loadOEMData() {
+            console.log('🏭 Loading OEM data...');
+            window.initialViewType = 'oem';
+            const root = ReactDOM.createRoot(document.getElementById('dashboardApp'));
+            root.render(<DashboardApp />);
+        }
+
+        function loadVendorData() {
+            console.log('🤝 Loading Vendor data...');
+            window.initialViewType = 'vendor';
+            const root = ReactDOM.createRoot(document.getElementById('dashboardApp'));
+            root.render(<DashboardApp />);
+        }
+
+        function initializeReportBuilder() {
+            console.log('📊 Initializing Report Builder...');
+            // Could redirect to report builder page or load specific components
+            openReportBuilder();
+        }
+
+        function loadReportsView() {
+            console.log('📑 Loading Reports view...');
+            // Could load reports-specific React component or redirect
+            window.initialViewType = 'reports';
+            const root = ReactDOM.createRoot(document.getElementById('dashboardApp'));
+            root.render(<DashboardApp />);
+        }
 
         // Keyboard shortcuts for power users
         document.addEventListener('keydown', function(e) {
@@ -1189,8 +1233,10 @@
         document.addEventListener('DOMContentLoaded', function() {
             console.log('🚀 DOM loaded - initializing welcome screen');
             
-            // Initialize welcome screen first
+            // Initialize welcome screen first - this controls React loading
             WelcomeScreen.init();
+            
+            // DO NOT auto-start React here - let WelcomeScreen control it
         });
 
         // Loading Manager for OneGov FIT (same as F02)
