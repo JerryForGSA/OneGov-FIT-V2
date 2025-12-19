@@ -6257,7 +6257,7 @@ function getColumnDisplayName(columnId) {
     topPiid: 'Top PIID',
     activeContracts: 'Active Contracts',
     discountOfferings: 'Discount Offerings',
-    aiProduct: 'AI Products',
+    aiProduct: 'Product Obligations',
     aiCategory: 'AI Category',
     topBicProducts: 'Top BIC Products',
     reseller: 'Reseller',
