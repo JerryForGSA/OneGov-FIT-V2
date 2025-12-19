@@ -750,7 +750,7 @@
             </div>
             <div class="loading-subtitle">Federal Information Technology Market Intelligence</div>
             
-            <!-- Add this section after the progress bar/loading text -->
+            <!-- COMMENTED OUT - View selection buttons that were causing issues
             <div id="viewSelectionButtons" style="margin: 30px 0;">
               <p style="color: white; margin-bottom: 20px;">Select a view to begin:</p>
               <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
@@ -761,6 +761,7 @@
                 <button onclick="selectView('reports')" style="padding: 12px 24px; background: white; color: #2c5282; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">Reports</button>
               </div>
             </div>
+            -->
         </div>
     </div>
 
@@ -794,56 +795,44 @@
     <!-- Functions will be defined in React block -->
 
     <script type="text/babel">
-        // Simple view selection functions
+        // COMMENTED OUT - View selection code that was breaking normal app loading
+        /*
         function selectView(viewType) {
-          // Hide selection buttons
           $('#viewSelectionButtons').hide();
-          
-          // Show the progress bar and loading text
           $('.loading-spinner, .loading-message, .loading-progress').show();
-          
-          // Update loading text for selected view
           $('#loadingMessage').text('Loading ' + viewType.charAt(0).toUpperCase() + viewType.slice(1) + ' View...');
-          
-          // Save selection
           sessionStorage.setItem('selectedView', viewType);
-          
-          // Load the selected view
           loadViewData(viewType);
         }
 
-        // On page load, check if view already selected
         $(document).ready(function() {
           if (!sessionStorage.getItem('selectedView')) {
-            // First visit - show selection buttons, hide progress
             $('#viewSelectionButtons').show();
             $('.loading-spinner, .loading-message, .loading-progress').hide();
-            // Show the loading overlay
             $('#oneGovLoadingOverlay').show();
           } else {
-            // Returning - hide selection buttons, load saved view
             $('#viewSelectionButtons').hide();
             loadViewData(sessionStorage.getItem('selectedView'));
           }
         });
 
-        // Connect the selectView function to existing loading logic
         function loadViewData(viewType) {
-          // Start React app with the selected view type
           window.initialViewType = viewType;
-          
-          // Show main content
           $('.main-container').show();
-          
-          // Start the React app
           const root = ReactDOM.createRoot(document.getElementById('dashboardApp'));
           root.render(<DashboardApp />);
-          
-          // Hide loading overlay after a short delay
           setTimeout(() => {
             $('#oneGovLoadingOverlay').hide();
           }, 2000);
         }
+        */
+        
+        // RESTORE NORMAL APP INITIALIZATION
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 DOM loaded - starting React app normally');
+            const root = ReactDOM.createRoot(document.getElementById('dashboardApp'));
+            root.render(<DashboardApp />);
+        });
 
 
         // Loading Manager for OneGov FIT (same as F02)
