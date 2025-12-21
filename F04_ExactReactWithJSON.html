@@ -946,15 +946,37 @@
     <script>
         // Simple view selection function
         window.selectView = function(viewType) {
-            console.log('View selected:', viewType);
+            console.log('🔥 SELECTVIEW DEBUG: View selected:', viewType);
             // Hide the selection overlay
             document.getElementById('viewSelectionOverlay').style.display = 'none';
             // Set the initial view type for React
             window.initialViewType = viewType;
-            // Start React app
-            window.startReactApp();
-            // Now start the loading and app initialization
-            LoadingManager.show('Loading ' + viewType.toUpperCase() + ' view...', 30000, 'init');
+            
+            // Show OneGov FIT loading screen for all views consistently
+            console.log('🔥 SELECTVIEW DEBUG: About to show LoadingManager for:', viewType);
+            if (viewType === 'reportbuilder') {
+                LoadingManager.show('Loading REPORT BUILDER view...', 30000, 'init');
+                console.log('🔥 SELECTVIEW DEBUG: LoadingManager.show called for REPORT BUILDER');
+                // Delay React startup to give OneGov FIT loading screen time to display
+                setTimeout(() => {
+                    console.log('🔥 SELECTVIEW DEBUG: Starting React app for Report Builder after delay');
+                    window.startReactApp();
+                }, 1500);
+            } else if (viewType === 'reports') {
+                LoadingManager.show('Loading REPORTS view...', 30000, 'init');
+                console.log('🔥 SELECTVIEW DEBUG: LoadingManager.show called for REPORTS');
+                // Delay React startup to give OneGov FIT loading screen time to display
+                setTimeout(() => {
+                    console.log('🔥 SELECTVIEW DEBUG: Starting React app for Reports after delay');
+                    window.startReactApp();
+                }, 1500);
+            } else {
+                LoadingManager.show('Loading ' + viewType.toUpperCase() + ' view...', 30000, 'init');
+                console.log('🔥 SELECTVIEW DEBUG: LoadingManager.show called for:', viewType.toUpperCase());
+                // Start React app immediately for OEM/Vendor/Agency (they need data loading time)
+                window.startReactApp();
+                console.log('🔥 SELECTVIEW DEBUG: React app started');
+            }
         };
     </script>
 
@@ -7009,11 +7031,42 @@
             };
 
             React.useEffect(() => {
-                console.log('🔄 REPORT BUILDER MOUNTED - Initial load');
-                console.log('Initial state:', { selectedEntityType, selectedColumn });
+                console.log('🔥 REPORT BUILDER DEBUG: Component mounted - Initial load');
+                console.log('🔥 REPORT BUILDER DEBUG: Initial state:', { selectedEntityType, selectedColumn });
+                // Auto-load data with default OEM selection (like before)
+                console.log('🔥 REPORT BUILDER DEBUG: Auto-loading data for:', selectedEntityType, selectedColumn);
                 loadReportData();
                 loadFilterOptions();
             }, []);
+
+            // Effect to hide loading when cards are actually rendered (COPY OEM/Vendor/Agency pattern)
+            React.useEffect(() => {
+                if (!loading && cardData.length > 0) {
+                    console.log('🔥 REPORT BUILDER DEBUG: Data loaded with', cardData.length, 'cards, checking DOM rendering');
+                    // Wait for DOM to update, then check if cards are rendered (SAME AS OEM/VENDOR/AGENCY)
+                    const checkCardsRendered = () => {
+                        // Look for the actual card container divs with perspective style (unique to report builder cards)
+                        const cardElements = document.querySelectorAll('div[style*="perspective: 1000px"]');
+                        console.log('🔥 REPORT BUILDER DEBUG: Found', cardElements.length, 'cards in DOM, expected', cardData.length);
+                        if (cardElements.length >= cardData.length) {
+                            // All cards are in DOM, quick hide for better performance
+                            setTimeout(() => {
+                                console.log('🔥 REPORT BUILDER DEBUG: All cards rendered in DOM, hiding LoadingManager');
+                                LoadingManager.hide();
+                            }, 100);
+                        } else {
+                            // Cards not rendered yet, check again (SAME AS OEM/VENDOR/AGENCY)
+                            setTimeout(checkCardsRendered, 100);
+                        }
+                    };
+                    setTimeout(checkCardsRendered, 100);
+                } else if (!loading) {
+                    console.log('🔥 REPORT BUILDER DEBUG: Loading finished, no cards, hiding quickly');
+                    setTimeout(() => {
+                        LoadingManager.hide();
+                    }, 200);
+                }
+            }, [loading, cardData]);
             
             // Load filter options when entity type changes
             React.useEffect(() => {
@@ -7049,7 +7102,8 @@
                 if (!selectedEntityType) {
                     setCardData([]);
                     setLoading(false);
-                    LoadingManager.hide(); // Hide loading overlay when no entity type
+                    // Don't hide loading overlay immediately - wait for cards to render or use timer
+                    console.log('🔥 REPORT BUILDER DEBUG: No entity type selected, will check for cards rendering');
                     return;
                 }
                 
@@ -7106,7 +7160,7 @@
                                 setAvailableYears(['2022', '2023', '2024', '2025']);
                             }
                             setLoading(false);
-                            LoadingManager.hide(); // Hide the global loading overlay when data is loaded
+                            // Don't hide LoadingManager here - let the card rendering effect handle it
                         })
                         .withFailureHandler((error) => {
                             console.error('FRONTEND: Error loading column report data:', error);
@@ -7125,7 +7179,7 @@
                             });
                             setCardData(processedCards);
                             setLoading(false);
-                            LoadingManager.hide(); // Hide loading overlay on error too
+                            // Don't hide LoadingManager here - let the card rendering effect handle it
                         })
                         .generateColumnReports(selectedEntityType, selectedColumn, topN, selectedEntities, 'all', 
                             selectedEntityType === 'Agencies' ? cfoActFilter : oneGovFilter, fiscalYearFilter);
@@ -7146,7 +7200,7 @@
                     });
                     setCardData(processedCards);
                     setLoading(false);
-                    LoadingManager.hide(); // Hide loading overlay on catch error too
+                    // Don't hide LoadingManager here - let the card rendering effect handle it
                 }
             };
             
@@ -7193,7 +7247,7 @@
                 if (!selectedEntityType) {
                     setCardData([]);
                     setLoading(false);
-                    LoadingManager.hide(); // Hide loading overlay when no entity type
+                    // Don't hide LoadingManager here - let the useEffect handle it
                     return;
                 }
                 
@@ -7218,20 +7272,20 @@
                             });
                             setCardData(processedCards);
                             setLoading(false);
-                            LoadingManager.hide(); // Hide loading overlay when filtered data is loaded
+                            // Don't hide LoadingManager here - let the useEffect handle it
                         })
                         .withFailureHandler((error) => {
                             console.error('FRONTEND: Error loading filtered column data:', error);
                             setCardData([]);
                             setLoading(false);
-                            LoadingManager.hide(); // Hide loading overlay on filtered data error
+                            // Don't hide LoadingManager here - let the useEffect handle it
                         })
                         .getFilteredReportBuilderData(entityNameFilter, parentDeptFilter);
                 } catch (error) {
                     console.error('Error in loadFilteredData:', error);
                     setCardData([]);
                     setLoading(false);
-                    LoadingManager.hide(); // Hide loading overlay on filtered data catch error
+                    // Don't hide LoadingManager here - let the useEffect handle it
                 }
             };
             
@@ -7691,17 +7745,51 @@
                                 <p style={{color: '#6b7280', fontSize: '1rem'}}>Choose Agency, OEM, or Vendor above to generate column-specific reports with only 4 focused cards instead of 28+</p>
                             </div>
                         ) : loading ? (
-                            <div style={{textAlign: 'center', padding: '50px'}}>
-                                <div style={{
-                                    width: '50px', 
-                                    height: '50px',
-                                    border: '3px solid #e5e7eb',
-                                    borderTop: '3px solid #f47920',
-                                    borderRadius: '50%',
-                                    animation: 'spin 1s linear infinite',
-                                    margin: '0 auto 20px'
-                                }}></div>
-                                <p style={{color: '#6b7280'}}>Loading {selectedColumn} data for {selectedEntityType}...</p>
+                            <div style={{
+                                position: 'relative',
+                                minHeight: '400px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                background: 'linear-gradient(135deg, #0a2240 0%, #144673 50%, #3a6ea5 100%)',
+                                borderRadius: '12px',
+                                padding: '60px 40px',
+                                boxShadow: '0 8px 32px rgba(0,0,0,0.12)'
+                            }}>
+                                <div style={{textAlign: 'center', color: 'white'}}>
+                                    {/* OneGov FIT Logo */}
+                                    <div style={{
+                                        display: 'inline-block',
+                                        background: 'rgba(255,255,255,0.15)',
+                                        borderRadius: '50%',
+                                        padding: '24px',
+                                        marginBottom: '24px',
+                                        backdropFilter: 'blur(10px)',
+                                        border: '2px solid rgba(244, 121, 32, 0.4)'
+                                    }}>
+                                        <div style={{fontSize: '2rem', fontWeight: '700', color: 'white', lineHeight: '1'}}>OneGov</div>
+                                        <div style={{fontSize: '0.8rem', color: '#f47920', fontWeight: '600', letterSpacing: '1.5px'}}>FIT</div>
+                                    </div>
+                                    
+                                    {/* Loading Spinner */}
+                                    <div style={{
+                                        width: '40px',
+                                        height: '40px',
+                                        border: '3px solid rgba(255,255,255,0.3)',
+                                        borderTop: '3px solid #f47920',
+                                        borderRadius: '50%',
+                                        animation: 'spin 1s linear infinite',
+                                        margin: '0 auto 16px'
+                                    }}></div>
+                                    
+                                    {/* Loading Message */}
+                                    <div style={{fontSize: '1.1rem', fontWeight: '500', marginBottom: '8px'}}>
+                                        Loading {selectedColumn} Data
+                                    </div>
+                                    <div style={{fontSize: '0.95rem', opacity: '0.85', color: '#e5e7eb'}}>
+                                        Preparing {selectedEntityType} insights...
+                                    </div>
+                                </div>
                             </div>
                         ) : cardData.length === 0 ? (
                             <div style={{textAlign: 'center', padding: '50px', background: 'white', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)'}}>
@@ -9012,9 +9100,39 @@
             const [selectedType, setSelectedType] = useState('All Types');
 
             useEffect(() => {
-                console.log('📊 ReportsView: Component mounted, loading reports...');
+                console.log('🔥 REPORTS DEBUG: Component mounted, loading reports...');
+                // Load reports immediately - LoadingManager will hide when data is loaded
                 loadReports();
+                console.log('🔥 REPORTS DEBUG: Started reports loading, LoadingManager will hide when data loads');
             }, []);
+
+            // Effect to hide loading when report cards are actually rendered (COPY OEM/Vendor/Agency pattern)
+            useEffect(() => {
+                if (!loading && allReports.length > 0) {
+                    console.log('🔥 REPORTS DEBUG: Data loaded with', allReports.length, 'reports, checking DOM rendering');
+                    // Wait for DOM to update, then check if cards are rendered (SAME AS OEM/VENDOR/AGENCY)
+                    const checkCardsRendered = () => {
+                        const cardElements = document.querySelectorAll('div[style*="background: white"][style*="padding: 24px"]');
+                        console.log('🔥 REPORTS DEBUG: Found', cardElements.length, 'report cards in DOM, expected', allReports.length);
+                        if (cardElements.length >= allReports.length) {
+                            // All cards are in DOM, quick hide for better performance
+                            setTimeout(() => {
+                                console.log('🔥 REPORTS DEBUG: All report cards rendered in DOM, hiding LoadingManager');
+                                LoadingManager.hide();
+                            }, 100);
+                        } else {
+                            // Cards not rendered yet, check again (SAME AS OEM/VENDOR/AGENCY)
+                            setTimeout(checkCardsRendered, 100);
+                        }
+                    };
+                    setTimeout(checkCardsRendered, 100);
+                } else if (!loading) {
+                    console.log('🔥 REPORTS DEBUG: Loading finished, no reports, hiding quickly');
+                    setTimeout(() => {
+                        LoadingManager.hide();
+                    }, 200);
+                }
+            }, [loading, allReports]);
 
             const loadReports = async () => {
                 setLoading(true);
@@ -9081,7 +9199,8 @@
                     console.error('ReportsView: Error loading report types:', error);
                 } finally {
                     setLoading(false);
-                    LoadingManager.hide(); // Hide the loading screen when Reports data is loaded
+                    // Don't hide LoadingManager here - let the card rendering effect handle it
+                    console.log('🔥 REPORTS DEBUG: Data loaded, card rendering effect will hide LoadingManager');
                 }
             };
             
@@ -10185,7 +10304,16 @@
                 setCfoActFilter('All');
                 setOneGovFilter('All');
                 
-                // Use getAllEntities for all types to ensure consistent B02 data manager usage
+                // Handle ReportBuilder and Reports like regular entity types
+                if (type === 'ReportBuilder' || type === 'Reports') {
+                    // For ReportBuilder and Reports, just set the entity type and let the components handle themselves
+                    setEntities([]); // No entities needed for these views
+                    setLoading(false);
+                    // LoadingManager will be hidden by the component's DOM detection
+                    return;
+                }
+                
+                // Use getAllEntities for entity types to ensure consistent B02 data manager usage
                 const functionMap = {
                     'OEMs': 'getAllEntities',
                     'Vendors': 'getAllEntities', 
@@ -10578,20 +10706,8 @@
                                                     .logUserAccess('Reports');
                                             }
                                             
-                                            if (type === 'ReportBuilder' || type === 'Reports') {
-                                                // Show loading for view transitions - let the component handle hiding
-                                                const viewName = type === 'ReportBuilder' ? 'Report Builder' : 'Reports';
-                                                LoadingManager.show(`Loading ${viewName} View...`, 15000, 'view');
-                                                
-                                                setEntityType(type);
-                                                setEntities([]);
-                                                setLoading(false);
-                                                
-                                                // Let the ReportBuilder/Reports components handle hiding the loading screen
-                                                // when their data is actually loaded
-                                            } else {
-                                                loadEntities(type);
-                                            }
+                                            // Use the SAME loading system for ALL view types (like OEM/Vendor/Agency)
+                                            loadEntities(type);
                                         }}
                                         disabled={loading && type !== 'ReportBuilder' && type !== 'Reports'}
                                     >
