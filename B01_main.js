@@ -1609,8 +1609,8 @@ function generateColumnReports(entityType, columnId, topN = 10, selectedEntities
     availableYears: result.availableYears
   });
   
-  // Return just the cards array for backward compatibility with frontend
-  return result.cards || [];
+  // Return full result object with cards and availableYears for frontend
+  return result;
 }
 /**
  * LEGACY: Generate column-specific reports using DataManager

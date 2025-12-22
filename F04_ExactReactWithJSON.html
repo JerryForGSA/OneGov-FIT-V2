@@ -7836,6 +7836,9 @@
                             onChartTypeChange={setExpandedChartType}
                             onClose={() => setExpandedCard(null)}
                             columnConfig={COLUMN_CONFIG[selectedColumn]}
+                            fiscalYearFilter={fiscalYearFilter}
+                            selectedColumn={selectedColumn}
+                            topN={topN}
                         />
                     )}
                 </div>
@@ -8451,12 +8454,44 @@
 
         // Expanded Modal Component - Full screen view with chart type switcher
         // Expanded Modal - Shows same chart/table as card but bigger, with flip
-        const ExpandedModal = ({ card, chartType, onChartTypeChange, onClose, columnConfig }) => {
+        const ExpandedModal = ({ card, chartType, onChartTypeChange, onClose, columnConfig, fiscalYearFilter, selectedColumn, topN }) => {
             if (!card) return null;
             
             const [isFlipped, setIsFlipped] = React.useState(false);
             const [showLegend, setShowLegend] = React.useState(false);
             const [legendData, setLegendData] = React.useState([]);
+            
+            // Generate dynamic title based on current fiscal year filter
+            const getDynamicTitle = () => {
+                // If we have fiscal year info in the card, use it to build a dynamic title
+                if (card.title) {
+                    // Extract the base title pattern and replace the fiscal year part
+                    let dynamicTitle = card.title;
+                    
+                    // Check if this is a fiscal year-sensitive title
+                    if (dynamicTitle.includes('FY') || dynamicTitle.includes('All Years')) {
+                        // Replace any existing fiscal year text with the current filter
+                        if (fiscalYearFilter && fiscalYearFilter !== 'all') {
+                            // Handle single year
+                            if (!fiscalYearFilter.includes('-')) {
+                                dynamicTitle = dynamicTitle.replace(/FY\d{2,4}|All Years|FY\d{2}-\d{2}/g, `FY${fiscalYearFilter.slice(-2)}`);
+                            } else {
+                                // Handle year range
+                                const years = fiscalYearFilter.split('-');
+                                const startYear = years[0].slice(-2);
+                                const endYear = years[1].slice(-2);
+                                dynamicTitle = dynamicTitle.replace(/FY\d{2,4}|All Years|FY\d{2}-\d{2}/g, `FY${startYear}-${endYear}`);
+                            }
+                        } else {
+                            // Use "All Years" for 'all' filter
+                            dynamicTitle = dynamicTitle.replace(/FY\d{2,4}|FY\d{2}-\d{2}/g, 'All Years');
+                        }
+                    }
+                    
+                    return dynamicTitle;
+                }
+                return card.title || 'Chart View';
+            };
             
             return (
                 <div style={{
@@ -8498,7 +8533,7 @@
                                 fontSize: '1.2rem',
                                 fontWeight: '600',
                                 color: 'var(--dark-blue)'
-                            }}>{card.title}</h3>
+                            }}>{getDynamicTitle()}</h3>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 {/* Flip to Table/Chart button */}
                                 <button 

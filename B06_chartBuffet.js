@@ -2753,7 +2753,7 @@ function extractColumnData(entities, columnId) {
  * @param {number} topN - Number of top items to show
  * @returns {Array} Array of breakdown chart cards
  */
-function generateColumnBreakdownCharts(entities, entityType, columnId, topN = 10) {
+function generateColumnBreakdownCharts(entities, entityType, columnId, topN = 10, fiscalYearFilter = 'all') {
   // Only generate breakdown charts for specific columns that have categorical data
   const breakdownColumns = [
     'sumTier',
@@ -2797,7 +2797,7 @@ function generateColumnBreakdownCharts(entities, entityType, columnId, topN = 10
 
   // Add entity-focused stacked chart as first chart if conditions are met
   if (topN && topN > 0 && entityType !== 'summary') {
-    const entityStackedChart = generateEntityStackedChart(entities, columnId, entityType, topN);
+    const entityStackedChart = generateEntityStackedChart(entities, columnId, entityType, topN, fiscalYearFilter);
     if (entityStackedChart) {
       cards.push(entityStackedChart);
       console.log(`📊 Added entity-focused stacked chart for ${columnId}`);
@@ -2821,31 +2821,31 @@ function generateColumnBreakdownCharts(entities, entityType, columnId, topN = 10
     
     switch(chartType) {
       case 'horizontalBar':
-        chart = generateBreakdownHorizontalBarChart(sortedData, columnId, entityType, topN);
+        chart = generateBreakdownHorizontalBarChart(sortedData, columnId, entityType, topN, fiscalYearFilter);
         break;
       case 'verticalBar':
-        chart = generateBreakdownVerticalBarChart(sortedData, columnId, entityType, topN);
+        chart = generateBreakdownVerticalBarChart(sortedData, columnId, entityType, topN, fiscalYearFilter);
         break;
       case 'pie':
-        chart = generateBreakdownPieChart(sortedData, columnId, entityType);
+        chart = generateBreakdownPieChart(sortedData, columnId, entityType, fiscalYearFilter);
         break;
       case 'doughnut':
-        chart = generateBreakdownDoughnutChart(sortedData, columnId, entityType);
+        chart = generateBreakdownDoughnutChart(sortedData, columnId, entityType, fiscalYearFilter);
         break;
       case 'funnel':
-        chart = generateBreakdownFunnelChart(sortedData, columnId, entityType);
+        chart = generateBreakdownFunnelChart(sortedData, columnId, entityType, fiscalYearFilter);
         break;
       case 'line':
-        chart = generateBreakdownLineChart(sortedData, columnId, entityType);
+        chart = generateBreakdownLineChart(sortedData, columnId, entityType, fiscalYearFilter);
         break;
       case 'area':
-        chart = generateBreakdownAreaChart(sortedData, columnId, entityType);
+        chart = generateBreakdownAreaChart(sortedData, columnId, entityType, fiscalYearFilter);
         break;
       case 'stackedBar':
-        chart = generateBreakdownStackedBarChart(entities, columnId, entityType, topN);
+        chart = generateBreakdownStackedBarChart(entities, columnId, entityType, topN, fiscalYearFilter);
         break;
       case 'fiscalTrend':
-        chart = generateBreakdownFiscalTrend(entities, columnId, entityType, {});
+        chart = generateBreakdownFiscalTrend(entities, columnId, entityType, {fiscalYearFilter});
         break;
       case 'fiscalArea':
         chart = generateBreakdownFiscalArea(entities, columnId, entityType);
@@ -2879,8 +2879,30 @@ function generateEntityBreakdownCharts(entities, entityType, columnId, topN = 10
   
   // Filter entities that have data for this column
   const entitiesWithData = entities.filter(entity => {
-    const value = entity.value || entity[columnId];
-    return value && parseFloat(value) > 0;
+    // For obligations column, use totalObligations from DataManager
+    if (columnId === 'obligations') {
+      return entity.totalObligations && entity.totalObligations > 0;
+    }
+    
+    // For other columns, check if the column data exists
+    const columnData = entity[columnId];
+    if (!columnData) return false;
+    
+    // Handle different data structures
+    if (typeof columnData === 'object' && columnData.total) {
+      return columnData.total > 0;
+    } else if (typeof columnData === 'number') {
+      return columnData > 0;
+    } else if (typeof columnData === 'string') {
+      try {
+        const parsed = JSON.parse(columnData);
+        return parsed && (parsed.total > 0 || parsed.value > 0);
+      } catch (e) {
+        return false;
+      }
+    }
+    
+    return false;
   }).slice(0, topN);
 
   if (entitiesWithData.length === 0) {
@@ -2889,21 +2911,66 @@ function generateEntityBreakdownCharts(entities, entityType, columnId, topN = 10
 
   // Calculate total value for title
   const totalValue = entitiesWithData.reduce((sum, entity) => {
-    const value = entity.value || entity[columnId] || 0;
-    return sum + parseFloat(value);
+    // For obligations column, use totalObligations from DataManager
+    if (columnId === 'obligations') {
+      return sum + (entity.totalObligations || 0);
+    }
+    
+    // For other columns, extract value from column data
+    const columnData = entity[columnId];
+    if (!columnData) return sum;
+    
+    if (typeof columnData === 'object' && columnData.total) {
+      return sum + columnData.total;
+    } else if (typeof columnData === 'number') {
+      return sum + columnData;
+    } else if (typeof columnData === 'string') {
+      try {
+        const parsed = JSON.parse(columnData);
+        return sum + (parsed.total || parsed.value || 0);
+      } catch (e) {
+        return sum;
+      }
+    }
+    
+    return sum;
   }, 0);
 
   // Generate Top N Entities Bar Chart
   charts.push({
     id: `${columnId}-entity-breakdown-bar`,
-    title: generateStandardChartTitle(columnId, topN, totalValue, 'all'),
+    title: generateStandardChartTitle(columnId, topN, totalValue, fiscalYearFilter),
     cardType: 'chart',
     chartType: 'bar',
     chartData: {
       labels: entitiesWithData.map(e => entityType === 'agency' ? abbreviateAgencyName(e.name) : e.name),
       datasets: [{
         label: columnDisplayName,
-        data: entitiesWithData.map(e => e.value || e[columnId] || 0),
+        data: entitiesWithData.map(e => {
+          // For obligations column, use totalObligations from DataManager
+          if (columnId === 'obligations') {
+            return e.totalObligations || 0;
+          }
+          
+          // For other columns, extract value from column data
+          const columnData = e[columnId];
+          if (!columnData) return 0;
+          
+          if (typeof columnData === 'object' && columnData.total) {
+            return columnData.total;
+          } else if (typeof columnData === 'number') {
+            return columnData;
+          } else if (typeof columnData === 'string') {
+            try {
+              const parsed = JSON.parse(columnData);
+              return parsed.total || parsed.value || 0;
+            } catch (err) {
+              return 0;
+            }
+          }
+          
+          return 0;
+        }),
         backgroundColor: entitiesWithData.map((e, idx) => getChartColor({
           columnId: columnId,
           label: e.name,
@@ -2945,12 +3012,33 @@ function generateEntityBreakdownCharts(entities, entityType, columnId, topN = 10
     tableData: {
       headers: ['Rank', entityType === 'agency' ? 'Agency' : entityType === 'oem' ? 'OEM' : 'Vendor', columnDisplayName, 'Percentage'],
       rows: entitiesWithData.map((entity, idx) => {
-        const total = entitiesWithData.reduce((sum, e) => sum + (e.value || e[columnId] || 0), 0);
-        const percentage = total > 0 ? ((entity.value || entity[columnId] || 0) / total * 100).toFixed(1) + '%' : '0.0%';
+        const total = totalValue; // Use the already calculated totalValue
+        
+        // Extract entity value using same logic as above
+        let entityValue = 0;
+        if (columnId === 'obligations') {
+          entityValue = entity.totalObligations || 0;
+        } else {
+          const columnData = entity[columnId];
+          if (typeof columnData === 'object' && columnData.total) {
+            entityValue = columnData.total;
+          } else if (typeof columnData === 'number') {
+            entityValue = columnData;
+          } else if (typeof columnData === 'string') {
+            try {
+              const parsed = JSON.parse(columnData);
+              entityValue = parsed.total || parsed.value || 0;
+            } catch (err) {
+              entityValue = 0;
+            }
+          }
+        }
+        
+        const percentage = total > 0 ? (entityValue / total * 100).toFixed(1) + '%' : '0.0%';
         return [
           idx + 1,
           entity.name,
-          formatCurrency(entity.value || entity[columnId] || 0),
+          formatCurrency(entityValue),
           percentage
         ];
       })
@@ -2964,7 +3052,7 @@ function generateEntityBreakdownCharts(entities, entityType, columnId, topN = 10
  * Generate Entity-Focused Stacked Bar Chart
  * Shows breakdown of categories for top entities in a single chart
  */
-function generateEntityStackedChart(entities, columnId, entityType, topN) {
+function generateEntityStackedChart(entities, columnId, entityType, topN, fiscalYearFilter = 'all') {
   console.log(`📊 generateEntityStackedChart: ${entityType} / ${columnId} with ${entities.length} entities, topN: ${topN}`);
   
   if (!entities || entities.length === 0) {
@@ -3004,7 +3092,7 @@ function generateEntityStackedChart(entities, columnId, entityType, topN) {
   
   return {
     id: `${entityType}_${columnId}_entity_stacked`,
-    title: generateStandardChartTitle(columnId, topEntities.length, totalValue, 'all'),
+    title: generateStandardChartTitle(columnId, topEntities.length, totalValue, fiscalYearFilter),
     cardType: 'chart',
     chartType: 'bar',
     chartData: {
@@ -3229,8 +3317,10 @@ function generateChartBuffet(entityType, columnId, entities, options = {}) {
 
   // Extract actual column data instead of using entity data
   console.log(`Chart generation: Starting extraction for ${entities.length} ${entityType} entities, column: ${columnId}`);
+  console.log('🔴 DEBUG: First entity for extractColumnData:', entities[0] ? Object.keys(entities[0]) : 'NO ENTITIES');
   const columnDataItems = extractColumnData(entities, columnId);
   console.log(`Chart generation: Extracted ${columnDataItems.length} data items`);
+  console.log('🔴 DEBUG: First extracted item:', columnDataItems[0]);
   
   let chartEntities;
   if (columnDataItems.length === 0) {
@@ -3291,7 +3381,7 @@ function generateChartBuffet(entityType, columnId, entities, options = {}) {
 
   // 1. GENERATE BREAKDOWN CHARTS FIRST
   // These show the actual content categories (e.g. Tiers, Products) instead of Entities
-  const breakdownCharts = generateColumnBreakdownCharts(entities, entityType, columnId, effectiveTopN);
+  const breakdownCharts = generateColumnBreakdownCharts(entities, entityType, columnId, effectiveTopN, fiscalYearFilter);
 
   // If breakdown charts exist, add them first (Primary View)
   if (breakdownCharts.length > 0) {
@@ -3489,7 +3579,7 @@ function generateChartBuffet(entityType, columnId, entities, options = {}) {
 /**
  * Generate breakdown pie chart showing category distribution
  */
-function generateBreakdownPieChart(data, columnId, entityType) {
+function generateBreakdownPieChart(data, columnId, entityType, fiscalYearFilter = 'all') {
   console.log(`🥧 generateBreakdownPieChart for ${columnId}: Received ${data.length} items`);
   const totalValue = data.reduce((sum, item) => sum + item.value, 0);
   
@@ -3499,7 +3589,7 @@ function generateBreakdownPieChart(data, columnId, entityType) {
       columnId,
       data.length,
       totalValue,
-      'all',
+      fiscalYearFilter,
       false
     ),
     cardType: 'chart',
@@ -3560,7 +3650,7 @@ function generateBreakdownPieChart(data, columnId, entityType) {
 /**
  * Generate breakdown horizontal bar chart
  */
-function generateBreakdownHorizontalBarChart(data, columnId, entityType, topN) {
+function generateBreakdownHorizontalBarChart(data, columnId, entityType, topN, fiscalYearFilter = 'all') {
   console.log(`📊 generateBreakdownHorizontalBarChart for ${columnId}: Received ${data.length} items`);
   const displayData = topN ? data.slice(0, topN) : data;
   const totalValue = data.reduce((sum, item) => sum + item.value, 0);
@@ -3571,7 +3661,7 @@ function generateBreakdownHorizontalBarChart(data, columnId, entityType, topN) {
       columnId,
       Math.min(topN, data.length),
       totalValue,
-      'all',
+      fiscalYearFilter,
       false
     ),
     cardType: 'chart',
@@ -3632,7 +3722,7 @@ function generateBreakdownHorizontalBarChart(data, columnId, entityType, topN) {
 /**
  * Generate breakdown vertical bar chart
  */
-function generateBreakdownVerticalBarChart(data, columnId, entityType, topN) {
+function generateBreakdownVerticalBarChart(data, columnId, entityType, topN, fiscalYearFilter = 'all') {
   console.log(`📊 generateBreakdownVerticalBarChart for ${columnId}: Received ${data.length} items`);
   const displayData = topN ? data.slice(0, topN) : data;
   const totalValue = data.reduce((sum, item) => sum + item.value, 0);
@@ -3643,7 +3733,7 @@ function generateBreakdownVerticalBarChart(data, columnId, entityType, topN) {
       columnId,
       Math.min(topN, data.length),
       totalValue,
-      'all',
+      fiscalYearFilter,
       false
     ),
     cardType: 'chart',
@@ -3701,13 +3791,13 @@ function generateBreakdownVerticalBarChart(data, columnId, entityType, topN) {
 /**
  * Generate breakdown doughnut chart
  */
-function generateBreakdownDoughnutChart(data, columnId, entityType) {
+function generateBreakdownDoughnutChart(data, columnId, entityType, fiscalYearFilter = 'all') {
   console.log(`🍩 generateBreakdownDoughnutChart for ${columnId}: Received ${data.length} items`);
   const totalValue = data.reduce((sum, item) => sum + item.value, 0);
   
   return {
     id: `${entityType}_${columnId}_breakdown_doughnut`,
-    title: generateStandardChartTitle(columnId, 'all', totalValue, 'all'),
+    title: generateStandardChartTitle(columnId, data.length, totalValue, fiscalYearFilter),
     cardType: 'chart',
     chartType: 'doughnut',
     chartData: {
@@ -3752,7 +3842,7 @@ function generateBreakdownDoughnutChart(data, columnId, entityType) {
 /**
  * Generate breakdown funnel chart
  */
-function generateBreakdownFunnelChart(data, columnId, entityType) {
+function generateBreakdownFunnelChart(data, columnId, entityType, fiscalYearFilter = 'all') {
   console.log(`🔻 generateBreakdownFunnelChart for ${columnId}: Received ${data.length} items`);
   const totalValue = data.reduce((sum, item) => sum + item.value, 0);
   
@@ -3774,7 +3864,7 @@ function generateBreakdownFunnelChart(data, columnId, entityType) {
       columnId,
       data.length,
       totalValue,
-      'all',
+      fiscalYearFilter,
       false
     ),
     cardType: 'funnel',
@@ -3792,7 +3882,7 @@ function generateBreakdownFunnelChart(data, columnId, entityType) {
 /**
  * Generate breakdown line chart
  */
-function generateBreakdownLineChart(data, columnId, entityType) {
+function generateBreakdownLineChart(data, columnId, entityType, fiscalYearFilter = 'all') {
   console.log(`📈 generateBreakdownLineChart for ${columnId}: Received ${data.length} items`);
   const totalValue = data.reduce((sum, item) => sum + item.value, 0);
   
@@ -3802,7 +3892,7 @@ function generateBreakdownLineChart(data, columnId, entityType) {
       columnId,
       data.length,
       totalValue,
-      'all',
+      fiscalYearFilter,
       false
     ),
     cardType: 'chart',
@@ -3857,7 +3947,7 @@ function generateBreakdownLineChart(data, columnId, entityType) {
 /**
  * Generate breakdown area chart
  */
-function generateBreakdownAreaChart(data, columnId, entityType) {
+function generateBreakdownAreaChart(data, columnId, entityType, fiscalYearFilter = 'all') {
   console.log(`📊 generateBreakdownAreaChart for ${columnId}: Received ${data.length} items`);
   const totalValue = data.reduce((sum, item) => sum + item.value, 0);
   
@@ -3867,7 +3957,7 @@ function generateBreakdownAreaChart(data, columnId, entityType) {
       columnId,
       data.length,
       totalValue,
-      'all',
+      fiscalYearFilter,
       false
     ),
     cardType: 'chart',
@@ -3923,7 +4013,7 @@ function generateBreakdownAreaChart(data, columnId, entityType) {
  * Generate stacked bar chart showing category breakdown per entity
  * ENHANCED: Tooltips now show full category breakdown with values and percentages
  */
-function generateBreakdownStackedBarChart(entities, columnId, entityType, topN = 5) {
+function generateBreakdownStackedBarChart(entities, columnId, entityType, topN = 5, fiscalYearFilter = 'all') {
   console.log(`📊 generateBreakdownStackedBarChart for ${columnId}: Received ${entities.length} entities, topN: ${topN}`);
   
   // Limit entities to topN (handle null/undefined for "All")
@@ -4098,7 +4188,7 @@ function generateBreakdownStackedBarChart(entities, columnId, entityType, topN =
       columnId,
       topN || entities.length,
       totalValue,
-      'all',
+      fiscalYearFilter,
       false
     ),
     cardType: 'chart',
@@ -6391,13 +6481,13 @@ function getCategoryColor(category, index, totalCount) {
 /**
  * Generate mixed view charts combining different perspectives
  */
-function generateMixedViewCharts(entities, columnId, entityType, topN) {
+function generateMixedViewCharts(entities, columnId, entityType, topN, fiscalYearFilter = 'all') {
   const charts = [];
   
   if (!entities || entities.length === 0) return charts;
   
   // 1. Overall distribution (existing breakdown)
-  const breakdownCharts = generateColumnBreakdownCharts(entities, entityType, columnId, topN);
+  const breakdownCharts = generateColumnBreakdownCharts(entities, entityType, columnId, topN, fiscalYearFilter);
   if (breakdownCharts.length > 0) {
     charts.push(...breakdownCharts);
   }
@@ -6502,30 +6592,43 @@ function generateColumnReportsBuffet(entityType, columnId, topN = 10, selectedEn
   
   try {
     // Get DataManager instance
+    console.log('🔍 DEBUG: Getting DataManager instance...');
     const dataManager = getDataManager();
+    console.log('🔍 DEBUG: DataManager instance acquired:', !!dataManager);
     
     // CRITICAL FIX: Always get ALL entities first, don't pre-filter by topN
     let reportEntities = [];
     
     try {
       // Get ALL entities of this type (not filtered by topN)
+      console.log('🔍 DEBUG: Attempting to load entities, entityType:', entityType);
+      console.log('🔍 DEBUG: DataManager available:', !!dataManager);
+      
       if (entityType === 'agency') {
         reportEntities = dataManager.getAgencies();
+        console.log('🔍 DEBUG: getAgencies() returned:', reportEntities ? reportEntities.length : 'null');
       } else if (entityType === 'oem') {
         reportEntities = dataManager.getOEMs();
+        console.log('🔍 DEBUG: getOEMs() returned:', reportEntities ? reportEntities.length : 'null');
       } else if (entityType === 'vendor') {
         reportEntities = dataManager.getVendors();
+        console.log('🔍 DEBUG: getVendors() returned:', reportEntities ? reportEntities.length : 'null');
       }
       
       console.log(`📊 Loaded ${reportEntities.length} total ${entityType} entities (before any filtering)`);
       
     } catch (error) {
       console.error('DataManager entity loading failed:', error);
+      console.error('Error details:', error.toString());
     }
     
     if (reportEntities.length === 0) {
       console.error('No entities found after all loading attempts');
-      return [];
+      return {
+        cards: [],
+        availableYears: [],
+        fiscalYearFilter: fiscalYearFilter || 'all'
+      };
     }
     
     // Apply DOD/Civilian filter if specified
@@ -6741,6 +6844,11 @@ function generateColumnReportsBuffet(entityType, columnId, topN = 10, selectedEn
     
     // Generate the complete chart buffet with ALL entities
     // The chart generation will handle topN internally
+    console.log('🔴 ABOUT TO GENERATE CARDS with:', reportEntities.length, 'entities');
+    console.log('🔴 First entity structure:', reportEntities[0] ? Object.keys(reportEntities[0]) : 'NO ENTITIES');
+    console.log('🔴 First entity totalObligations:', reportEntities[0]?.totalObligations);
+    console.log('🔴 First entity value:', reportEntities[0]?.value);
+    
     const cards = generateChartBuffet(entityType, columnId, reportEntities, {
       topN: topN,  // Pass topN but don't pre-filter entities
       selectedEntities: selectedEntities,
@@ -6748,6 +6856,9 @@ function generateColumnReportsBuffet(entityType, columnId, topN = 10, selectedEn
       tierFilter: tierFilter,
       fiscalYearFilter: fiscalYearFilter
     });
+    
+    console.log('🔴 CARDS GENERATED:', cards.length);
+    console.log('🔴 First card title:', cards[0]?.title || 'NO CARDS');
     
     // Add metadata to each card
     cards.forEach(card => {
