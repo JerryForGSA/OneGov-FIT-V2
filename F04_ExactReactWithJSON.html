@@ -6665,7 +6665,7 @@
                     defaultChart: 'horizontalBar'
                 },
                 fasOem: { 
-                    title: 'FAS OEM Analysis', 
+                    title: 'OEM Obligations', 
                     icon: '🏭',
                     chartTypes: ['horizontalBar', 'funnel', 'table'],
                     defaultChart: 'horizontalBar'
@@ -7454,7 +7454,7 @@
                                       <option value="reseller">🔄 Reseller Analysis</option>
                                       <option value="bicReseller">🔄 BIC Reseller Sales</option>
                                       <option value="bicOem">🏭 OEM BIC Sales</option>
-                                      <option value="fasOem">🏭 FAS OEM Analysis</option>
+                                      <option value="fasOem">🏭 OEM Obligations</option>
                                       <option value="fundingAgency">🏢 Funding Agencies</option>
                                       <option value="oneGovTier">⭐ OneGov Tier</option>
                                   </select>
@@ -7786,8 +7786,11 @@
                                     <div style={{fontSize: '1.1rem', fontWeight: '500', marginBottom: '8px'}}>
                                         Loading {selectedColumn} Data
                                     </div>
-                                    <div style={{fontSize: '0.95rem', opacity: '0.85', color: '#e5e7eb'}}>
+                                    <div style={{fontSize: '0.95rem', opacity: '0.85', color: '#e5e7eb', marginBottom: '12px'}}>
                                         Preparing {selectedEntityType} insights...
+                                    </div>
+                                    <div style={{fontSize: '0.9rem', opacity: '0.75', color: '#e5e7eb'}}>
+                                        Powered by USAi
                                     </div>
                                 </div>
                             </div>

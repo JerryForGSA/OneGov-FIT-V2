@@ -2472,8 +2472,15 @@ function getChartTypesByContext(entityType, columnId, entityCount) {
 function extractColumnData(entities, columnId) {
   const columnData = new Map();
 
+  // Map frontend column IDs to actual entity property names
+  const propertyNameMap = {
+    'aiCategories': 'aiCategory',
+    'categoryObligations': 'aiCategory'
+  };
+  const entityPropertyName = propertyNameMap[columnId] || columnId;
+
   entities.forEach((entity) => {
-    let jsonData = entity[columnId];
+    let jsonData = entity[entityPropertyName];
 
     // For some columns, we can still extract data even if jsonData is undefined
     if (!jsonData && columnId !== 'obligations') return;
@@ -2543,7 +2550,8 @@ function extractColumnData(entities, columnId) {
       }
 
       case 'fasOem': {
-        const summaries = jsonData.top_10_oem_summaries;
+        // Try both top_15_oem_summaries and top_10_oem_summaries
+        const summaries = jsonData.top_15_oem_summaries || jsonData.top_10_oem_summaries;
         if (summaries) {
           Object.entries(summaries).forEach(([name, data]) => {
             const value = data.total_obligations || data.total || 0;
@@ -2584,6 +2592,32 @@ function extractColumnData(entities, columnId) {
           Object.entries(summaries).forEach(([name, data]) => {
             const value = data.total || 0;
             if (!value) return;
+            columnData.set(name, (columnData.get(name) || 0) + value);
+          });
+        }
+        break;
+      }
+
+      case 'topRefPiid': {
+        const items = jsonData.top_10_reference_piids;
+        if (Array.isArray(items)) {
+          items.forEach((item) => {
+            const name = item.reference_piid;
+            const value = item.dollars_obligated || 0;
+            if (!name || !value) return;
+            columnData.set(name, (columnData.get(name) || 0) + value);
+          });
+        }
+        break;
+      }
+
+      case 'topPiid': {
+        const items = jsonData.top_10_piids;
+        if (Array.isArray(items)) {
+          items.forEach((item) => {
+            const name = item.piid;
+            const value = item.dollars_obligated || 0;
+            if (!name || !value) return;
             columnData.set(name, (columnData.get(name) || 0) + value);
           });
         }
@@ -2674,6 +2708,25 @@ function extractColumnData(entities, columnId) {
         break;
       }
 
+      case 'oneGovTier': {
+        // Extract tier distribution from tier_counts or fiscal_year_tiers
+        const tierCounts = jsonData.tier_counts;
+        if (tierCounts && typeof tierCounts === 'object') {
+          Object.entries(tierCounts).forEach(([tierName, count]) => {
+            if (count > 0) {
+              columnData.set(tierName, (columnData.get(tierName) || 0) + count);
+            }
+          });
+        } else {
+          // Fallback: count current entity's tier
+          const entityTier = jsonData.overall_tier || jsonData.mode_tier;
+          if (entityTier) {
+            columnData.set(entityTier, (columnData.get(entityTier) || 0) + 1);
+          }
+        }
+        break;
+      }
+
       default: {
         console.warn(`❌ Unknown column ID: ${columnId}. No data extraction performed.`);
         break;
@@ -2704,7 +2757,7 @@ function generateColumnBreakdownCharts(entities, entityType, columnId, topN = 10
   // Only generate breakdown charts for specific columns that have categorical data
   const breakdownColumns = [
     'sumTier',
-    'sumType',
+    'sumType', 
     'aiProduct',
     'aiCategory',
     'aiCategories',
@@ -2713,7 +2766,12 @@ function generateColumnBreakdownCharts(entities, entityType, columnId, topN = 10
     'reseller',
     'smallBusiness',
     'productObligations',
-    'categoryObligations'
+    'categoryObligations',
+    'topRefPiid',
+    'topPiid',
+    'oneGovTier',
+    'fasOem',
+    'fundingAgency'
   ];
 
   if (!breakdownColumns.includes(columnId)) {
