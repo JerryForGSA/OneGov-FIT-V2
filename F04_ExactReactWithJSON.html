@@ -61,7 +61,7 @@
         .navbar {
             background: linear-gradient(135deg, var(--dark-blue) 0%, var(--blue) 100%);
             color: var(--text-light);
-            padding: 1rem 0;
+            padding: 0.75rem 0;
             box-shadow: 0 4px 20px rgba(0,0,0,0.15);
             position: sticky;
             top: 0;
@@ -82,6 +82,35 @@
             gap: 1rem;
         }
 
+        /* New logo styles for navbar */
+        .nav-logo-circle {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-logo-text {
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: #f47920;
+            line-height: 1;
+        }
+
+        .nav-logo-subtext {
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 1.5px;
+            color: rgba(255, 255, 255, 0.9);
+            margin-top: 2px;
+        }
 
         .brand-text {
             display: flex;
@@ -109,10 +138,10 @@
             background: none;
             border: none;
             color: #ffffff;
-            padding: 0.8rem 1.2rem;
+            padding: 1rem 1.6rem;
             border-radius: 8px;
             cursor: pointer;
-            font-size: 0.95rem;
+            font-size: 1.1rem;
             font-weight: 500;
             transition: all 0.2s ease;
         }
@@ -134,14 +163,16 @@
             gap: 1rem;
         }
         .info-icon {
-            width: 40px;
-            height: 40px;
+            width: 55px;
+            height: 55px;
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.1);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
+            color: #f47920;
+            font-size: 1.4rem;
+            font-weight: 700;
             cursor: pointer;
             transition: all 0.3s ease;
             border: 2px solid rgba(255, 255, 255, 0.2);
@@ -150,21 +181,21 @@
         .info-icon:hover {
             background: rgba(255, 255, 255, 0.2);
             transform: scale(1.1);
-            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 12px rgba(244, 121, 32, 0.3);
         }
 
         /* Main Content */
         .main-content {
             max-width: 1800px;
             margin: 0 auto;
-            padding: 2rem;
+            padding: 1rem 2rem;
         }
 
 
         /* KPI Carousel Styles - EXACT MATCH */
         .kpi-carousel-wrapper {
             position: relative;
-            margin-bottom: 32px;
+            margin-bottom: 16px;
             width: 100vw;
             margin-left: calc(-50vw + 50%);
             background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
@@ -174,7 +205,7 @@
             position: relative;
             overflow: hidden;
             width: 100%;
-            padding: 40px 20px;
+            padding: 20px 20px;
         }
 
         .kpi-container {
@@ -190,7 +221,7 @@
             grid-template-columns: repeat(3, 1fr);
             gap: 20px;
             justify-content: center;
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
 
@@ -201,8 +232,8 @@
             box-shadow: var(--shadow);
             position: relative;
             overflow: hidden;
-            height: 200px;
-            min-height: 200px;
+            height: 240px;
+            min-height: 240px;
             display: flex;
             flex-direction: column;
         }
@@ -230,7 +261,7 @@
         }
 
         .kpi-title {
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             color: var(--blue);
             margin-bottom: 8px;
             font-weight: 600;
@@ -241,7 +272,7 @@
         }
 
         .kpi-value {
-            font-size: 2.1rem;
+            font-size: 1.75rem;
             font-weight: 700;
             color: var(--dark-blue);
             margin-bottom: 12px;
@@ -349,8 +380,8 @@
             background: #f8f9fa;
             border-radius: 12px;
             border: 1px solid rgba(0,0,0,0.05);
-            padding: 20px;
-            margin-top: 32px;
+            padding: 16px;
+            margin-top: 16px;
             scrollbar-width: thin;
             scrollbar-color: var(--orange) #f1f1f1;
         }
@@ -508,8 +539,8 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 20px;
-            padding: 20px 0;
+            gap: 16px;
+            padding: 10px 0;
             background: rgba(255, 255, 255, 0.1);
             backdrop-filter: blur(10px);
         }
@@ -10985,8 +11016,9 @@
                     <nav className="navbar">
                         <div className="nav-container">
                             <div className="nav-brand">
-                                <div className="brand-text">
-                                    <span className="brand-name">OneGov FIT</span>
+                                <div className="nav-logo-circle">
+                                    <span className="nav-logo-text">OneGov</span>
+                                    <span className="nav-logo-subtext">FIT</span>
                                 </div>
                             </div>
                             

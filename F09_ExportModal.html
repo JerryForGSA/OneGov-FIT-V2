@@ -933,6 +933,61 @@ function showExportModal(exportType, availableItems) {
 }
 
 /**
+ * Extract table data from an HTML table element
+ * 
+ * @param {HTMLTableElement} table - The table element
+ * @returns {Object} Table data with headers and rows
+ */
+function extractTableData(table) {
+  try {
+    const headers = [];
+    const rows = [];
+    
+    // Extract headers from thead or first row
+    const thead = table.querySelector('thead');
+    if (thead) {
+      const headerRow = thead.querySelector('tr');
+      if (headerRow) {
+        headerRow.querySelectorAll('th, td').forEach(cell => {
+          headers.push(cell.textContent.trim());
+        });
+      }
+    } else {
+      // Try first row as headers
+      const firstRow = table.querySelector('tr');
+      if (firstRow) {
+        firstRow.querySelectorAll('th, td').forEach(cell => {
+          headers.push(cell.textContent.trim());
+        });
+      }
+    }
+    
+    // Extract data rows
+    const tbody = table.querySelector('tbody') || table;
+    const dataRows = tbody.querySelectorAll('tr');
+    const startIndex = thead ? 0 : 1; // Skip first row if no thead (assumed to be headers)
+    
+    for (let i = startIndex; i < dataRows.length; i++) {
+      const row = [];
+      dataRows[i].querySelectorAll('td').forEach(cell => {
+        row.push(cell.textContent.trim());
+      });
+      if (row.length > 0) {
+        rows.push(row);
+      }
+    }
+    
+    console.log('📊 Extracted table data:', { headers, rowCount: rows.length });
+    
+    return { headers, rows };
+    
+  } catch (error) {
+    console.error('Error extracting table data:', error);
+    return null;
+  }
+}
+
+/**
  * Helper function to collect exportable items from the Report Builder
  * This should be customized based on how Report Builder stores its content
  * 
@@ -941,11 +996,20 @@ function showExportModal(exportType, availableItems) {
 function collectExportableItems() {
   const items = [];
   
-  // Find all chart cards
-  const chartCards = document.querySelectorAll('[data-card-type="chart"]');
+  console.log('📤 Collecting exportable items...');
+  
+  // Find all chart cards - try multiple selectors
+  let chartCards = document.querySelectorAll('[data-card-type="chart"]');
+  if (chartCards.length === 0) {
+    // Try alternative selectors for charts
+    chartCards = document.querySelectorAll('.report-card:has(canvas), .card:has(canvas)');
+  }
+  
+  console.log('📤 Found chart cards:', chartCards.length);
+  
   chartCards.forEach((card, index) => {
     const canvas = card.querySelector('canvas');
-    const title = card.querySelector('.card-title, h3, h4')?.textContent || `Chart ${index + 1}`;
+    const title = card.querySelector('.card-title, h3, h4, .title')?.textContent || `Chart ${index + 1}`;
     
     items.push({
       id: card.dataset.cardId || `chart_${index}`,
@@ -956,16 +1020,40 @@ function collectExportableItems() {
     });
   });
   
-  // Find all table cards
-  const tableCards = document.querySelectorAll('[data-card-type="table"]');
+  // Find all table cards - try multiple selectors
+  let tableCards = document.querySelectorAll('[data-card-type="table"]');
+  if (tableCards.length === 0) {
+    // Try alternative selectors for tables
+    tableCards = document.querySelectorAll('.report-card:has(table), .card:has(table)');
+  }
+  
+  console.log('📤 Found table cards:', tableCards.length);
   tableCards.forEach((card, index) => {
     const title = card.querySelector('.card-title, h3, h4')?.textContent || `Table ${index + 1}`;
+    
+    // Try to get table data from dataset or extract from HTML table
+    let tableData = null;
+    if (card.dataset.tableData) {
+      try {
+        tableData = JSON.parse(card.dataset.tableData);
+      } catch (e) {
+        console.warn('Could not parse tableData from dataset:', e);
+      }
+    }
+    
+    // If no dataset tableData, try to extract from the actual HTML table
+    if (!tableData) {
+      const table = card.querySelector('table');
+      if (table) {
+        tableData = extractTableData(table);
+      }
+    }
     
     items.push({
       id: card.dataset.cardId || `table_${index}`,
       type: 'table',
       title: title,
-      tableData: card.dataset.tableData ? JSON.parse(card.dataset.tableData) : null
+      tableData: tableData
     });
   });
   

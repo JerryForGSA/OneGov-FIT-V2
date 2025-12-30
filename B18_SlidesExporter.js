@@ -351,7 +351,25 @@ function insertSlideTable(slide, item, layout) {
  * @param {number} maxHeight - Maximum available height
  */
 function insertSlideTableAtPosition(slide, item, x, y, maxWidth, maxHeight) {
+  console.log('📊 SLIDES: insertSlideTableAtPosition called with item:', {
+    type: item.type,
+    hasTableData: !!item.tableData,
+    hasData: !!item.data,
+    hasChartData: !!item.chartData,
+    title: item.title
+  });
+  
   const tableData = formatTableData(item);
+  
+  console.log('📊 SLIDES: formatTableData returned:', {
+    hasHeaders: !!tableData.headers,
+    headersLength: tableData.headers ? tableData.headers.length : 0,
+    hasRows: !!tableData.rows,
+    rowsLength: tableData.rows ? tableData.rows.length : 0,
+    headers: tableData.headers,
+    firstRow: tableData.rows ? tableData.rows[0] : null
+  });
+  
   insertSlideTableDataAtPosition(slide, tableData, x, y, maxWidth, maxHeight);
 }
 

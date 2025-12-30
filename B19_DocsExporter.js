@@ -324,7 +324,25 @@ function insertDocChartImageInCell(cell, base64Data) {
  * @param {Object} item - The table item
  */
 function insertDocTable(body, item) {
+  console.log('📄 DOCS: insertDocTable called with item:', {
+    type: item.type,
+    hasTableData: !!item.tableData,
+    hasData: !!item.data,
+    hasChartData: !!item.chartData,
+    title: item.title
+  });
+  
   const tableData = formatTableData(item);
+  
+  console.log('📄 DOCS: formatTableData returned:', {
+    hasHeaders: !!tableData.headers,
+    headersLength: tableData.headers ? tableData.headers.length : 0,
+    hasRows: !!tableData.rows,
+    rowsLength: tableData.rows ? tableData.rows.length : 0,
+    headers: tableData.headers,
+    firstRow: tableData.rows ? tableData.rows[0] : null
+  });
+  
   insertDocTableFromData(body, tableData);
 }
 
