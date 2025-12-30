@@ -6760,11 +6760,225 @@
             ];
 
             // Load data from backend on component mount
-            // Export handler functions for Google Docs, Sheets, and Slides
+            
+        // Chart image capture function
+        const captureChartImage = async (canvasElement) => {
+            return new Promise((resolve) => {
+                try {
+                    // If it's a canvas element, get base64 directly
+                    if (canvasElement && canvasElement.tagName === 'CANVAS') {
+                        const base64 = canvasElement.toDataURL('image/png');
+                        console.log('📸 Chart captured via canvas.toDataURL');
+                        resolve(base64);
+                        return;
+                    }
+                    
+                    // If no canvas found, resolve with null
+                    console.warn('📸 No canvas element found for chart capture');
+                    resolve(null);
+                } catch (error) {
+                    console.warn('📸 Chart capture failed:', error);
+                    resolve(null);
+                }
+            });
+        };
+
+        // Improved chart finding function
+        const findChartCanvasForCard = (card) => {
+            console.log(`🔍 Looking for canvas for card: ${card.title} (ID: ${card.id})`);
+            
+            // Strategy 1: Find by card data attribute
+            const cardElement = document.querySelector(`[data-card-id="${card.id}"]`);
+            if (cardElement) {
+                const canvas = cardElement.querySelector('canvas');
+                if (canvas) {
+                    console.log(`✅ Found canvas via data-card-id for: ${card.title}`);
+                    return canvas;
+                }
+            }
+            
+            // Strategy 2: Find by card title or ID in nearby elements
+            const titleElements = Array.from(document.querySelectorAll('*')).filter(el => 
+                el.textContent && el.textContent.trim() === card.title
+            );
+            
+            for (const titleEl of titleElements) {
+                // Look for canvas in the same container
+                const container = titleEl.closest('.card, .chart-container, .card-body, [class*="card"]');
+                if (container) {
+                    const canvas = container.querySelector('canvas');
+                    if (canvas) {
+                        console.log(`✅ Found canvas via title match for: ${card.title}`);
+                        return canvas;
+                    }
+                }
+            }
+            
+            // Strategy 3: Use card index to match canvas order
+            const allCards = Object.keys(selections).filter(id => selections[id] && selections[id].chart);
+            const cardIndex = allCards.indexOf(card.id);
+            const allCanvases = document.querySelectorAll('canvas');
+            
+            if (cardIndex >= 0 && cardIndex < allCanvases.length) {
+                console.log(`✅ Found canvas via index ${cardIndex} for: ${card.title}`);
+                return allCanvases[cardIndex];
+            }
+            
+            // Strategy 4: Last resort - return first canvas with warning
+            if (allCanvases.length > 0) {
+                console.warn(`⚠️ Using first canvas as fallback for: ${card.title} - may be incorrect!`);
+                return allCanvases[0];
+            }
+            
+            console.error(`❌ No canvas found for: ${card.title}`);
+            return null;
+        };
+
+            // Letterhead selection modal
+        const showLetterheadSelectionModal = (exportType) => {
+            return new Promise((resolve) => {
+                const modal = document.createElement('div');
+                modal.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 10000;
+                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                `;
+                
+                const typeIcons = {
+                    docs: '📄',
+                    sheets: '📊',
+                    slides: '🖼️'
+                };
+                
+                modal.innerHTML = `
+                    <div style="
+                        background: white;
+                        border-radius: 12px;
+                        padding: 0;
+                        max-width: 400px;
+                        width: 90%;
+                        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+                        overflow: hidden;
+                    ">
+                        <div style="
+                            background: linear-gradient(135deg, #144673 0%, #0a2240 100%);
+                            color: white;
+                            padding: 20px;
+                            text-align: center;
+                        ">
+                            <span style="font-size: 32px;">${typeIcons[exportType] || '📤'}</span>
+                            <h3 style="
+                                margin: 10px 0 5px;
+                                font-size: 18px;
+                                font-weight: 600;
+                            ">Select Letterhead</h3>
+                            <p style="
+                                margin: 0;
+                                font-size: 14px;
+                                opacity: 0.9;
+                            ">Choose the letterhead style for your export</p>
+                        </div>
+                        <div style="padding: 20px;">
+                            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                                <button id="selectGSA" style="
+                                    flex: 1;
+                                    padding: 15px;
+                                    border: 2px solid #144673;
+                                    background: white;
+                                    border-radius: 8px;
+                                    cursor: pointer;
+                                    transition: all 0.2s;
+                                    font-size: 16px;
+                                    font-weight: 600;
+                                    color: #144673;
+                                " onmouseover="this.style.background='#144673'; this.style.color='white'" 
+                                   onmouseout="this.style.background='white'; this.style.color='#144673'">
+                                    GSA Letterhead
+                                </button>
+                                <button id="selectITVMO" style="
+                                    flex: 1;
+                                    padding: 15px;
+                                    border: 2px solid #f47920;
+                                    background: white;
+                                    border-radius: 8px;
+                                    cursor: pointer;
+                                    transition: all 0.2s;
+                                    font-size: 16px;
+                                    font-weight: 600;
+                                    color: #f47920;
+                                " onmouseover="this.style.background='#f47920'; this.style.color='white'"
+                                   onmouseout="this.style.background='white'; this.style.color='#f47920'">
+                                    ITVMO Letterhead
+                                </button>
+                            </div>
+                            <button id="cancelLetterhead" style="
+                                width: 100%;
+                                padding: 12px;
+                                background: #e5e7eb;
+                                border: none;
+                                border-radius: 8px;
+                                cursor: pointer;
+                                font-size: 14px;
+                                color: #4b5563;
+                                transition: background 0.2s;
+                            " onmouseover="this.style.background='#d1d5db'"
+                               onmouseout="this.style.background='#e5e7eb'">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                // Add event listeners
+                modal.querySelector('#selectGSA').addEventListener('click', () => {
+                    modal.remove();
+                    resolve('GSA');
+                });
+                
+                modal.querySelector('#selectITVMO').addEventListener('click', () => {
+                    modal.remove();
+                    resolve('ITVMO');
+                });
+                
+                modal.querySelector('#cancelLetterhead').addEventListener('click', () => {
+                    modal.remove();
+                    resolve(null);
+                });
+                
+                // Close on background click
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.remove();
+                        resolve(null);
+                    }
+                });
+            });
+        };
+
+        // Export handler functions for Google Docs, Sheets, and Slides
             const handleExportToGoogleDocs = async () => {
                 // Immediate logging to verify button click
                 console.log('🚀 DOCS EXPORT BUTTON CLICKED');
+                
+                // First show letterhead selection
+                const letterhead = await showLetterheadSelectionModal('docs');
+                if (!letterhead) {
+                    console.log('Export cancelled by user');
+                    return;
+                }
+                
                 console.log('Export to Docs initiated:', {
+                    letterhead,
                     selectedEntityType,
                     selectedColumn,
                     cardDataLength: cardData.length,
@@ -6793,6 +7007,21 @@
                     return;
                 }
                 
+                // Capture chart images for selected cards
+                console.log('📸 Capturing chart images...');
+                for (const card of selectedCards) {
+                    if (card.includeChart) {
+                        const chartElement = findChartCanvasForCard(card);
+                        
+                        if (chartElement) {
+                            card.chartImage = await captureChartImage(chartElement);
+                            console.log(`📸 Docs - Captured image for: ${card.title}`, card.chartImage ? 'SUCCESS' : 'FAILED');
+                        } else {
+                            console.warn(`📸 Docs - No canvas found for: ${card.title}`);
+                        }
+                    }
+                }
+                
                 // Compact payload logging
                 console.log('📦 Exporting payload:', {
                     selectedEntityType,
@@ -6801,7 +7030,8 @@
                     cards: selectedCards.map(c => ({ 
                         id: c.id, 
                         title: c.title, 
-                        columnId: c.metadata?.columnId 
+                        columnId: c.metadata?.columnId,
+                        hasChartImage: !!c.chartImage
                     }))
                 });
                 
@@ -6820,9 +7050,8 @@
                                 reject(error);
                             })
                             .exportToGoogleDocs(selectedCards, {
-                                exportOptions: {
-                                    useExpanded: exportViewMode === 'expanded'
-                                }
+                                letterhead: letterhead,
+                                useExpanded: exportViewMode === 'expanded'
                             });
                     });
                     
@@ -6853,6 +7082,9 @@
             };
             
             const handleExportToGoogleSheets = async () => {
+                // Sheets uses the same template for both GSA and ITVMO, no selection needed
+                const letterhead = 'GSA'; // Default to GSA (both use same template anyway)
+                
                 const selectedCards = Object.entries(selections)
                     .filter(([_, sel]) => sel && (sel.chart || sel.table))
                     .map(([id, sel]) => {
@@ -6872,29 +7104,51 @@
                 
                 if (selectedCards.length === 0) return;
                 
-                // Minimal logging
-                console.log('Export to Sheets initiated:', {
+                // Capture chart images for selected cards (MISSING FEATURE - NOW ADDED)
+                console.log('📸 Capturing chart images for Sheets...');
+                for (const card of selectedCards) {
+                    if (card.includeChart) {
+                        const chartElement = findChartCanvasForCard(card);
+                        
+                        if (chartElement) {
+                            card.chartImage = await captureChartImage(chartElement);
+                            console.log(`📸 Sheets - Captured image for: ${card.title}`, card.chartImage ? 'SUCCESS' : 'FAILED');
+                        } else {
+                            console.warn(`📸 Sheets - No canvas found for: ${card.title}`);
+                        }
+                    }
+                }
+                
+                // Compact payload logging
+                console.log('📦 Exporting payload:', {
                     selectedEntityType,
                     selectedColumn,
                     cardCount: selectedCards.length,
                     cards: selectedCards.map(c => ({ 
                         id: c.id, 
                         title: c.title, 
-                        columnId: c.metadata?.columnId 
+                        columnId: c.metadata?.columnId,
+                        hasChartImage: !!c.chartImage
                     }))
                 });
                 
                 setIsExporting(true);
                 showProcessingModal('Creating Spreadsheet', 'Generating your Google Sheet with the selected data...');
                 try {
+                    console.log('📞 Calling google.script.run.exportToGoogleSheets...');
                     const result = await new Promise((resolve, reject) => {
                         google.script.run
-                            .withSuccessHandler(resolve)
-                            .withFailureHandler(reject)
+                            .withSuccessHandler((result) => {
+                                console.log('📋 Backend response:', result);
+                                resolve(result);
+                            })
+                            .withFailureHandler((error) => {
+                                console.error('❌ Backend error:', error);
+                                reject(error);
+                            })
                             .exportToGoogleSheets(selectedCards, {
-                                exportOptions: {
-                                    useExpanded: exportViewMode === 'expanded'
-                                }
+                                letterhead: letterhead,
+                                useExpanded: exportViewMode === 'expanded'
                             });
                     });
                     
@@ -6934,7 +7188,16 @@
             const handleExportToGoogleSlides = async () => {
                 // Immediate logging to verify button click
                 console.log('🚀 SLIDES EXPORT BUTTON CLICKED');
+                
+                // First show letterhead selection
+                const letterhead = await showLetterheadSelectionModal('slides');
+                if (!letterhead) {
+                    console.log('Export cancelled by user');
+                    return;
+                }
+                
                 console.log('Export to Slides initiated:', {
+                    letterhead,
                     selectedEntityType,
                     selectedColumn,
                     cardDataLength: cardData.length,
@@ -6963,6 +7226,21 @@
                     return;
                 }
                 
+                // Capture chart images for selected cards
+                console.log('📸 Capturing chart images for Slides...');
+                for (const card of selectedCards) {
+                    if (card.includeChart) {
+                        const chartElement = findChartCanvasForCard(card);
+                        
+                        if (chartElement) {
+                            card.chartImage = await captureChartImage(chartElement);
+                            console.log(`📸 Slides - Captured image for: ${card.title}`, card.chartImage ? 'SUCCESS' : 'FAILED');
+                        } else {
+                            console.warn(`📸 Slides - No canvas found for: ${card.title}`);
+                        }
+                    }
+                }
+                
                 // Compact payload logging
                 console.log('📦 Exporting payload:', {
                     selectedEntityType,
@@ -6971,7 +7249,8 @@
                     cards: selectedCards.map(c => ({ 
                         id: c.id, 
                         title: c.title, 
-                        columnId: c.metadata?.columnId 
+                        columnId: c.metadata?.columnId,
+                        hasChartImage: !!c.chartImage
                     }))
                 });
                 
@@ -6990,9 +7269,8 @@
                                 reject(error);
                             })
                             .exportToGoogleSlides(selectedCards, {
-                                exportOptions: {
-                                    useExpanded: exportViewMode === 'expanded'
-                                }
+                                letterhead: letterhead,
+                                useExpanded: exportViewMode === 'expanded'
                             });
                     });
                     

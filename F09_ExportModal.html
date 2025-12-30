@@ -1,0 +1,974 @@
+<!--
+  F09_ExportModal.html
+  Export Modal for OneGov FIT Report Builder
+  Version 1.0.0
+  
+  This modal allows users to:
+  - Select items (charts/tables) to export
+  - Choose letterhead style (GSA/ITVMO)
+  - Choose layout density (1 or 2 per page)
+  - Export to Google Slides, Docs, or Sheets
+  
+  Dependencies:
+  - B17_ExportManager.gs (backend orchestration)
+  - B18_SlidesExporter.gs
+  - B19_DocsExporter.gs
+  - B20_SheetsExporter.gs
+  
+  Usage:
+  - Call showExportModal(exportType, availableItems) from parent page
+  - exportType: 'slides' | 'docs' | 'sheets'
+  - availableItems: array of {id, title, type, element} objects
+-->
+
+<style>
+  /* Export Modal Styles */
+  .export-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  .export-modal {
+    background: white;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 85vh;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .export-modal-header {
+    background: linear-gradient(135deg, #144673 0%, #0a2240 100%);
+    color: white;
+    padding: 20px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .export-modal-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .export-modal-close {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 5px;
+    line-height: 1;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+  }
+  
+  .export-modal-close:hover {
+    opacity: 1;
+  }
+  
+  .export-modal-body {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+  }
+  
+  .export-section {
+    margin-bottom: 24px;
+  }
+  
+  .export-section:last-child {
+    margin-bottom: 0;
+  }
+  
+  .export-section-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #144673;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  /* Report Title Input */
+  .export-title-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+  }
+  
+  .export-title-input:focus {
+    outline: none;
+    border-color: #144673;
+  }
+  
+  /* Letterhead Selection */
+  .letterhead-options {
+    display: flex;
+    gap: 12px;
+  }
+  
+  .letterhead-option {
+    flex: 1;
+    padding: 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+  }
+  
+  .letterhead-option:hover {
+    border-color: #144673;
+    background: #f8f9fa;
+  }
+  
+  .letterhead-option.selected {
+    border-color: #144673;
+    background: #e8f4fc;
+  }
+  
+  .letterhead-option-icon {
+    font-size: 2rem;
+    margin-bottom: 8px;
+  }
+  
+  .letterhead-option-label {
+    font-weight: 600;
+    color: #333;
+  }
+  
+  /* Layout Density */
+  .layout-options {
+    display: flex;
+    gap: 12px;
+  }
+  
+  .layout-option {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s;
+  }
+  
+  .layout-option:hover {
+    border-color: #144673;
+  }
+  
+  .layout-option.selected {
+    border-color: #144673;
+    background: #e8f4fc;
+  }
+  
+  .layout-option input {
+    display: none;
+  }
+  
+  .layout-option-radio {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ccc;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .layout-option.selected .layout-option-radio {
+    border-color: #144673;
+  }
+  
+  .layout-option.selected .layout-option-radio::after {
+    content: '';
+    width: 10px;
+    height: 10px;
+    background: #144673;
+    border-radius: 50%;
+  }
+  
+  /* Item Selection */
+  .export-items-list {
+    max-height: 250px;
+    overflow-y: auto;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+  }
+  
+  .export-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  
+  .export-item:last-child {
+    border-bottom: none;
+  }
+  
+  .export-item:hover {
+    background: #f8f9fa;
+  }
+  
+  .export-item.selected {
+    background: #e8f4fc;
+  }
+  
+  .export-item-checkbox {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  
+  .export-item.selected .export-item-checkbox {
+    background: #144673;
+    border-color: #144673;
+  }
+  
+  .export-item.selected .export-item-checkbox::after {
+    content: '✓';
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+  }
+  
+  .export-item-icon {
+    font-size: 1.25rem;
+  }
+  
+  .export-item-title {
+    flex: 1;
+    font-weight: 500;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .export-item-type {
+    font-size: 0.8rem;
+    color: #666;
+    background: #f0f0f0;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  
+  /* Select All / None */
+  .export-items-actions {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+  
+  .export-items-action {
+    font-size: 0.85rem;
+    color: #3a6ea5;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+  
+  .export-items-action:hover {
+    color: #144673;
+  }
+  
+  /* Modal Footer */
+  .export-modal-footer {
+    padding: 16px 24px;
+    background: #f8f9fa;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .export-item-count {
+    font-size: 0.9rem;
+    color: #666;
+  }
+  
+  .export-modal-buttons {
+    display: flex;
+    gap: 12px;
+  }
+  
+  .export-btn {
+    padding: 10px 24px;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .export-btn-cancel {
+    background: white;
+    border: 1px solid #ccc;
+    color: #666;
+  }
+  
+  .export-btn-cancel:hover {
+    background: #f0f0f0;
+  }
+  
+  .export-btn-export {
+    background: linear-gradient(135deg, #f47920 0%, #e06610 100%);
+    border: none;
+    color: white;
+  }
+  
+  .export-btn-export:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(244, 121, 32, 0.3);
+  }
+  
+  .export-btn-export:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+  }
+  
+  /* Progress State */
+  .export-progress {
+    text-align: center;
+    padding: 40px 20px;
+  }
+  
+  .export-progress-spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid #e5e7eb;
+    border-top-color: #144673;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  
+  .export-progress-text {
+    font-size: 1.1rem;
+    color: #333;
+    margin-bottom: 8px;
+  }
+  
+  .export-progress-subtext {
+    font-size: 0.9rem;
+    color: #666;
+  }
+  
+  /* Success State */
+  .export-success {
+    text-align: center;
+    padding: 40px 20px;
+  }
+  
+  .export-success-icon {
+    font-size: 4rem;
+    margin-bottom: 16px;
+  }
+  
+  .export-success-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #22c55e;
+    margin-bottom: 8px;
+  }
+  
+  .export-success-message {
+    color: #666;
+    margin-bottom: 24px;
+  }
+  
+  .export-success-link {
+    display: inline-block;
+    background: linear-gradient(135deg, #144673 0%, #0a2240 100%);
+    color: white;
+    padding: 12px 32px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    margin-bottom: 12px;
+    transition: transform 0.2s;
+  }
+  
+  .export-success-link:hover {
+    transform: translateY(-2px);
+  }
+  
+  .export-success-copy {
+    display: block;
+    color: #3a6ea5;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  
+  /* Error State */
+  .export-error {
+    text-align: center;
+    padding: 40px 20px;
+  }
+  
+  .export-error-icon {
+    font-size: 4rem;
+    margin-bottom: 16px;
+  }
+  
+  .export-error-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #ef4444;
+    margin-bottom: 8px;
+  }
+  
+  .export-error-message {
+    color: #666;
+    margin-bottom: 24px;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+</style>
+
+<script>
+/**
+ * Export Modal Controller
+ * Manages the export modal UI and communicates with backend
+ */
+const ExportModal = {
+  // State
+  isOpen: false,
+  exportType: null,
+  letterhead: 'GSA',
+  layoutDensity: 'single',
+  reportTitle: '',
+  availableItems: [],
+  selectedItems: new Set(),
+  currentState: 'selection', // 'selection' | 'progress' | 'success' | 'error'
+  exportResult: null,
+  
+  /**
+   * Show the export modal
+   * @param {string} exportType - 'slides' | 'docs' | 'sheets'
+   * @param {Array} availableItems - Array of exportable items
+   */
+  show: function(exportType, availableItems) {
+    console.log('📤 ExportModal.show:', exportType, availableItems?.length, 'items');
+    
+    this.exportType = exportType;
+    this.availableItems = availableItems || [];
+    this.selectedItems = new Set(this.availableItems.map(item => item.id)); // Select all by default
+    this.currentState = 'selection';
+    this.letterhead = 'GSA';
+    this.layoutDensity = 'single';
+    this.reportTitle = '';
+    this.isOpen = true;
+    
+    this.render();
+  },
+  
+  /**
+   * Close the modal
+   */
+  close: function() {
+    this.isOpen = false;
+    const overlay = document.getElementById('export-modal-overlay');
+    if (overlay) {
+      overlay.remove();
+    }
+  },
+  
+  /**
+   * Render the modal
+   */
+  render: function() {
+    // Remove existing modal if present
+    const existing = document.getElementById('export-modal-overlay');
+    if (existing) existing.remove();
+    
+    // Create modal HTML
+    const modalHTML = this.getModalHTML();
+    
+    // Add to document
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // Add event listeners
+    this.attachEventListeners();
+  },
+  
+  /**
+   * Get modal HTML based on current state
+   */
+  getModalHTML: function() {
+    const typeLabels = {
+      slides: { icon: '📊', name: 'Google Slides' },
+      docs: { icon: '📄', name: 'Google Docs' },
+      sheets: { icon: '📋', name: 'Google Sheets' }
+    };
+    
+    const typeInfo = typeLabels[this.exportType] || { icon: '📁', name: 'Export' };
+    
+    let bodyContent = '';
+    
+    switch (this.currentState) {
+      case 'selection':
+        bodyContent = this.getSelectionHTML();
+        break;
+      case 'progress':
+        bodyContent = this.getProgressHTML();
+        break;
+      case 'success':
+        bodyContent = this.getSuccessHTML();
+        break;
+      case 'error':
+        bodyContent = this.getErrorHTML();
+        break;
+    }
+    
+    return `
+      <div class="export-modal-overlay" id="export-modal-overlay" onclick="if(event.target === this) ExportModal.close()">
+        <div class="export-modal">
+          <div class="export-modal-header">
+            <h2>${typeInfo.icon} Export to ${typeInfo.name}</h2>
+            <button class="export-modal-close" onclick="ExportModal.close()">&times;</button>
+          </div>
+          <div class="export-modal-body">
+            ${bodyContent}
+          </div>
+          ${this.currentState === 'selection' ? this.getFooterHTML() : ''}
+        </div>
+      </div>
+    `;
+  },
+  
+  /**
+   * Get selection state HTML
+   */
+  getSelectionHTML: function() {
+    // Report Title
+    let html = `
+      <div class="export-section">
+        <div class="export-section-title">Report Title (Optional)</div>
+        <input type="text" 
+               class="export-title-input" 
+               id="export-title-input"
+               placeholder="Enter a title for your export..."
+               value="${this.reportTitle}">
+      </div>
+    `;
+    
+    // Letterhead Selection
+    html += `
+      <div class="export-section">
+        <div class="export-section-title">Letterhead Style</div>
+        <div class="letterhead-options">
+          <div class="letterhead-option ${this.letterhead === 'GSA' ? 'selected' : ''}" 
+               onclick="ExportModal.setLetterhead('GSA')">
+            <div class="letterhead-option-icon">🏛️</div>
+            <div class="letterhead-option-label">GSA</div>
+          </div>
+          <div class="letterhead-option ${this.letterhead === 'ITVMO' ? 'selected' : ''}"
+               onclick="ExportModal.setLetterhead('ITVMO')">
+            <div class="letterhead-option-icon">💼</div>
+            <div class="letterhead-option-label">ITVMO</div>
+          </div>
+        </div>
+      </div>
+    `;
+    
+    // Layout Density (not for sheets)
+    if (this.exportType !== 'sheets') {
+      html += `
+        <div class="export-section">
+          <div class="export-section-title">Layout</div>
+          <div class="layout-options">
+            <div class="layout-option ${this.layoutDensity === 'single' ? 'selected' : ''}"
+                 onclick="ExportModal.setLayoutDensity('single')">
+              <div class="layout-option-radio"></div>
+              <span>1 item per page</span>
+            </div>
+            <div class="layout-option ${this.layoutDensity === 'double' ? 'selected' : ''}"
+                 onclick="ExportModal.setLayoutDensity('double')">
+              <div class="layout-option-radio"></div>
+              <span>2 items per page</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    
+    // Item Selection
+    html += `
+      <div class="export-section">
+        <div class="export-section-title">Select Items to Export</div>
+        <div class="export-items-actions">
+          <span class="export-items-action" onclick="ExportModal.selectAll()">Select All</span>
+          <span class="export-items-action" onclick="ExportModal.selectNone()">Select None</span>
+        </div>
+        <div class="export-items-list">
+    `;
+    
+    if (this.availableItems.length === 0) {
+      html += `<div style="padding: 20px; text-align: center; color: #666;">No items available to export</div>`;
+    } else {
+      this.availableItems.forEach(item => {
+        const isSelected = this.selectedItems.has(item.id);
+        const icon = item.type === 'chart' ? '📊' : '📋';
+        const typeLabel = item.type === 'chart' ? 'Chart' : 'Table';
+        
+        html += `
+          <div class="export-item ${isSelected ? 'selected' : ''}" 
+               onclick="ExportModal.toggleItem('${item.id}')">
+            <div class="export-item-checkbox"></div>
+            <span class="export-item-icon">${icon}</span>
+            <span class="export-item-title">${item.title || 'Untitled'}</span>
+            <span class="export-item-type">${typeLabel}</span>
+          </div>
+        `;
+      });
+    }
+    
+    html += `
+        </div>
+      </div>
+    `;
+    
+    return html;
+  },
+  
+  /**
+   * Get progress state HTML
+   */
+  getProgressHTML: function() {
+    return `
+      <div class="export-progress">
+        <div class="export-progress-spinner"></div>
+        <div class="export-progress-text">Exporting to ${this.exportType === 'slides' ? 'Google Slides' : this.exportType === 'docs' ? 'Google Docs' : 'Google Sheets'}...</div>
+        <div class="export-progress-subtext">This may take a moment</div>
+      </div>
+    `;
+  },
+  
+  /**
+   * Get success state HTML
+   */
+  getSuccessHTML: function() {
+    const result = this.exportResult || {};
+    return `
+      <div class="export-success">
+        <div class="export-success-icon">✅</div>
+        <div class="export-success-title">Export Complete!</div>
+        <div class="export-success-message">${result.message || 'Your export has been created successfully.'}</div>
+        <a href="${result.fileUrl || '#'}" target="_blank" class="export-success-link">
+          Open ${this.exportType === 'slides' ? 'Presentation' : this.exportType === 'docs' ? 'Document' : 'Spreadsheet'}
+        </a>
+        <span class="export-success-copy" onclick="ExportModal.copyLink('${result.fileUrl || ''}')">
+          📋 Copy Link
+        </span>
+        <br><br>
+        <button class="export-btn export-btn-cancel" onclick="ExportModal.close()">Done</button>
+      </div>
+    `;
+  },
+  
+  /**
+   * Get error state HTML
+   */
+  getErrorHTML: function() {
+    const result = this.exportResult || {};
+    return `
+      <div class="export-error">
+        <div class="export-error-icon">❌</div>
+        <div class="export-error-title">Export Failed</div>
+        <div class="export-error-message">${result.error || 'An unknown error occurred. Please try again.'}</div>
+        <button class="export-btn export-btn-cancel" onclick="ExportModal.currentState = 'selection'; ExportModal.render();">
+          Try Again
+        </button>
+        <button class="export-btn export-btn-cancel" onclick="ExportModal.close()" style="margin-left: 10px;">
+          Close
+        </button>
+      </div>
+    `;
+  },
+  
+  /**
+   * Get footer HTML
+   */
+  getFooterHTML: function() {
+    const selectedCount = this.selectedItems.size;
+    const canExport = selectedCount > 0;
+    
+    return `
+      <div class="export-modal-footer">
+        <div class="export-item-count">${selectedCount} item${selectedCount !== 1 ? 's' : ''} selected</div>
+        <div class="export-modal-buttons">
+          <button class="export-btn export-btn-cancel" onclick="ExportModal.close()">Cancel</button>
+          <button class="export-btn export-btn-export" 
+                  onclick="ExportModal.startExport()"
+                  ${!canExport ? 'disabled' : ''}>
+            Export
+          </button>
+        </div>
+      </div>
+    `;
+  },
+  
+  /**
+   * Attach event listeners
+   */
+  attachEventListeners: function() {
+    const titleInput = document.getElementById('export-title-input');
+    if (titleInput) {
+      titleInput.addEventListener('input', (e) => {
+        this.reportTitle = e.target.value;
+      });
+    }
+  },
+  
+  /**
+   * Set letterhead selection
+   */
+  setLetterhead: function(value) {
+    this.letterhead = value;
+    this.render();
+  },
+  
+  /**
+   * Set layout density
+   */
+  setLayoutDensity: function(value) {
+    this.layoutDensity = value;
+    this.render();
+  },
+  
+  /**
+   * Toggle item selection
+   */
+  toggleItem: function(itemId) {
+    if (this.selectedItems.has(itemId)) {
+      this.selectedItems.delete(itemId);
+    } else {
+      this.selectedItems.add(itemId);
+    }
+    this.render();
+  },
+  
+  /**
+   * Select all items
+   */
+  selectAll: function() {
+    this.selectedItems = new Set(this.availableItems.map(item => item.id));
+    this.render();
+  },
+  
+  /**
+   * Select no items
+   */
+  selectNone: function() {
+    this.selectedItems.clear();
+    this.render();
+  },
+  
+  /**
+   * Copy link to clipboard
+   */
+  copyLink: function(url) {
+    if (navigator.clipboard && url) {
+      navigator.clipboard.writeText(url).then(() => {
+        alert('Link copied to clipboard!');
+      }).catch(() => {
+        prompt('Copy this link:', url);
+      });
+    } else {
+      prompt('Copy this link:', url);
+    }
+  },
+  
+  /**
+   * Start the export process
+   */
+  startExport: async function() {
+    console.log('📤 Starting export...');
+    
+    // Update state to progress
+    this.currentState = 'progress';
+    this.render();
+    
+    try {
+      // Build export manifest
+      const selectedItemsList = this.availableItems.filter(item => this.selectedItems.has(item.id));
+      
+      // Capture chart images from canvas elements
+      const itemsWithImages = await this.captureChartImages(selectedItemsList);
+      
+      const exportData = {
+        exportType: this.exportType,
+        letterhead: this.letterhead,
+        layoutDensity: this.layoutDensity,
+        reportTitle: this.reportTitle || 'Report Builder Export',
+        items: itemsWithImages
+      };
+      
+      console.log('📤 Export data prepared:', {
+        type: exportData.exportType,
+        letterhead: exportData.letterhead,
+        items: exportData.items.length
+      });
+      
+      // Call backend
+      google.script.run
+        .withSuccessHandler((result) => {
+          console.log('📤 Export result:', result);
+          this.exportResult = result;
+          
+          if (result && result.success) {
+            this.currentState = 'success';
+          } else {
+            this.currentState = 'error';
+          }
+          this.render();
+        })
+        .withFailureHandler((error) => {
+          console.error('📤 Export error:', error);
+          this.exportResult = { error: error.message || error.toString() };
+          this.currentState = 'error';
+          this.render();
+        })
+        .exportReportBuilder(exportData);
+        
+    } catch (error) {
+      console.error('📤 Export preparation error:', error);
+      this.exportResult = { error: error.message || 'Failed to prepare export' };
+      this.currentState = 'error';
+      this.render();
+    }
+  },
+  
+  /**
+   * Capture chart images from canvas elements
+   * @param {Array} items - Items to process
+   * @returns {Array} Items with base64 image data
+   */
+  captureChartImages: async function(items) {
+    const processedItems = [];
+    
+    for (const item of items) {
+      const processedItem = { ...item };
+      
+      // If it's a chart and has a canvas reference, capture it
+      if (item.type === 'chart' && item.canvasElement) {
+        try {
+          const canvas = item.canvasElement;
+          if (canvas && canvas.toDataURL) {
+            processedItem.imageBase64 = canvas.toDataURL('image/png');
+            console.log(`📸 Captured chart image: ${item.title}`);
+          }
+        } catch (e) {
+          console.warn(`📸 Could not capture chart: ${item.title}`, e);
+        }
+      }
+      
+      // If it's a chart with a chartInstance (Chart.js), try to get image from that
+      if (item.type === 'chart' && item.chartInstance) {
+        try {
+          processedItem.imageBase64 = item.chartInstance.toBase64Image();
+          console.log(`📸 Captured chart via Chart.js: ${item.title}`);
+        } catch (e) {
+          console.warn(`📸 Could not capture via Chart.js: ${item.title}`, e);
+        }
+      }
+      
+      // Remove DOM references (can't be serialized)
+      delete processedItem.canvasElement;
+      delete processedItem.chartInstance;
+      delete processedItem.element;
+      
+      processedItems.push(processedItem);
+    }
+    
+    return processedItems;
+  }
+};
+
+/**
+ * Global function to show export modal
+ * Called from Report Builder UI
+ * 
+ * @param {string} exportType - 'slides' | 'docs' | 'sheets'
+ * @param {Array} availableItems - Array of {id, title, type, canvasElement?, chartInstance?, tableData?, chartData?}
+ */
+function showExportModal(exportType, availableItems) {
+  ExportModal.show(exportType, availableItems);
+}
+
+/**
+ * Helper function to collect exportable items from the Report Builder
+ * This should be customized based on how Report Builder stores its content
+ * 
+ * @returns {Array} Array of exportable items
+ */
+function collectExportableItems() {
+  const items = [];
+  
+  // Find all chart cards
+  const chartCards = document.querySelectorAll('[data-card-type="chart"]');
+  chartCards.forEach((card, index) => {
+    const canvas = card.querySelector('canvas');
+    const title = card.querySelector('.card-title, h3, h4')?.textContent || `Chart ${index + 1}`;
+    
+    items.push({
+      id: card.dataset.cardId || `chart_${index}`,
+      type: 'chart',
+      title: title,
+      canvasElement: canvas,
+      chartData: card.dataset.chartData ? JSON.parse(card.dataset.chartData) : null
+    });
+  });
+  
+  // Find all table cards
+  const tableCards = document.querySelectorAll('[data-card-type="table"]');
+  tableCards.forEach((card, index) => {
+    const title = card.querySelector('.card-title, h3, h4')?.textContent || `Table ${index + 1}`;
+    
+    items.push({
+      id: card.dataset.cardId || `table_${index}`,
+      type: 'table',
+      title: title,
+      tableData: card.dataset.tableData ? JSON.parse(card.dataset.tableData) : null
+    });
+  });
+  
+  return items;
+}
+</script>

@@ -957,55 +957,66 @@ function exportReport(reportData) {
  */
 function exportToGoogleDocs(cards, exportOptions = {}) {
   try {
-    // Process cards based on export options
-    const processedCards = cards.map(card => {
-      // If expanded view is requested and card has expandedOptions, use them
-      if (exportOptions.useExpanded && card.expandedOptions) {
+    // Use the new export system from B17_ExportManager
+    // Default to GSA letterhead if not specified
+    const letterhead = exportOptions.letterhead || 'GSA';
+    const layoutDensity = exportOptions.layoutDensity || 'single';
+    
+    // Convert cards to the format expected by exportReportBuilder
+    const exportData = {
+      exportType: 'docs',
+      letterhead: letterhead,
+      layoutDensity: layoutDensity,
+      reportTitle: 'OneGov FIT Market Report - ' + new Date().toLocaleDateString(),
+      items: cards.map(card => {
+        // Process cards based on export options
+        let processedCard = card;
+        if (exportOptions.useExpanded && card.expandedOptions) {
+          processedCard = {
+            ...card,
+            chartOptions: card.expandedOptions
+          };
+        }
+        
         return {
-          ...card,
-          chartOptions: card.expandedOptions  // Use expanded chart options
+          id: processedCard.id || 'card_' + Math.random().toString(36).substr(2, 9),
+          type: processedCard.includeChart ? 'chart' : 'table',
+          title: processedCard.title || 'Item',
+          imageBase64: processedCard.chartImage || null,  // Chart image if available
+          chartData: processedCard.chartData || processedCard.chart || null,
+          tableData: processedCard.tableData || processedCard.table || null,
+          includeChart: processedCard.includeChart || processedCard.selected === 'chart' || processedCard.selected === 'both',
+          includeTable: processedCard.includeTable || processedCard.selected === 'table' || processedCard.selected === 'both'
         };
-      }
-      return card;  // Use default options
+      })
+    };
+    
+    console.log('📄 Calling exportReportBuilder for Docs with:', {
+      letterhead: exportData.letterhead,
+      itemCount: exportData.items.length,
+      hasImages: exportData.items.some(item => item.imageBase64)
     });
     
-    const doc = DocumentApp.create('OneGov FIT Market Report - ' + new Date().toLocaleDateString());
-    const body = doc.getBody();
+    // Check if exportReportBuilder function exists
+    console.log('🔍 exportReportBuilder function exists:', typeof exportReportBuilder);
     
-    body.appendParagraph('OneGov FIT Market Analytics Report')
-      .setHeading(DocumentApp.ParagraphHeading.TITLE);
-    
-    body.appendParagraph('Generated on: ' + new Date().toLocaleString())
-      .setHeading(DocumentApp.ParagraphHeading.SUBTITLE);
-    
-    // Add export view mode indicator
-    if (exportOptions.useExpanded) {
-      body.appendParagraph('View Mode: Expanded (Detailed Charts)')
-        .setItalic(true);
+    // Call the new export manager
+    let result;
+    if (typeof exportReportBuilder === 'function') {
+      console.log('✅ Calling exportReportBuilder...');
+      result = exportReportBuilder(exportData);
     } else {
-      body.appendParagraph('View Mode: Default (Clean Charts)')
-        .setItalic(true);
+      console.error('❌ exportReportBuilder function not found! Creating fallback response...');
+      return createResponse(false, null, 'Export system not properly initialized - missing exportReportBuilder function');
     }
     
-    processedCards.forEach((card, index) => {
-      body.appendParagraph(`${index + 1}. ${card.title}`)
-        .setHeading(DocumentApp.ParagraphHeading.HEADING1);
-      
-      if (card.selected === 'chart' || card.selected === 'both') {
-        body.appendParagraph(`Chart: ${card.chart?.title || card.title}`);
-        // Note: Charts would need to be rendered with expanded options
-      }
-      
-      if (card.selected === 'table' || card.selected === 'both') {
-        body.appendParagraph(`Table: ${card.table?.title || card.title}`);
-        // Add table data here
-      }
-    });
+    if (result.success && (result.url || result.fileUrl)) {
+      return createResponse(true, { url: result.url || result.fileUrl }, null);
+    } else {
+      console.error('Export failed:', result.error);
+      return createResponse(false, null, result.error || 'Export failed');
+    }
     
-    const url = doc.getUrl();
-    doc.saveAndClose();
-    
-    return createResponse(true, { url }, null);
   } catch (error) {
     console.error('Error exporting to Google Docs:', error);
     return createResponse(false, null, error.toString());
@@ -1017,31 +1028,66 @@ function exportToGoogleDocs(cards, exportOptions = {}) {
  */
   function exportToGoogleSheets(cards, exportOptions = {}) {
     try {
-      // Process cards based on export options
-      const processedCards = cards.map(card => {
-        // If expanded view is requested and card has expandedOptions, use them
-        if (exportOptions.useExpanded && card.expandedOptions) {
+      // Use the new export system from B17_ExportManager
+      // Default to GSA letterhead if not specified
+      const letterhead = exportOptions.letterhead || 'GSA';
+      const layoutDensity = exportOptions.layoutDensity || 'single';
+      
+      // Convert cards to the format expected by exportReportBuilder
+      const exportData = {
+        exportType: 'sheets',
+        letterhead: letterhead,
+        layoutDensity: layoutDensity,
+        reportTitle: 'OneGov FIT Market Report - ' + new Date().toLocaleDateString(),
+        items: cards.map(card => {
+          // Process cards based on export options
+          let processedCard = card;
+          if (exportOptions.useExpanded && card.expandedOptions) {
+            processedCard = {
+              ...card,
+              chartOptions: card.expandedOptions
+            };
+          }
+          
           return {
-            ...card,
-            chartOptions: card.expandedOptions  // Use expanded chart options
+            id: processedCard.id || 'card_' + Math.random().toString(36).substr(2, 9),
+            type: processedCard.includeChart ? 'chart' : 'table',
+            title: processedCard.title || 'Item',
+            imageBase64: processedCard.chartImage || null,  // Chart image if available
+            chartData: processedCard.chartData || processedCard.chart || null,
+            tableData: processedCard.tableData || processedCard.table || null,
+            includeChart: processedCard.includeChart || processedCard.selected === 'chart' || processedCard.selected === 'both',
+            includeTable: processedCard.includeTable || processedCard.selected === 'table' || processedCard.selected === 'both'
           };
-        }
-        return card;  // Use default options
+        })
+      };
+      
+      console.log('📋 Calling exportReportBuilder for Sheets with:', {
+        letterhead: exportData.letterhead,
+        itemCount: exportData.items.length,
+        hasImages: exportData.items.some(item => item.imageBase64)
       });
       
-      // Implementation for Google Sheets export
-      const sheet = SpreadsheetApp.create('OneGov FIT Market Report - ' + new Date().toLocaleDateString());
+      // Check if exportReportBuilder function exists
+      console.log('🔍 exportReportBuilder function exists:', typeof exportReportBuilder);
       
-      // Add metadata sheet
-      const metaSheet = sheet.getActiveSheet();
-      metaSheet.setName('Report Metadata');
-      metaSheet.getRange(1, 1).setValue('Export View Mode:');
-      metaSheet.getRange(1, 2).setValue(exportOptions.useExpanded ? 'Expanded' : 'Default');
-      metaSheet.getRange(2, 1).setValue('Generated:');
-      metaSheet.getRange(2, 2).setValue(new Date().toLocaleString());
+      // Call the new export manager
+      let result;
+      if (typeof exportReportBuilder === 'function') {
+        console.log('✅ Calling exportReportBuilder...');
+        result = exportReportBuilder(exportData);
+      } else {
+        console.error('❌ exportReportBuilder function not found! Creating fallback response...');
+        return createResponse(false, null, 'Export system not properly initialized - missing exportReportBuilder function');
+      }
       
-      const url = sheet.getUrl();
-      return createResponse(true, { url }, null);
+      if (result.success && (result.url || result.fileUrl)) {
+        return createResponse(true, { url: result.url || result.fileUrl }, null);
+      } else {
+        console.error('Export failed:', result.error);
+        return createResponse(false, null, result.error || 'Export failed');
+      }
+      
     } catch (error) {
       console.error('Error exporting to Google Sheets:', error);
       return createResponse(false, null, error.toString());
@@ -1051,12 +1097,69 @@ function exportToGoogleDocs(cards, exportOptions = {}) {
 /**
  * Export to Google Slides
  */
-function exportToGoogleSlides(cards) {
+function exportToGoogleSlides(cards, exportOptions = {}) {
   try {
-    // Implementation for Google Slides export
-    const presentation = SlidesApp.create('OneGov FIT Market Report - ' + new Date().toLocaleDateString());
-    const url = presentation.getUrl();
-    return createResponse(true, { url }, null);
+    // Use the new export system from B17_ExportManager
+    // Default to GSA letterhead if not specified
+    const letterhead = exportOptions.letterhead || 'GSA';
+    const layoutDensity = exportOptions.layoutDensity || 'single';
+    
+    // Convert cards to the format expected by exportReportBuilder
+    const exportData = {
+      exportType: 'slides',
+      letterhead: letterhead,
+      layoutDensity: layoutDensity,
+      reportTitle: 'OneGov FIT Market Report - ' + new Date().toLocaleDateString(),
+      items: cards.map(card => ({
+        id: card.id || 'card_' + Math.random().toString(36).substr(2, 9),
+        type: card.includeChart ? 'chart' : 'table',
+        title: card.title || 'Item',
+        imageBase64: card.chartImage || null,  // Chart image if available
+        chartData: card.chartData || card.chart || null,
+        tableData: card.tableData || card.table || null,
+        includeChart: card.includeChart || card.selected === 'chart' || card.selected === 'both',
+        includeTable: card.includeTable || card.selected === 'table' || card.selected === 'both'
+      }))
+    };
+    
+    console.log('📊 Calling exportReportBuilder for Slides with:', {
+      letterhead: exportData.letterhead,
+      itemCount: exportData.items.length,
+      hasImages: exportData.items.some(item => item.imageBase64)
+    });
+    
+    // Check if exportReportBuilder function exists
+    console.log('🔍 exportReportBuilder function exists:', typeof exportReportBuilder);
+    
+    // Call the new export manager
+    let result;
+    if (typeof exportReportBuilder === 'function') {
+      console.log('✅ Calling exportReportBuilder...');
+      result = exportReportBuilder(exportData);
+      console.log('📊 SLIDES: exportReportBuilder returned:', result);
+      console.log('📊 SLIDES: Result structure check:', {
+        hasResult: !!result,
+        success: result?.success,
+        hasUrl: !!result?.url,
+        hasFileUrl: !!result?.fileUrl,
+        urlValue: result?.url,
+        fileUrlValue: result?.fileUrl,
+        error: result?.error
+      });
+    } else {
+      console.error('❌ exportReportBuilder function not found! Creating fallback response...');
+      return createResponse(false, null, 'Export system not properly initialized - missing exportReportBuilder function');
+    }
+    
+    if (result.success && (result.url || result.fileUrl)) {
+      const finalUrl = result.url || result.fileUrl;
+      console.log('📊 SLIDES: Creating success response with URL:', finalUrl);
+      return createResponse(true, { url: finalUrl }, null);
+    } else {
+      console.error('📊 SLIDES: Export failed:', result.error);
+      return createResponse(false, null, result.error || 'Export failed');
+    }
+    
   } catch (error) {
     console.error('Error exporting to Google Slides:', error);
     return createResponse(false, null, error.toString());
