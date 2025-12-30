@@ -952,6 +952,297 @@ function exportReport(reportData) {
   }
 }
 
+// ============================================================================
+// INFORMATION RESOURCES FUNCTIONS
+// ============================================================================
+
+/**
+ * Get Information Resources data from the Information tab
+ * Groups data by Category for the Information Resources modal
+ * 
+ * @returns {Object} Object with categories containing items with links
+ */
+function getInformationResources() {
+  try {
+    console.log('🔍 Getting Information Resources data...');
+    
+    // Get the main spreadsheet using the correct ID
+    const SPREADSHEET_ID = '18h0TYPAPiWCKPB09v7kChoICQOELJSLBfwaZwpYheXE';
+    const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    if (!spreadsheet) {
+      console.error('❌ Could not access main spreadsheet');
+      return { categories: {} };
+    }
+    
+    console.log('📊 Spreadsheet accessed:', spreadsheet.getName(), 'ID:', spreadsheet.getId());
+    
+    // Get Information tab (try both 'Information' and any variations)
+    let informationSheet = spreadsheet.getSheetByName('Information');
+    
+    if (!informationSheet) {
+      // Try alternative names
+      const sheetNames = spreadsheet.getSheets().map(sheet => sheet.getName());
+      console.log('📋 Available sheet names:', sheetNames);
+      
+      // Look for sheets with 'info' in the name
+      const infoSheetName = sheetNames.find(name => 
+        name.toLowerCase().includes('information') || 
+        name.toLowerCase().includes('info')
+      );
+      
+      if (infoSheetName) {
+        informationSheet = spreadsheet.getSheetByName(infoSheetName);
+        console.log('📋 Found Information sheet with name:', infoSheetName);
+      }
+    }
+    
+    if (!informationSheet) {
+      console.log('❌ Information tab not found in spreadsheet');
+      return { categories: {} };
+    }
+    
+    const lastRow = informationSheet.getLastRow();
+    const lastCol = informationSheet.getLastColumn();
+    console.log(`📊 Information sheet dimensions: ${lastRow} rows x ${lastCol} columns`);
+    
+    if (lastRow <= 1) {
+      console.log('⚠️ Information tab appears empty (only header row)');
+      return { categories: {} };
+    }
+    
+    // Get headers and data with more detailed logging
+    const headers = informationSheet.getRange(1, 1, 1, lastCol).getValues()[0];
+    console.log('📋 Headers found:', headers);
+    
+    const data = informationSheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
+    console.log('📊 Data rows retrieved:', data.length);
+    console.log('📊 Sample data (first 3 rows):', data.slice(0, 3));
+    
+    // Find column indices with case-insensitive matching
+    const findColumnIndex = (columnName) => {
+      return headers.findIndex(header => 
+        header && header.toString().toLowerCase().trim() === columnName.toLowerCase()
+      );
+    };
+    
+    const categoryIndex = findColumnIndex('Category');
+    const itemIndex = findColumnIndex('Item');
+    const linkIndex = findColumnIndex('Link');
+    const keyIndex = findColumnIndex('Key');
+    
+    console.log('📊 Column indices - Category:', categoryIndex, 'Item:', itemIndex, 'Link:', linkIndex, 'Key:', keyIndex);
+    
+    if (categoryIndex === -1 || itemIndex === -1) {
+      console.error('❌ Information tab missing required columns: Category and/or Item');
+      console.log('📋 Available headers:', headers);
+      return { categories: {} };
+    }
+    
+    // Organize data by category with detailed logging
+    const categories = {};
+    let processedRows = 0;
+    let skippedRows = 0;
+    
+    data.forEach((row, index) => {
+      const category = row[categoryIndex] ? row[categoryIndex].toString().trim() : '';
+      const item = row[itemIndex] ? row[itemIndex].toString().trim() : '';
+      const link = linkIndex !== -1 && row[linkIndex] ? row[linkIndex].toString().trim() : '';
+      const key = keyIndex !== -1 && row[keyIndex] ? row[keyIndex].toString().trim() : `${category}_${item}_${index + 2}`;
+      
+      if (category && item) {
+        if (!categories[category]) {
+          categories[category] = [];
+        }
+        
+        categories[category].push({
+          item: item,
+          link: link,
+          key: key
+        });
+        
+        processedRows++;
+      } else {
+        skippedRows++;
+        if (index < 5) { // Log first few skipped rows for debugging
+          console.log(`⚠️ Skipping row ${index + 2}: Category='${category}', Item='${item}'`);
+        }
+      }
+    });
+    
+    console.log(`✅ Processed ${processedRows} rows, skipped ${skippedRows} rows`);
+    console.log('📊 Categories found:', Object.keys(categories));
+    console.log('📊 Items per category:', Object.keys(categories).map(cat => `${cat}: ${categories[cat].length}`));
+    
+    return { categories: categories };
+    
+  } catch (error) {
+    console.error('❌ Error getting Information Resources:', error);
+    console.error('❌ Stack trace:', error.stack);
+    return { categories: {} };
+  }
+}
+
+/**
+ * Simple test to directly call getInformationResources and log the result
+ */
+function testGetInformationResources() {
+  console.log('🧪 Testing getInformationResources() directly...');
+  const result = getInformationResources();
+  console.log('📊 Final result:', JSON.stringify(result, null, 2));
+  return result;
+}
+
+/**
+ * Debug function to check spreadsheet access and sheet contents
+ */
+function debugInformationSheet() {
+  try {
+    console.log('🔍 DEBUG: Checking spreadsheet access...');
+    
+    // Check if we can access the spreadsheet
+    const SPREADSHEET_ID = '18h0TYPAPiWCKPB09v7kChoICQOELJSLBfwaZwpYheXE';
+    const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    if (!spreadsheet) {
+      return { error: 'Cannot access spreadsheet' };
+    }
+    
+    const spreadsheetId = spreadsheet.getId();
+    const spreadsheetName = spreadsheet.getName();
+    console.log('📊 Spreadsheet found:', spreadsheetName, 'ID:', spreadsheetId);
+    
+    // List all sheets
+    const sheets = spreadsheet.getSheets();
+    const sheetNames = sheets.map(sheet => sheet.getName());
+    console.log('📋 All sheets:', sheetNames);
+    
+    // Try to find Information sheet
+    const informationSheet = spreadsheet.getSheetByName('Information');
+    if (!informationSheet) {
+      return { 
+        error: 'No Information sheet found',
+        spreadsheetId: spreadsheetId,
+        spreadsheetName: spreadsheetName,
+        availableSheets: sheetNames
+      };
+    }
+    
+    // Get basic sheet info
+    const lastRow = informationSheet.getLastRow();
+    const lastCol = informationSheet.getLastColumn();
+    console.log('📊 Information sheet dimensions:', lastRow, 'x', lastCol);
+    
+    if (lastRow <= 1) {
+      return {
+        error: 'Information sheet appears empty',
+        dimensions: `${lastRow}x${lastCol}`,
+        spreadsheetId: spreadsheetId
+      };
+    }
+    
+    // Get all data
+    const allData = informationSheet.getRange(1, 1, lastRow, lastCol).getValues();
+    const headers = allData[0];
+    const dataRows = allData.slice(1);
+    
+    console.log('📋 Headers:', headers);
+    console.log('📊 First few data rows:', dataRows.slice(0, 5));
+    
+    return {
+      success: true,
+      spreadsheetId: spreadsheetId,
+      spreadsheetName: spreadsheetName,
+      sheetName: 'Information',
+      dimensions: `${lastRow}x${lastCol}`,
+      headers: headers,
+      sampleData: dataRows.slice(0, 5),
+      totalDataRows: dataRows.length
+    };
+    
+  } catch (error) {
+    console.error('❌ DEBUG ERROR:', error);
+    return { 
+      error: error.toString(),
+      stack: error.stack
+    };
+  }
+}
+
+/**
+ * Test function to check Information Resources data and create sample data if needed
+ */
+function testInformationResources() {
+  try {
+    console.log('🧪 Testing Information Resources...');
+    
+    // Get the main spreadsheet
+    const spreadsheet = getSpreadsheet();
+    if (!spreadsheet) {
+      console.error('❌ Could not access main spreadsheet');
+      return;
+    }
+    
+    console.log('✅ Spreadsheet accessed:', spreadsheet.getName());
+    
+    // Check if Information tab exists
+    let informationSheet = spreadsheet.getSheetByName('Information');
+    if (!informationSheet) {
+      console.log('⚠️ Information tab not found, creating it...');
+      
+      // Create Information tab with sample data
+      informationSheet = spreadsheet.insertSheet('Information');
+      
+      // Add headers
+      const headers = ['Category', 'Item', 'Link', 'Key'];
+      informationSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+      
+      // Add sample data
+      const sampleData = [
+        ['Getting Started', 'OneGov FIT User Guide', 'https://example.com/user-guide', 'user_guide'],
+        ['Getting Started', 'Video Tutorial', 'https://example.com/video-tutorial', 'video_tutorial'],
+        ['Reports', 'Report Builder Help', 'https://example.com/report-builder', 'report_builder'],
+        ['Reports', 'Export Guide', 'https://example.com/export-guide', 'export_guide'],
+        ['Support', 'Contact IT Support', 'mailto:support@gsa.gov', 'contact_support'],
+        ['Support', 'Submit Ticket', 'https://example.com/submit-ticket', 'submit_ticket'],
+        ['Data Sources', 'Understanding Your Data', 'https://example.com/data-sources', 'data_sources'],
+        ['Data Sources', 'Data Refresh Schedule', 'https://example.com/data-refresh', 'data_refresh']
+      ];
+      
+      informationSheet.getRange(2, 1, sampleData.length, headers.length).setValues(sampleData);
+      
+      // Style the header
+      const headerRange = informationSheet.getRange(1, 1, 1, headers.length);
+      headerRange.setBackground('#144673');
+      headerRange.setFontColor('#ffffff');
+      headerRange.setFontWeight('bold');
+      
+      console.log('✅ Information tab created with sample data');
+    } else {
+      console.log('✅ Information tab found');
+    }
+    
+    // Test the getInformationResources function
+    console.log('🧪 Testing getInformationResources() function...');
+    const result = getInformationResources();
+    
+    console.log('📊 Result:', result);
+    console.log('📊 Categories found:', Object.keys(result.categories));
+    
+    Object.keys(result.categories).forEach(category => {
+      console.log(`📋 ${category}:`, result.categories[category]);
+    });
+    
+    return result;
+    
+  } catch (error) {
+    console.error('❌ Error testing Information Resources:', error);
+    return null;
+  }
+}
+
+// ============================================================================
+// EXPORT FUNCTIONS (Called from Report Builder frontend)
+// ============================================================================
+
 /**
  * Export to Google Docs
  */

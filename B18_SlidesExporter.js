@@ -168,23 +168,24 @@ function processItemsDouble(presentation, items) {
  * @param {string} position - 'left' | 'right' | 'full'
  */
 function addItemToSlide(slide, item, position) {
-  // Calculate position based on left/right
+  // Calculate position based on left/right with better spacing
   const slideWidth = 720; // points (10 inches at 72 dpi)
   const slideHeight = 540; // points (7.5 inches at 72 dpi)
-  const margin = 20;
-  const titleHeight = 40;
+  const margin = 30; // Increased margin for better spacing
+  const titleHeight = 35; // Slightly smaller title
+  const gap = 20; // Gap between left and right items
   
   let x, y, width, height;
   
   if (position === 'left') {
     x = margin;
     y = margin;
-    width = (slideWidth / 2) - (margin * 1.5);
+    width = (slideWidth / 2) - margin - (gap / 2);
     height = slideHeight - (margin * 2);
   } else if (position === 'right') {
-    x = (slideWidth / 2) + (margin / 2);
+    x = (slideWidth / 2) + (gap / 2);
     y = margin;
-    width = (slideWidth / 2) - (margin * 1.5);
+    width = (slideWidth / 2) - margin - (gap / 2);
     height = slideHeight - (margin * 2);
   } else {
     x = margin;
@@ -193,18 +194,19 @@ function addItemToSlide(slide, item, position) {
     height = slideHeight - (margin * 2);
   }
   
-  // Add title
+  // Add title with smaller font for double layout
+  const fontSize = position === 'left' || position === 'right' ? 12 : 14;
   const titleBox = slide.insertTextBox(item.title || 'Untitled', x, y, width, titleHeight);
   titleBox.getText().getTextStyle()
-    .setFontSize(14)
+    .setFontSize(fontSize)
     .setBold(true)
     .setForegroundColor('#144673');
   
-  // Adjust content area
-  const contentY = y + titleHeight + 10;
-  const contentHeight = height - titleHeight - 20;
+  // Adjust content area with more conservative spacing
+  const contentY = y + titleHeight + 5;
+  const contentHeight = height - titleHeight - 15;
   
-  // Add content
+  // Add content with size constraints for double layout
   if (item.type === 'chart' && item.imageBase64) {
     insertChartImageAtPosition(slide, item.imageBase64, x, contentY, width, contentHeight);
   } else if (item.type === 'table' || item.tableData) {
@@ -229,50 +231,74 @@ function addItemToSlide(slide, item, position) {
 function insertChartImage(slide, base64Data, layout) {
   const slideWidth = 720;
   const slideHeight = 540;
-  const margin = 40;
-  const titleSpace = 60;
-  const captionSpace = 40;
+  const margin = 50; // Increased margin for better padding
+  const titleSpace = 70; // More space for title
+  const captionSpace = 30; // Space for caption if needed
   
-  // Calculate dimensions for centered chart
+  // Calculate safe dimensions with conservative sizing
   const maxWidth = slideWidth - (margin * 2);
   const maxHeight = slideHeight - titleSpace - captionSpace - (margin * 2);
   
-  // Maintain aspect ratio (assuming 800x500 source)
-  const aspectRatio = 800 / 500;
-  let width = maxWidth;
+  // Use more conservative aspect ratio (16:10 is common for charts)
+  // and scale down to ensure it fits well
+  const aspectRatio = 16 / 10;
+  let width = Math.min(maxWidth, 500); // Cap at 500px width for better fit
   let height = width / aspectRatio;
   
+  // If height is too tall, scale down based on height constraint
   if (height > maxHeight) {
-    height = maxHeight;
+    height = Math.min(maxHeight, 300); // Cap at 300px height
     width = height * aspectRatio;
   }
   
-  // Center horizontally
-  const x = (slideWidth - width) / 2;
-  const y = titleSpace + margin;
+  // Further reduce by 10% to ensure comfortable fit
+  width = width * 0.9;
+  height = height * 0.9;
   
-  insertChartImageAtPosition(slide, base64Data, x, y, width, height);
+  // Calculate positioning for the available space
+  const x = margin;
+  const y = titleSpace;
+  
+  insertChartImageAtPosition(slide, base64Data, x, y, maxWidth, maxHeight);
 }
 
 /**
- * Insert a chart image at a specific position
+ * Insert a chart image at a specific position with smart sizing
  * 
  * @param {SlidesApp.Slide} slide - The slide
  * @param {string} base64Data - Base64 encoded image
  * @param {number} x - X position in points
  * @param {number} y - Y position in points
- * @param {number} width - Width in points
- * @param {number} height - Height in points
+ * @param {number} maxWidth - Maximum width in points
+ * @param {number} maxHeight - Maximum height in points
  */
-function insertChartImageAtPosition(slide, base64Data, x, y, width, height) {
+function insertChartImageAtPosition(slide, base64Data, x, y, maxWidth, maxHeight) {
   try {
     // Convert base64 to blob
     const blob = base64ToBlob(base64Data, 'chart.png');
     
-    // Insert image
-    const image = slide.insertImage(blob, x, y, width, height);
+    // Smart sizing: use conservative dimensions to ensure good fit
+    // Assume common chart aspect ratios and scale appropriately
+    const aspectRatio = 16 / 10; // Common chart ratio
     
-    console.log(`📊 SLIDES: Inserted chart image at (${x}, ${y}) size ${width}x${height}`);
+    // Calculate dimensions that fit within the bounds
+    let width = Math.min(maxWidth * 0.85, 450); // Use 85% of available width, cap at 450px
+    let height = width / aspectRatio;
+    
+    // If height exceeds bounds, scale down
+    if (height > maxHeight * 0.85) {
+      height = Math.min(maxHeight * 0.85, 280); // Use 85% of available height, cap at 280px
+      width = height * aspectRatio;
+    }
+    
+    // Center the image within the available space
+    const centerX = x + (maxWidth - width) / 2;
+    const centerY = y + (maxHeight - height) / 2;
+    
+    // Insert image with calculated dimensions
+    const image = slide.insertImage(blob, centerX, centerY, width, height);
+    
+    console.log(`📊 SLIDES: Inserted chart image at (${centerX.toFixed(1)}, ${centerY.toFixed(1)}) size ${width.toFixed(1)}x${height.toFixed(1)}`);
     
     return image;
   } catch (error) {
@@ -281,7 +307,7 @@ function insertChartImageAtPosition(slide, base64Data, x, y, width, height) {
     // Insert placeholder text if image fails
     const placeholder = slide.insertTextBox(
       '⚠️ Chart image could not be inserted',
-      x, y, width, height
+      x, y, maxWidth, 40
     );
     placeholder.getText().getTextStyle().setForegroundColor('#ef4444');
     
@@ -303,15 +329,15 @@ function insertChartImageAtPosition(slide, base64Data, x, y, width, height) {
 function insertSlideTable(slide, item, layout) {
   const slideWidth = 720;
   const slideHeight = 540;
-  const margin = 40;
-  const titleSpace = 60;
+  const margin = 50; // Increased margin for better spacing
+  const titleSpace = 70; // More space for title
   
   const x = margin;
   const y = titleSpace + 20;
-  const width = slideWidth - (margin * 2);
-  const height = slideHeight - titleSpace - margin - 40;
+  const maxWidth = slideWidth - (margin * 2);
+  const maxHeight = slideHeight - titleSpace - margin - 40;
   
-  insertSlideTableAtPosition(slide, item, x, y, width, height);
+  insertSlideTableAtPosition(slide, item, x, y, maxWidth, maxHeight);
 }
 
 /**
@@ -321,12 +347,12 @@ function insertSlideTable(slide, item, layout) {
  * @param {Object} item - The table item
  * @param {number} x - X position
  * @param {number} y - Y position
- * @param {number} width - Available width
- * @param {number} height - Available height
+ * @param {number} maxWidth - Maximum available width
+ * @param {number} maxHeight - Maximum available height
  */
-function insertSlideTableAtPosition(slide, item, x, y, width, height) {
+function insertSlideTableAtPosition(slide, item, x, y, maxWidth, maxHeight) {
   const tableData = formatTableData(item);
-  insertSlideTableDataAtPosition(slide, tableData, x, y, width, height);
+  insertSlideTableDataAtPosition(slide, tableData, x, y, maxWidth, maxHeight);
 }
 
 /**
@@ -336,10 +362,10 @@ function insertSlideTableAtPosition(slide, item, x, y, width, height) {
  * @param {Object} tableData - Formatted table data {headers, rows}
  * @param {number} x - X position
  * @param {number} y - Y position
- * @param {number} width - Available width
- * @param {number} height - Available height
+ * @param {number} maxWidth - Maximum available width
+ * @param {number} maxHeight - Maximum available height
  */
-function insertSlideTableDataAtPosition(slide, tableData, x, y, width, height) {
+function insertSlideTableDataAtPosition(slide, tableData, x, y, maxWidth, maxHeight) {
   const { headers, rows } = tableData;
   
   if (!headers || headers.length === 0) {
@@ -347,32 +373,55 @@ function insertSlideTableDataAtPosition(slide, tableData, x, y, width, height) {
     return;
   }
   
-  // Limit rows to fit on slide (max ~15 rows typically)
-  const maxRows = Math.min(rows.length, 15);
+  // Smart row limiting based on available height
+  const rowHeight = 22; // Points per row
+  const headerHeight = 25; // Header slightly taller
+  const maxPossibleRows = Math.floor((maxHeight - 30) / rowHeight); // 30px buffer
+  const maxRows = Math.min(rows.length, maxPossibleRows, 12); // Cap at 12 rows for readability
   const displayRows = rows.slice(0, maxRows);
   
   const numRows = displayRows.length + 1; // +1 for header
   const numCols = headers.length;
   
+  // Calculate table dimensions
+  const tableHeight = (numRows - 1) * rowHeight + headerHeight;
+  const tableWidth = Math.min(maxWidth * 0.95, maxWidth); // Use 95% of available width
+  
+  // Center table in available space
+  const tableX = x + (maxWidth - tableWidth) / 2;
+  const tableY = y + Math.max(0, (maxHeight - tableHeight) / 3); // Position in upper third
+  
   try {
-    // Create table
-    const table = slide.insertTable(numRows, numCols, x, y, width, Math.min(height, numRows * 25));
+    // Create table with calculated dimensions
+    const table = slide.insertTable(numRows, numCols, tableX, tableY, tableWidth, tableHeight);
+    
+    // Adjust column widths to fit content
+    const colWidth = tableWidth / numCols;
+    for (let col = 0; col < numCols; col++) {
+      table.getColumn(col).setWidth(colWidth);
+    }
     
     // Style header row
     for (let col = 0; col < numCols; col++) {
       const cell = table.getCell(0, col);
       cell.getText().setText(String(headers[col] || ''));
       cell.getText().getTextStyle()
-        .setFontSize(10)
+        .setFontSize(9) // Slightly smaller for better fit
         .setBold(true)
         .setForegroundColor('#ffffff');
       cell.getFill().setSolidFill('#144673');
     }
     
+    // Set header row height
+    table.getRow(0).setHeight(headerHeight);
+    
     // Populate data rows
     for (let row = 0; row < displayRows.length; row++) {
       const rowData = displayRows[row];
       const isEvenRow = row % 2 === 0;
+      
+      // Set row height
+      table.getRow(row + 1).setHeight(rowHeight);
       
       for (let col = 0; col < numCols; col++) {
         const cell = table.getCell(row + 1, col);
@@ -392,7 +441,7 @@ function insertSlideTableDataAtPosition(slide, tableData, x, y, width, height) {
         
         cell.getText().setText(String(displayValue || ''));
         cell.getText().getTextStyle()
-          .setFontSize(9)
+          .setFontSize(8) // Smaller font for data rows to fit better
           .setForegroundColor('#333333');
         
         // Alternating row colors
@@ -406,18 +455,20 @@ function insertSlideTableDataAtPosition(slide, tableData, x, y, width, height) {
     
     // Add note if rows were truncated
     if (rows.length > maxRows) {
-      const noteY = y + (numRows * 25) + 10;
-      const note = slide.insertTextBox(
-        `Showing ${maxRows} of ${rows.length} rows`,
-        x, noteY, width, 20
-      );
-      note.getText().getTextStyle()
-        .setFontSize(8)
-        .setItalic(true)
-        .setForegroundColor('#666666');
+      const noteY = tableY + tableHeight + 5;
+      if (noteY + 20 <= y + maxHeight) { // Only add if fits
+        const note = slide.insertTextBox(
+          `Showing ${maxRows} of ${rows.length} rows`,
+          tableX, noteY, tableWidth, 20
+        );
+        note.getText().getTextStyle()
+          .setFontSize(7)
+          .setItalic(true)
+          .setForegroundColor('#666666');
+      }
     }
     
-    console.log(`📊 SLIDES: Inserted table with ${numRows} rows x ${numCols} cols`);
+    console.log(`📊 SLIDES: Inserted table with ${numRows} rows x ${numCols} cols at (${tableX.toFixed(1)}, ${tableY.toFixed(1)}) size ${tableWidth.toFixed(1)}x${tableHeight.toFixed(1)}`);
     
   } catch (error) {
     console.error('📊 SLIDES: Error inserting table:', error);
@@ -425,7 +476,7 @@ function insertSlideTableDataAtPosition(slide, tableData, x, y, width, height) {
     // Insert error message
     const errorBox = slide.insertTextBox(
       `⚠️ Table could not be inserted: ${error.message}`,
-      x, y, width, 40
+      x, y, maxWidth, 40
     );
     errorBox.getText().getTextStyle().setForegroundColor('#ef4444');
   }

@@ -126,6 +126,32 @@
             background-color: var(--orange);
             box-shadow: 0 2px 6px rgba(244, 121, 32, 0.3);
         }
+        
+        /* Navigation Actions */
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .info-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+        .info-icon:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
+        }
 
         /* Main Content */
         .main-content {
@@ -811,8 +837,9 @@
             
             <!-- Footer with Credits -->
             <div style="display: flex; justify-content: center; align-items: center; opacity: 0.8; font-size: 0.85rem; margin-top: 1rem;">
-                <div style="color: rgba(255,255,255,0.7);">
-                    Built by gerald.mavis@gsa.gov
+                <div style="color: rgba(255,255,255,0.7); text-align: center;">
+                    <div>Developer: gerald.mavis@gsa.gov</div>
+                    <div style="margin-top: 0.25rem;">Product Owner: kyra.stewart@gsa.gov</div>
                 </div>
             </div>
         </div>
@@ -10959,7 +10986,7 @@
                         <div className="nav-container">
                             <div className="nav-brand">
                                 <div className="brand-text">
-                                    <span className="brand-name">OneGov FIT Market</span>
+                                    <span className="brand-name">OneGov FIT</span>
                                 </div>
                             </div>
                             
@@ -11034,6 +11061,16 @@
                                          'Reports'}
                                     </button>
                                 ))}
+                            </div>
+                            
+                            <div className="nav-actions">
+                                <div className="info-icon" onClick={() => toggleInformationMenu()}>
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+                                        <path d="M12 16v-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                                        <circle cx="12" cy="8" r="1" fill="currentColor"/>
+                                    </svg>
+                                </div>
                             </div>
                         </div>
                     </nav>
@@ -11775,6 +11812,296 @@
                 showSuccessDialog('Document Ready', `Document link: ${docUrl}\n\nPlease copy this link and email it to ${recipient}.`);
             }
         };
+    </script>
+    
+    <!-- Information Resources Modal -->
+    <div id="infoMenu" class="info-menu">
+        <div class="info-menu-header">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+                <path d="M12 16v-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <circle cx="12" cy="8" r="1" fill="currentColor"/>
+            </svg>
+            Information Resources
+        </div>
+        <div class="info-menu-content" id="infoMenuContent">
+            <!-- Categories will be populated here -->
+        </div>
+        <div class="info-menu-footer">
+            Click any item to open its resource link
+        </div>
+    </div>
+
+    <style>
+        /* Information Menu Popup Styles */
+        .info-menu {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            width: 350px;
+            max-height: 600px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            border: 2px solid var(--orange);
+            z-index: 9999;
+            display: none;
+            overflow: hidden;
+        }
+
+        .info-menu.show {
+            display: block;
+            animation: slideInDown 0.3s ease-out;
+        }
+
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .info-menu-header {
+            background: linear-gradient(135deg, var(--dark-blue) 0%, var(--blue) 100%);
+            color: white;
+            padding: 15px 20px;
+            font-weight: 600;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-menu-content {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .info-category {
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .info-category:last-child {
+            border-bottom: none;
+        }
+
+        .category-header {
+            background: #f8f9fa;
+            padding: 12px 20px;
+            font-weight: 600;
+            color: #374151;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: background-color 0.2s ease;
+        }
+
+        .category-header:hover {
+            background: #e5e7eb;
+        }
+
+        .category-arrow {
+            transition: transform 0.2s ease;
+            color: var(--orange);
+        }
+
+        .category-expanded .category-arrow {
+            transform: rotate(90deg);
+        }
+
+        .category-items {
+            display: none;
+            background: white;
+        }
+
+        .category-expanded .category-items {
+            display: block;
+        }
+
+        .info-item {
+            padding: 10px 20px 10px 40px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            border-bottom: 1px solid #f3f4f6;
+            color: #374151;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-item:hover {
+            background: #f8f9fa;
+            color: #1f2937;
+        }
+
+        .info-item.has-link {
+            color: var(--orange);
+        }
+
+        .info-item.has-link:hover {
+            background: #fff7ed;
+            color: #ea580c;
+        }
+
+        .info-menu-footer {
+            background: #f8f9fa;
+            padding: 10px 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #6b7280;
+            border-top: 1px solid #e5e7eb;
+        }
+    </style>
+
+    <script>
+        // Information Menu Functionality
+        let informationData = { categories: {} };
+        let infoMenuLoaded = false;
+
+        // Toggle information menu
+        function toggleInformationMenu() {
+            const menu = document.getElementById('infoMenu');
+            
+            if (menu.classList.contains('show')) {
+                // Hide menu
+                menu.classList.remove('show');
+                // Remove click outside listener
+                setTimeout(() => {
+                    document.removeEventListener('click', closeMenuOnClickOutside);
+                }, 300);
+            } else {
+                // Load data if not loaded yet
+                if (!infoMenuLoaded) {
+                    loadInformationData();
+                } else {
+                    // Show menu
+                    menu.classList.add('show');
+                    // Add click outside listener after menu is shown
+                    setTimeout(() => {
+                        document.addEventListener('click', closeMenuOnClickOutside);
+                    }, 100);
+                }
+            }
+        }
+
+        // Load information data from backend
+        function loadInformationData() {
+            console.log('Loading Information tab data...');
+            
+            // First try the debug function to see what's happening
+            google.script.run
+                .withSuccessHandler(function(debugData) {
+                    console.log('🔍 DEBUG INFO:', debugData);
+                    
+                    // Now try the actual function
+                    google.script.run
+                        .withSuccessHandler(function(data) {
+                            console.log('Information data received:', data);
+                            console.log('Categories object:', data.categories);
+                            console.log('Categories keys:', Object.keys(data.categories));
+                            informationData = data;
+                            infoMenuLoaded = true;
+                            populateInformationMenu();
+                            
+                            // Show menu after populating
+                            const menu = document.getElementById('infoMenu');
+                            menu.classList.add('show');
+                            
+                            // Add click outside listener after menu is shown
+                            setTimeout(() => {
+                                document.addEventListener('click', closeMenuOnClickOutside);
+                            }, 100);
+                        })
+                        .withFailureHandler(function(error) {
+                            console.error('Error loading Information data:', error);
+                            alert('Error loading information resources: ' + error.message);
+                        })
+                        .getInformationResources();
+                })
+                .withFailureHandler(function(error) {
+                    console.error('Debug function failed:', error);
+                })
+                .debugInformationSheet();
+        }
+
+        // Populate the information menu with categories and items
+        function populateInformationMenu() {
+            const menuContent = document.getElementById('infoMenuContent');
+            
+            if (!informationData.categories || Object.keys(informationData.categories).length === 0) {
+                menuContent.innerHTML = '<div style="padding: 20px; text-align: center; color: #6b7280;">No information resources available</div>';
+                return;
+            }
+            
+            let menuHTML = '';
+            
+            Object.keys(informationData.categories).forEach(categoryName => {
+                const items = informationData.categories[categoryName];
+                
+                menuHTML += `
+                    <div class="info-category">
+                        <div class="category-header" onclick="toggleCategory('${categoryName}')">
+                            <span>${categoryName}</span>
+                            <span class="category-arrow">►</span>
+                        </div>
+                        <div class="category-items">
+                `;
+                
+                items.forEach(item => {
+                    const hasLink = item.link && item.link.trim() !== '';
+                    const itemClass = hasLink ? 'info-item has-link' : 'info-item';
+                    const onclick = hasLink ? `onclick="openInfoLink('${item.link.replace(/'/g, '\\\\\'')}')"` : '';
+                    
+                    menuHTML += `
+                        <div class="${itemClass}" ${onclick}>
+                            ${item.item}
+                        </div>
+                    `;
+                });
+                
+                menuHTML += `
+                        </div>
+                    </div>
+                `;
+            });
+            
+            menuContent.innerHTML = menuHTML;
+        }
+
+        // Toggle category expansion
+        function toggleCategory(categoryName) {
+            const categoryEl = event.target.closest('.info-category');
+            categoryEl.classList.toggle('category-expanded');
+        }
+
+        // Open information link in new window
+        function openInfoLink(url) {
+            if (url && url.trim() !== '') {
+                window.open(url, '_blank');
+            }
+        }
+
+        // Close menu when clicking outside
+        function closeMenuOnClickOutside(event) {
+            const menu = document.getElementById('infoMenu');
+            const infoIcon = document.querySelector('.info-icon');
+            
+            if (!menu.contains(event.target) && !infoIcon.contains(event.target)) {
+                menu.classList.remove('show');
+                document.removeEventListener('click', closeMenuOnClickOutside);
+            }
+        }
+
+        // Make functions available globally
+        window.toggleInformationMenu = toggleInformationMenu;
+        window.toggleCategory = toggleCategory;
+        window.openInfoLink = openInfoLink;
     </script>
 </body>
 </html>
